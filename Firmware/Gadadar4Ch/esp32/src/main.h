@@ -10,3 +10,6 @@ struct Config {
 };
 
 GenericConfig configHelper("/gadadar4ch.json");
+
+void loadConfig();
+void saveConfig();

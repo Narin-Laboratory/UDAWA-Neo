@@ -29,17 +29,4 @@ build_flags =
 	-D=${PIOENV}
 	-DCORE_DEBUG_LEVEL=0
 lib_deps =
-	https://github.com/arduino-libraries/NTPClient.git
-	https://github.com/Narin-Laboratory/libudawa-esp32.git
-	https://github.com/fbiego/ESP32Time.git
-	https://github.com/PaulStoffregen/Time
-	https://github.com/me-no-dev/ESPAsyncWebServer.git
-	https://github.com/thingsboard/pubsubclient.git
-	https://github.com/Narin-Laboratory/thingsboard-arduino-sdk.git
-	akkoyun/Statistical@2.4.4
-	https://github.com/Links2004/arduinoWebSockets.git
-	https://github.com/rweather/arduinolibs.git
-	https://github.com/Erriez/ErriezDS3231.git
-	https://github.com/arduino-libraries/ArduinoHttpClient.git
-	bblanchon/ArduinoJson@6.21.2
-	bblanchon/StreamUtils@^1.8.0
+	https://github.com/Narin-Laboratory/libudawa-esp32.git#gigarefactor
