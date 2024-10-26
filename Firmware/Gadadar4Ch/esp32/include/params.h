@@ -46,6 +46,7 @@ const int tbPort = 8883;
 constexpr char tbAddr[] PROGMEM = "prita.undiknas.ac.id";
 constexpr char spiffsBinUrl[] PROGMEM = "http://prita.undiknas.ac.id/cdn/firmware/gadadar4ch.spiffs.bin";
 constexpr char model[] PROGMEM = "Gadadar4Ch";
+constexpr char hname[] PROGMEM = "gadadar4ch";
 constexpr char group[] PROGMEM = "Gadadar";
 constexpr char logIP[] PROGMEM = "255.255.255.255";
 const uint8_t logLev = 5;
@@ -54,6 +55,7 @@ const bool fWOTA = true;
 const bool fWeb = true;
 const int gmtOff = 28880;
 const uint16_t logPort = 29514;
+const bool fInit = false;
 
 
 #endif
