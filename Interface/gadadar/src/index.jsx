@@ -1,43 +1,62 @@
 import { render } from 'preact';
+import { useState } from 'preact/hooks';
 
 import preactLogo from './assets/preact.svg';
+import gearSvg from './assets/gear.svg';
 import './style.css';
+import LineChart from './lineChart';
+import ChannelSelector from './channelSelector';
+import { AppStateProvider, useAppState } from './AppStateContext';
 
-export function App() {
+function App() {
 	return (
-		<div>
-			<a href="https://preactjs.com" target="_blank">
-				<img src={preactLogo} alt="Preact logo" height="160" width="160" />
-			</a>
-			<h1>Get Started building Vite-powered Preact Apps </h1>
-			<section>
-				<Resource
-					title="Learn Preact"
-					description="If you're new to Preact, try the interactive tutorial to learn important concepts"
-					href="https://preactjs.com/tutorial"
-				/>
-				<Resource
-					title="Differences to React"
-					description="If you're coming from React, you may want to check out our docs to see where Preact differs"
-					href="https://preactjs.com/guide/v10/differences-to-react"
-				/>
-				<Resource
-					title="Learn Vite"
-					description="To learn more about Vite and how you can customize it to fit your needs, take a look at their excellent documentation"
-					href="https://vitejs.dev"
-				/>
-			</section>
-		</div>
+	  <AppStateProvider>
+		<MainApp />
+	  </AppStateProvider>
 	);
-}
-
-function Resource(props) {
+  }
+  
+  function MainApp() {
+	const { selectedChannelId } = useAppState();
+  
 	return (
-		<a href={props.href} target="_blank" class="resource">
-			<h2>{props.title}</h2>
-			<p>{props.description}</p>
-		</a>
+	  <div>
+		<header>
+		  <article>
+			<nav>
+				<ul>
+					<li><a class="secondary" aria-label="Menu" data-discover="true" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="1rem" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon-menu"><path d="M4 6l16 0"></path><path d="M4 12l16 0"></path><path d="M4 18l16 0"></path></svg></a></li></ul>
+				<ul>
+					<li><strong>UDAWA Gadadar</strong></li>
+				</ul>
+				<ul>
+					<li><a class="secondary" aria-label="Twitter" data-discover="true" href="#">✅</a></li>
+				</ul>
+			</nav>
+		  </article>
+		</header>
+		<main class="container">
+		  <section>
+			<article>
+			  <LineChart />
+			</article>
+			<article>
+			  <ChannelSelector />
+			  <p>Selected channel: {selectedChannelId}</p>
+			</article>
+			<article>
+				<button>Button</button>
+			</article>
+		  </section>
+		</main>
+		<footer>
+		  <section class="text-center mt-10">
+			<hr />
+			<small>❤️ PSTI UNDIKNAS ❤️</small>
+		  </section>
+		</footer>
+	  </div>
 	);
-}
-
-render(<App />, document.getElementById('app'));
+  }
+  
+  render(<App />, document.getElementById('app'));
