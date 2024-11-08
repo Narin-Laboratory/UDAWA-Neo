@@ -6,15 +6,20 @@ const AppStateContext = createContext(null);
 
 export const AppStateProvider = ({ children }) => {
   const [selectedChannelId, setSelectedChannelId] = useState(null);
+  const [cfg, setCfg] = useState(null);
 
   const state = {
     selectedChannelId,
     setSelectedChannelId,
-    channels: [
-      { id: '1', name: 'Channel One' },
-      { id: '2', name: 'Channel Two' },
-      { id: '3', name: 'Channel Three' },
-    ],
+    channels: [],
+    cfg: {
+      fInit: false,
+      hname: "gadadar",
+      htP: "milikpetani",
+      wssid: "Gadadar",
+      wpass: "milikpetani",
+    },
+    setCfg,
   };
 
   return (

@@ -7,6 +7,7 @@ import './style.css';
 import LineChart from './lineChart';
 import ChannelSelector from './channelSelector';
 import { AppStateProvider, useAppState } from './AppStateContext';
+import SetupForm from './setupForm';
 
 function App() {
 	return (
@@ -17,7 +18,7 @@ function App() {
   }
   
   function MainApp() {
-	const { selectedChannelId } = useAppState();
+	const { selectedChannelId, cfg } = useAppState();
   
 	return (
 	  <div>
@@ -36,18 +37,24 @@ function App() {
 		  </article>
 		</header>
 		<main class="container">
-		  <section>
-			<article>
-			  <LineChart />
-			</article>
-			<article>
-			  <ChannelSelector />
-			  <p>Selected channel: {selectedChannelId}</p>
-			</article>
-			<article>
-				<button>Button</button>
-			</article>
-		  </section>
+			{!cfg.fInit ? (
+				<section>
+					<SetupForm></SetupForm>
+				</section>
+			) : (
+				<section>
+					<article>
+					<LineChart />
+					</article>
+					<article>
+					<ChannelSelector />
+					<p>Selected channel: {selectedChannelId}</p>
+					</article>
+					<article>
+						<button>Button</button>
+					</article>
+				</section>
+			)}
 		</main>
 		<footer>
 		  <section class="text-center mt-10">
