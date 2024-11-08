@@ -1,25 +1,59 @@
 import { createContext } from 'preact';
-import { useContext, useState } from 'preact/hooks';
+import { useContext, useEffect, useState, useRef } from 'preact/hooks';
 
-// Initialize the context without a default value
 const AppStateContext = createContext(null);
 
 export const AppStateProvider = ({ children }) => {
   const [selectedChannelId, setSelectedChannelId] = useState(null);
-  const [cfg, setCfg] = useState(null);
+  const [cfg, setCfg] = useState({
+    fInit: false,
+    hname: "gadadar",
+    htP: "milikpetani",
+    wssid: "Gadadar",
+    wpass: "milikpetani",
+  });
+  const [channels, setChannels] = useState([]);
+  
+  // Store WebSocket in a ref so it persists across re-renders
+  const ws = useRef(null);
+
+  useEffect(() => {
+    ws.current = new WebSocket('ws://' + "192.168.4.1" + "/ws");
+
+    ws.current.onopen = () => {
+      console.log('WebSocket connected');
+      ws.current.send(JSON.stringify({ cmd: 'getConfig' }));
+    };
+
+    ws.current.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log(data);
+
+      if (data.cfg) {
+        data.cfg.wpass = "********";
+        setCfg(data.cfg);
+      }
+    };
+
+    ws.current.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    ws.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => ws.current.close();
+  }, []);
 
   const state = {
     selectedChannelId,
     setSelectedChannelId,
-    channels: [],
-    cfg: {
-      fInit: false,
-      hname: "gadadar",
-      htP: "milikpetani",
-      wssid: "Gadadar",
-      wpass: "milikpetani",
-    },
+    channels,
+    setChannels,
+    cfg,
     setCfg,
+    ws // Pass WebSocket reference as part of the context
   };
 
   return (
@@ -29,7 +63,6 @@ export const AppStateProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the application state with a null check
 export const useAppState = () => {
   const context = useContext(AppStateContext);
   if (!context) {

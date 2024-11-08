@@ -2,14 +2,21 @@ import { h } from 'preact';
 import { useAppState } from './AppStateContext';
 
 const SetupForm = () => {
-  const { cfg, setCfg } = useAppState();
+  const { cfg, ws } = useAppState();
 
-  const handleChange = (event) => {
-    setCfg(event.target.value);
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ type: 'configUpdate', cfg }));
+      console.log('Config sent:', cfg);
+    } else {
+      console.error('WebSocket is not open');
+    }
   };
 
   return (
-    <form>
+    <form onSubmit={handleSubmit}>
       <fieldset>
         <label>
           Device Web Name
@@ -19,18 +26,18 @@ const SetupForm = () => {
             placeholder={cfg.hname}
           />
           <small id="hname-helper">
-            Device hostname to access the web interface, e.g gadadar8 will be accessible from gadadar8.local
+            Device hostname to access the web interface, e.g. gadadar8 will be accessible from gadadar8.local
           </small>
         </label>
         <label>
-          Device Password
+          Device Secret
           <input
             type="password"
             name="htP"
-            placeholder="********"
+            placeholder=""
           />
           <small id="htP-helper">
-            Device password to access the web interface and to connect to the offline mode WiFi
+            Device secret to access everything related to device (access the built-in web interface, connect to other device, and to connect to the offline mode WiFi.)
           </small>
         </label>
         <label>
@@ -41,7 +48,7 @@ const SetupForm = () => {
             placeholder={cfg.wssid}
           />
           <small id="wssid-helper">
-            WiFi name to connect with
+            WiFi name to connect with (in online mode).
           </small>
         </label>
         <label>
@@ -49,10 +56,10 @@ const SetupForm = () => {
           <input
             type="password"
             name="wpass"
-            placeholder="*******"
+            placeholder=""
           />
           <small id="wpass-helper">
-            WiFi password to connect with
+            WiFi password to connect with (in online mode).
           </small>
         </label>
       </fieldset>
@@ -60,10 +67,7 @@ const SetupForm = () => {
         <input type="checkbox" name="advanced-options" />
         Show advanced options
       </label>
-      <input
-        type="submit"
-        value="Save"
-      />
+      <input type="submit" value="Save" />
     </form>
   );
 };
