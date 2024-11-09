@@ -6,11 +6,19 @@ const AppStateContext = createContext(null);
 export const AppStateProvider = ({ children }) => {
   const [selectedChannelId, setSelectedChannelId] = useState(null);
   const [cfg, setCfg] = useState({
-    fInit: false,
-    hname: "gadadar",
-    htP: "milikpetani",
-    wssid: "Gadadar",
-    wpass: "milikpetani",
+    name: "",
+    model: "",
+    group: "",
+    gmtOff: 28880,
+    hname: "",
+    htP: "",
+    wssid: "",
+    wpass: "",
+    fInit: false
+  });
+  const [status, setStatus] useState({
+    code: 400,
+    msg: "Bad request."
   });
   const [channels, setChannels] = useState([]);
   
@@ -29,8 +37,7 @@ export const AppStateProvider = ({ children }) => {
       const data = JSON.parse(event.data);
       console.log(data);
 
-      if (data.cfg) {
-        data.cfg.wpass = "********";
+      if (data.cmd == "setConfig" && data.cfg) {
         setCfg(data.cfg);
       }
     };
