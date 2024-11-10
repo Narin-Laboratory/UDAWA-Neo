@@ -3,7 +3,7 @@ import { useState } from 'preact/hooks';
 import { useAppState } from './AppStateContext';
 
 const SetupForm = () => {
-  const { cfg, setCfg, ws } = useAppState();
+  const { cfg, setCfg, ws, WiFiList, scanning, setScanning, sendWsMessage } = useAppState();
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -17,15 +17,13 @@ const SetupForm = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-  
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      const updatedCfg = { ...cfg, fInit: true };
-      setCfg(updatedCfg);
-      ws.current.send(JSON.stringify({cmd: 'setConfig', cfg: updatedCfg}));
-      console.log('Config sent:', {cmd: 'setConfig', cfg: updatedCfg});
-    } else {
-      console.error('WebSocket is not open');
-    }
+    sendWsMessage({ cmd: 'setConfig', cfg: cfg });
+    sendWsMessage({cmd: 'setFInit', fInit: true});
+  };
+
+  const handleScanWiFi = () => {
+    setScanning(true);
+    sendWsMessage({ cmd: 'getAvailableWiFi' });
   };
 
   return (
@@ -45,12 +43,12 @@ const SetupForm = () => {
           </small>
         </label>
         <label>
-            Device Group
-            <input type="text" name="group" value={cfg.group} onChange={handleChange} placeholder="e.g., greenhouse1"/>
-            <small id="hname-helper">
-              Device group where it belongs to.
-            </small>
-          </label>
+          Device Group
+          <input type="text" name="group" value={cfg.group} onChange={handleChange} placeholder="e.g., greenhouse1"/>
+          <small id="hname-helper">
+            Device group where it belongs to.
+          </small>
+        </label>
         <label>
           Device Web Name
           <input
@@ -77,19 +75,30 @@ const SetupForm = () => {
             Device secret to access everything related to device (access the built-in web interface, connect to other devices, and to connect to the offline mode WiFi.)
           </small>
         </label>
-        <label>
-          WiFi Name
-          <input
-            type="text"
-            name="wssid"
-            value={cfg.wssid}
-            onChange={handleChange}
-            placeholder="e.g., MyWiFi"
-          />
-          <small id="wssid-helper">
-            WiFi name to connect with (in online mode).
-          </small>
-        </label>
+        <fieldset role="group">
+            <select
+              name="wssid"
+              value={cfg.wssid}
+              onChange={handleChange}
+              aria-label="Select WiFi name..."
+              required
+            >
+              <option value={cfg.wssid} disabled>{cfg.wssid}</option>
+              {Array.isArray(WiFiList) && WiFiList.map((network, index) => (
+                <option key={network.ssid+index} value={network.ssid}>
+                  {network.ssid} ({network.rssi}%)
+                </option>
+              ))}
+            </select>
+          <button
+            type="button"
+            onClick={handleScanWiFi}
+            disabled={scanning}
+            aria-busy={scanning ? true : false}
+          >
+            {scanning ? 'Scanning…' : 'Scan'}
+          </button>
+        </fieldset>
         <label>
           WiFi Password
           <input
@@ -113,13 +122,11 @@ const SetupForm = () => {
         />
         Show advanced options
       </label>
-
-      {showAdvanced ? (
-				<fieldset>
-          
+      {showAdvanced && (
+        <fieldset>
+          {/* Add advanced options here */}
         </fieldset>
-			) : <div></div>}
-
+      )}
       <input type="submit" value="Save" />
     </form>
   );

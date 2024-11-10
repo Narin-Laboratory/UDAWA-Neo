@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { useState } from 'preact/hooks';
+import { useState, useEffect } from 'preact/hooks';
 
 import preactLogo from './assets/preact.svg';
 import gearSvg from './assets/gear.svg';
@@ -18,8 +18,32 @@ function App() {
   }
   
   function MainApp() {
-	const { selectedChannelId, cfg } = useAppState();
-  
+	const { selectedChannelId, cfg, ws, finishedSetup } = useAppState();
+	const [latestCfg, setLatestCfg] = useState(cfg); // State to hold latest cfg
+
+	useEffect(() => {
+		// Function to update latestCfg whenever cfg changes
+		const updateCfg = () => {
+		setLatestCfg(cfg); 
+		};
+
+		// Subscribe to WebSocket messages
+		if (ws.current) {
+		ws.current.addEventListener('message', (event) => {
+			const data = JSON.parse(event.data);
+			if (data.cmd === 'setConfig' && data.cfg) {
+			updateCfg(); // Update latestCfg when new config is received
+			}
+		});
+		}
+
+		// Cleanup: Remove the event listener when component unmounts
+		return () => {
+		if (ws.current) {
+			ws.current.removeEventListener('message', updateCfg);
+		}
+		};
+	}, [cfg, ws]); // Run effect whenever cfg or ws changes
 	return (
 	  <div>
 		<header>
@@ -53,6 +77,21 @@ function App() {
 					<article>
 						<button>Button</button>
 					</article>
+					<dialog open={finishedSetup}>
+						<article>
+							<header>
+							<button aria-label="Close" rel="prev"></button>
+							<p>
+								<strong>Device Setup Completed!</strong>
+							</p>
+							</header>
+							<p>
+							Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the device built-in web interface via <br/><br/>
+							<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/><br/>
+							Thankyou and happy farming!
+							</p>
+						</article>
+					</dialog>
 				</section>
 			)}
 		</main>

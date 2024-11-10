@@ -16,11 +16,16 @@ export const AppStateProvider = ({ children }) => {
     wpass: "",
     fInit: false
   });
-  const [status, setStatus] useState({
+  const [status, setStatus] = useState({
     code: 400,
     msg: "Bad request."
   });
+  const [WiFiList, setWiFiList] = useState(
+    []
+  );
   const [channels, setChannels] = useState([]);
+  const [scanning, setScanning] = useState(false);
+  const [finishedSetup, setFinishedSetup] = useState(false);
   
   // Store WebSocket in a ref so it persists across re-renders
   const ws = useRef(null);
@@ -40,6 +45,15 @@ export const AppStateProvider = ({ children }) => {
       if (data.cmd == "setConfig" && data.cfg) {
         setCfg(data.cfg);
       }
+      else if (data.cmd == "getAvailableWiFi" && data.WiFiList){
+        setWiFiList(data.WiFiList);
+        setScanning(false);
+      }
+      else if (data.cmd == "setFInit" && data.fInit){
+        const updatedCfg = { ...cfg, fInit: data.fInit };
+        setCfg(updatedCfg);
+        setFinishedSetup(data.fInit)
+      }
     };
 
     ws.current.onclose = () => {
@@ -53,6 +67,14 @@ export const AppStateProvider = ({ children }) => {
     return () => ws.current.close();
   }, []);
 
+  const sendWsMessage = (data) => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify(data));
+    } else {
+      console.error('WebSocket is not open');
+    }
+  };
+
   const state = {
     selectedChannelId,
     setSelectedChannelId,
@@ -60,7 +82,15 @@ export const AppStateProvider = ({ children }) => {
     setChannels,
     cfg,
     setCfg,
-    ws // Pass WebSocket reference as part of the context
+    scanning,
+    setScanning,
+    status,
+    setStatus,
+    WiFiList,
+    setWiFiList,
+    finishedSetup, setFinishedSetup,
+    ws,
+    sendWsMessage
   };
 
   return (
