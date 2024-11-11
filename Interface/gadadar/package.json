@@ -8,6 +8,7 @@
 	},
 	"dependencies": {
 		"chart.js": "^4.4.6",
+		"crypto-js": "^4.2.0",
 		"preact": "^10.22.1"
 	},
 	"devDependencies": {

@@ -8,6 +8,7 @@ import LineChart from './lineChart';
 import ChannelSelector from './channelSelector';
 import { AppStateProvider, useAppState } from './AppStateContext';
 import SetupForm from './setupForm';
+import LoginPopUp from './loginPopUp';
 
 function App() {
 	return (
@@ -18,7 +19,7 @@ function App() {
   }
   
   function MainApp() {
-	const { selectedChannelId, cfg, ws, finishedSetup } = useAppState();
+	const { selectedChannelId, cfg, ws, finishedSetup, authState, showSetupForm, setShowSetupForm, wsStatus } = useAppState();
 	const [latestCfg, setLatestCfg] = useState(cfg); // State to hold latest cfg
 
 	useEffect(() => {
@@ -44,23 +45,33 @@ function App() {
 		}
 		};
 	}, [cfg, ws]); // Run effect whenever cfg or ws changes
+
+	const handleShowSetupForm = () => {
+		setShowSetupForm(!showSetupForm);
+	};
 	return (
 	  <div>
+		{ !wsStatus && (
+        <article class="full-page-cover" data-theme="dark">
+          {/* Your cover content here */}
+          <h1>Websocket Connect Failed</h1>
+		  <p>Unable to connect to the device. Please make sure that you are in the same WiFi network with the device.</p>
+		  <div>😵</div>
+		</article>
+      )}
 		<header>
 		  <article>
 			<nav>
 				<ul>
-					<li><a class="secondary" aria-label="Menu" data-discover="true" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="1rem" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon-menu"><path d="M4 6l16 0"></path><path d="M4 12l16 0"></path><path d="M4 18l16 0"></path></svg></a></li></ul>
+					<li><a onClick={handleShowSetupForm} class="secondary" aria-label="Menu" data-discover="true" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="1rem" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon-menu"><path d="M4 6l16 0"></path><path d="M4 12l16 0"></path><path d="M4 18l16 0"></path></svg></a></li></ul>
 				<ul>
 					<li><strong>UDAWA Gadadar</strong></li>
-				</ul>
-				<ul>
-					<li><a class="secondary" aria-label="Twitter" data-discover="true" href="#">✅</a></li>
 				</ul>
 			</nav>
 		  </article>
 		</header>
 		<main class="container">
+			<LoginPopUp></LoginPopUp>
 			{!cfg.fInit ? (
 				<section>
 					<SetupForm></SetupForm>
@@ -87,9 +98,14 @@ function App() {
 							</header>
 							<p>
 							Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the device built-in web interface via <br/><br/>
-							<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/><br/>
+							<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/>
 							Thankyou and happy farming!
 							</p>
+						</article>
+					</dialog>
+					<dialog open={showSetupForm}>
+						<article>
+							<SetupForm></SetupForm>
 						</article>
 					</dialog>
 				</section>
