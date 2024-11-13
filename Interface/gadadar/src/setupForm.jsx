@@ -7,6 +7,7 @@ const SetupForm = () => {
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [disableSubmitButton, setDisableSubmitButton] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -14,12 +15,14 @@ const SetupForm = () => {
       ...prevData,
       [name]: value
     }));
+    setDisableSubmitButton(false);
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    sendWsMessage({ cmd: 'setConfig', cfg: cfg });
+    sendWsMessage({cmd: 'setConfig', cfg: cfg });
     sendWsMessage({cmd: 'setFInit', fInit: true});
+    setDisableSubmitButton(true);
   };
 
   const handleScanWiFi = () => {
@@ -138,7 +141,7 @@ const SetupForm = () => {
             {/* Add advanced options here */}
           </fieldset>
         )}
-          <input type="submit" value="Save" />
+          <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? "Saved!" : "Save"} />
           { cfg.fInit && (
             <input type="button" onClick={() => setShowSetupForm(false)} value="Close" class="outline primary" />
           )}

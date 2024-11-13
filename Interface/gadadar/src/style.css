@@ -8,3 +8,27 @@
 	height: 100%;
 	z-index: 999;
 }
+
+
+.gauge-container.four > .gauge .dial {
+	stroke: #334455;
+	stroke-width: 10;
+  }
+  .gauge-container.four > .gauge .value {
+	stroke: #F32450;
+	stroke-dasharray: none;
+	stroke-width: 10;
+  }
+  .gauge-container.four > .gauge .value-text {
+	fill: #F32450;
+	transform: translate3d(26%, 20%, 0);
+	display: inline-block;
+  }
+  .gauge-container.four .value-text {
+	color: #F32450;
+	font-weight: 100;
+	position: absolute;
+	bottom: 26%;
+    right: 16%;
+	display: inline-block;
+  } 

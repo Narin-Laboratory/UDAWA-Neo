@@ -20,7 +20,8 @@ void loop() {
   if (!udawa.crashState.fSafeMode) {
     if (millis() - timer > 1000) {
       udawa.logger->debug(PSTR(__func__), PSTR("%d\n"), ESP.getFreeHeap());
-
+      JsonDocument doc;
+      doc["powerSensor"] 
       timer = millis();
     }
   }

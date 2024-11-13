@@ -4,7 +4,7 @@ import { useState, useEffect } from 'preact/hooks';
 import preactLogo from './assets/preact.svg';
 import gearSvg from './assets/gear.svg';
 import './style.css';
-import LineChart from './lineChart';
+import SvgGauge from './svgGauge';
 import ChannelSelector from './channelSelector';
 import { AppStateProvider, useAppState } from './AppStateContext';
 import SetupForm from './setupForm';
@@ -71,15 +71,15 @@ function App() {
 		  </article>
 		</header>
 		<main class="container">
-			<LoginPopUp></LoginPopUp>
+			<LoginPopUp />
 			{!cfg.fInit ? (
 				<section>
-					<SetupForm></SetupForm>
+					<SetupForm />
 				</section>
 			) : (
 				<section>
 					<article>
-					<LineChart />
+					<SvgGauge label="Wattage" value={1200} maxValue={2000} />
 					</article>
 					<article>
 					<ChannelSelector />

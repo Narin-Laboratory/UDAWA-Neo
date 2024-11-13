@@ -27,9 +27,10 @@ export const AppStateProvider = ({ children }) => {
   const [scanning, setScanning] = useState(false);
   const [finishedSetup, setFinishedSetup] = useState(false);
   const [authState, setAuthState] = useState(false);
-  const [salt, setSalt] = useState("");
+  const [salt, setSalt] = useState(null);
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [wsStatus, setWsStatus] = useState(false);
+  const [ack, setAck] = useState(null);
   
   // Store WebSocket in a ref so it persists across re-renders
   const ws = useRef(null);
@@ -58,9 +59,7 @@ export const AppStateProvider = ({ children }) => {
         setWiFiList(data.WiFiList);
         setScanning(false);
       }
-      else if (data.cmd && data.cmd == "setFInit" && data.fInit){
-        const updatedCfg = { ...cfg, fInit: data.fInit };
-        setCfg(updatedCfg);
+      else if (data.cmd && data.cmd == "setFinishedSetup" && data.fInit){
         setFinishedSetup(data.fInit)
       }
       else if(data.status && data.status.code){
