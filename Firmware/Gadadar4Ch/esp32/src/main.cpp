@@ -21,7 +21,13 @@ void loop() {
     if (millis() - timer > 1000) {
       udawa.logger->debug(PSTR(__func__), PSTR("%d\n"), ESP.getFreeHeap());
       JsonDocument doc;
-      doc["powerSensor"] 
+      JsonObject powerSensor = doc[PSTR("powerSensor")].to<JsonObject>(); 
+      powerSensor["amp"] = millis()/1000;
+      powerSensor["volt"] = millis()/1000;
+      powerSensor["watt"] = millis()/1000;
+      powerSensor["pf"] = millis()/1000;
+      powerSensor["kwh"] = millis()/1000;
+      udawa.wsBroadcast(doc);
       timer = millis();
     }
   }
