@@ -17,8 +17,8 @@ export const AppStateProvider = ({ children }) => {
     fInit: true
   });
   const [status, setStatus] = useState({
-    code: 400,
-    msg: "Bad request."
+    code: 0,
+    msg: ""
   });
   const [WiFiList, setWiFiList] = useState(
     []
@@ -27,16 +27,15 @@ export const AppStateProvider = ({ children }) => {
   const [scanning, setScanning] = useState(false);
   const [finishedSetup, setFinishedSetup] = useState(false);
   const [authState, setAuthState] = useState(false);
-  const [salt, setSalt] = useState(null);
+  const [salt, setSalt] = useState({setSalt: {salt: "", name: "", model: "", group: ""}});
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [wsStatus, setWsStatus] = useState(false);
-  const [ack, setAck] = useState(null);
   
   // Store WebSocket in a ref so it persists across re-renders
   const ws = useRef(null);
 
   useEffect(() => {
-    ws.current = new WebSocket('ws://' + "gadadar1.local" + "/ws");
+    ws.current = new WebSocket('ws://' + "gadadar4ch.local" + "/ws");
 
     ws.current.onopen = () => {
       console.log('WebSocket connected');
@@ -47,10 +46,18 @@ export const AppStateProvider = ({ children }) => {
     ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log(data);
-
-      if(data.cmd && data.cmd == "setSalt" && data.salt){
-        setSalt(data.salt);
-        console.log(data.salt);
+      if(data.setSalt){
+        setSalt(data.setSalt);
+      }
+      else if(data.status){
+        setStatus(data.status);
+        if(data.status.code == 200){
+          setAuthState(true);
+          sendWsMessage({cmd: "getConfig"});
+          console.log("Authenticated");
+        }else{
+          setAuthState(false);
+        }
       }
       else if (data.cmd == "setConfig" && data.cfg) {
         setCfg(data.cfg);
@@ -61,14 +68,6 @@ export const AppStateProvider = ({ children }) => {
       }
       else if (data.cmd && data.cmd == "setFinishedSetup" && data.fInit){
         setFinishedSetup(data.fInit)
-      }
-      else if(data.status && data.status.code){
-        if(data.status.code == 200){
-          setAuthState(true);
-          sendWsMessage({cmd: "getConfig"});
-        }else{
-          setAuthState(false);
-        }
       }
     };
 

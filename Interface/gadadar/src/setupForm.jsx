@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useAppState } from './AppStateContext';
 
 const SetupForm = () => {
@@ -8,21 +8,29 @@ const SetupForm = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [disableSubmitButton, setDisableSubmitButton] = useState(false);
+  const [syncDatetime] = useState(false);
+
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setCfg((prevData) => ({
-      ...prevData,
-      [name]: value
-    }));
-    setDisableSubmitButton(false);
+      const { name, value } = e.target;
+      setCfg((prevData) => ({
+          ...prevData,
+          [name]: value
+      }));
+      setDisableSubmitButton(false);
   };
 
   const handleSubmit = (event) => {
-    event.preventDefault();
-    sendWsMessage({cmd: 'setConfig', cfg: cfg });
-    sendWsMessage({cmd: 'setFInit', fInit: true});
-    setDisableSubmitButton(true);
+      event.preventDefault();
+      const now = new Date();
+      const timestamp = now.getTime() / 1000;
+      sendWsMessage({ cmd: 'getAvailableWiFi' });
+      sendWsMessage({ cmd: 'setConfig', cfg: cfg }); // Send formData instead of cfg
+      sendWsMessage({ cmd: 'setFInit', fInit: true });
+      if(syncDatetime){
+        sendWsMessage({ cmd: 'setRTCUpdate', ts: timestamp});
+      }
+      setDisableSubmitButton(true);
   };
 
   const handleScanWiFi = () => {
@@ -58,7 +66,13 @@ const SetupForm = () => {
           </label>
           <label>
             Device Group
-            <input type="text" name="group" value={cfg.group} onChange={handleChange} placeholder="e.g., greenhouse1"/>
+            <input 
+              type="text" 
+              name="group" 
+              value={cfg.group} 
+              onChange={handleChange}
+              placeholder="e.g., greenhouse1"
+            />
             <small id="hname-helper">
               Device group where it belongs to.
             </small>
@@ -127,6 +141,7 @@ const SetupForm = () => {
             </small>
           </label>
         </fieldset>
+        <hr/>
         <label>
           <input
             type="checkbox"
@@ -139,6 +154,14 @@ const SetupForm = () => {
         {showAdvanced && (
           <fieldset>
             {/* Add advanced options here */}
+            <label>
+              <input
+                type="checkbox"
+                name="sync-datetime"
+                checked={syncDatetime}
+              />
+              Sync devices date and time.
+            </label>
           </fieldset>
         )}
           <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? "Saved!" : "Save"} />

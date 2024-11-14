@@ -16,26 +16,35 @@ const LoginPopUp = () => {
 
     // Convert htP and salt into CryptoJS word arrays for consistent byte interpretation
     const key = CryptoJS.enc.Utf8.parse(htP);
-    const saltUtf8 = CryptoJS.enc.Utf8.parse(salt);
+    const saltUtf8 = CryptoJS.enc.Utf8.parse(salt.salt);
 
     // Compute the HMAC SHA-256
     const hmac = CryptoJS.HmacSHA256(saltUtf8, key); // Note: reversed order (salt as message, key as key)
     const hmacHex = hmac.toString(CryptoJS.enc.Hex).toLowerCase();
     
     // Send to server
-    sendWsMessage({ auth: hmacHex, salt: salt });
+    sendWsMessage({ auth: hmacHex, salt: salt.salt });
   };
 
   return (
     <dialog open={!authState && wsStatus && cfg.fInit}>
       <article>
+        <header>
+          <hgroup>
+            <h2>UDAWA Smart System</h2>
+            <p>Universal digital agriculture workflow assistant</p>
+          </hgroup>
+        </header>
         <form onSubmit={handleSubmit}>
           <fieldset role="group"> 
             <input name="htP" value={htP} onChange={handleChange} type="password" placeholder="Device secret" autoComplete="password" />
             <input type="submit" value="Login" />
           </fieldset>
-          <small>Enter your device secret to access the device.</small>
+          <small>{status.msg != "" ? status.msg : "Enter your device secret to access this device agent."}</small>
         </form>
+        <footer>
+          <small><i>{salt.name} device agent at {salt.group}</i></small>
+        </footer>
       </article>
     </dialog>
   );

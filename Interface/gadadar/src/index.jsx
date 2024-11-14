@@ -4,7 +4,6 @@ import { useState, useEffect } from 'preact/hooks';
 import preactLogo from './assets/preact.svg';
 import gearSvg from './assets/gear.svg';
 import './style.css';
-import SvgGauge from './svgGauge';
 import ChannelSelector from './channelSelector';
 import { AppStateProvider, useAppState } from './AppStateContext';
 import SetupForm from './setupForm';
@@ -77,38 +76,41 @@ function App() {
 					<SetupForm />
 				</section>
 			) : (
-				<section>
-					<article>
-					<SvgGauge label="Wattage" value={1200} maxValue={2000} />
-					</article>
-					<article>
-					<ChannelSelector />
-					<p>Selected channel: {selectedChannelId}</p>
-					</article>
-					<article>
-						<button>Button</button>
-					</article>
-					<dialog open={finishedSetup}>
+				<div>
+					{authState && (
+					<section>
 						<article>
-							<header>
-							<button aria-label="Close" rel="prev"></button>
-							<p>
-								<strong>Device Setup Completed!</strong>
-							</p>
-							</header>
-							<p>
-							Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the device built-in web interface via <br/><br/>
-							<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/>
-							Thankyou and happy farming!
-							</p>
 						</article>
-					</dialog>
-					<dialog open={showSetupForm}>
 						<article>
-							<SetupForm></SetupForm>
+						<ChannelSelector />
+						<p>Selected channel: {selectedChannelId}</p>
 						</article>
-					</dialog>
-				</section>
+						<article>
+							<button>Button</button>
+						</article>
+						<dialog open={finishedSetup}>
+							<article>
+								<header>
+								<button aria-label="Close" rel="prev"></button>
+								<p>
+									<strong>Device Setup Completed!</strong>
+								</p>
+								</header>
+								<p>
+								Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the device built-in web interface via <br/><br/>
+								<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/>
+								Thankyou and happy farming!
+								</p>
+							</article>
+						</dialog>
+						<dialog open={showSetupForm}>
+							<article>
+								<SetupForm></SetupForm>
+							</article>
+						</dialog>
+					</section>
+					)}
+				</div>
 			)}
 		</main>
 		<footer>
