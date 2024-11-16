@@ -37,13 +37,13 @@ const LoginPopUp = () => {
         </header>
         <form onSubmit={handleSubmit}>
           <fieldset role="group"> 
-            <input name="htP" value={htP} onChange={handleChange} type="password" placeholder="Device secret" autoComplete="password" />
+            <input name="htP" value={htP} onChange={handleChange} type="password" placeholder="Agent secret" autoComplete="password" />
             <input type="submit" value="Login" />
           </fieldset>
-          <small>{status.msg != "" ? status.msg : "Enter your device secret to access this device agent."}</small>
+          <small>{status.msg != "" ? status.msg : "Enter your agent secret to access this agent agent."}</small>
         </form>
         <footer>
-          <small><i>{salt.name} device agent at {salt.group}</i></small>
+          <small><i>{salt.name} agent at {salt.group}</i></small>
         </footer>
       </article>
     </dialog>

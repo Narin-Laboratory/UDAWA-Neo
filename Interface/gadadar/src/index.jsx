@@ -8,6 +8,7 @@ import ChannelSelector from './channelSelector';
 import { AppStateProvider, useAppState } from './AppStateContext';
 import SetupForm from './setupForm';
 import LoginPopUp from './loginPopUp';
+import PowerSensor from './powerSensor';
 
 function App() {
 	return (
@@ -20,6 +21,7 @@ function App() {
   function MainApp() {
 	const { selectedChannelId, cfg, ws, finishedSetup, authState, showSetupForm, setShowSetupForm, wsStatus } = useAppState();
 	const [latestCfg, setLatestCfg] = useState(cfg); // State to hold latest cfg
+	const [powerSensor, setPowerSensor] = useState({amp: 0, volt: 0, watt: 0, pf: 0, kwh: 0});
 
 	useEffect(() => {
 		// Function to update latestCfg whenever cfg changes
@@ -32,7 +34,11 @@ function App() {
 		ws.current.addEventListener('message', (event) => {
 			const data = JSON.parse(event.data);
 			if (data.cmd === 'setConfig' && data.cfg) {
-			updateCfg(); // Update latestCfg when new config is received
+				updateCfg(); // Update latestCfg when new config is received
+			}
+			else if(data.powerSensor){
+				console.log(data.powerSensor);
+				setPowerSensor(data.powerSensor);
 			}
 		});
 		}
@@ -54,7 +60,7 @@ function App() {
         <article class="full-page-cover" data-theme="dark">
           {/* Your cover content here */}
           <h1>Websocket Connect Failed</h1>
-		  <p>Unable to connect to the device. Please make sure that you are in the same WiFi network with the device.</p>
+		  <p>Unable to connect to the agent. Please make sure that you are in the same WiFi network with the agent.</p>
 		  <div>😵</div>
 		</article>
       )}
@@ -62,9 +68,9 @@ function App() {
 		  <article>
 			<nav>
 				<ul>
-					<li><a onClick={handleShowSetupForm} class="secondary" aria-label="Menu" data-discover="true" href="#"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="1rem" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon-menu"><path d="M4 6l16 0"></path><path d="M4 12l16 0"></path><path d="M4 18l16 0"></path></svg></a></li></ul>
+					<li><a onClick={handleShowSetupForm} class="secondary" aria-label="Menu" data-discover="true" href="#">⚙️</a></li></ul>
 				<ul>
-					<li><strong>UDAWA Gadadar</strong></li>
+					<li><strong>UDAWA {cfg.model}</strong></li>
 				</ul>
 			</nav>
 		  </article>
@@ -80,6 +86,7 @@ function App() {
 					{authState && (
 					<section>
 						<article>
+							<PowerSensor powerSensor={powerSensor}></PowerSensor>
 						</article>
 						<article>
 						<ChannelSelector />
@@ -93,11 +100,11 @@ function App() {
 								<header>
 								<button aria-label="Close" rel="prev"></button>
 								<p>
-									<strong>Device Setup Completed!</strong>
+									<strong>Agent Setup Completed!</strong>
 								</p>
 								</header>
 								<p>
-								Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the device built-in web interface via <br/><br/>
+								Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the agent built-in web interface via <br/><br/>
 								<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/>
 								Thankyou and happy farming!
 								</p>
