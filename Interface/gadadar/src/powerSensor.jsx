@@ -9,40 +9,28 @@ const PowerSensor = ({ powerSensor }) => {
   return (
     <div class="grid">
       <article class="text-center">
-        <header>⚡ Power Load</header>
-        <hgroup>
-          <h2>{powerSensor.watt}</h2>
-          <p>Watt</p>
-        </hgroup>
-        <footer>
-        <div class="overflow-auto">
-        <table class="text-center">
-            <thead data-theme="dark">
-            <tr>
-                <th scope="col">Current</th>
-                <th scope="col">Voltage</th>
-                <th scope="col">Power Factor</th>
-                <th scope="col">Consumed</th>
-            </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{powerSensor.amp}</td>
-                <td>{powerSensor.volt}</td>
-                <td>{powerSensor.pf}</td>
-                <td>{powerSensor.kwh}</td>
-              </tr>
-            </tbody>
-            <tfoot>
-            <tr>
-              <th scope="col">Amp</th>
-              <td scope="col">Volt</td>
-              <td scope="col">%</td>
-              <td scope="col">kWh</td>
-            </tr>
-            </tfoot>
-        </table>
+        <header>⚡ Power Usage</header>
+        <div class="parent-3c">
+          <hgroup>
+            <h4>{powerSensor.watt}</h4>
+            <p>Watt</p>
+          </hgroup>
+          <hgroup>
+            <h4>{powerSensor.ener}</h4>
+            <p>kWh</p>
+          </hgroup>
+          <hgroup>
+            <h4>{(powerSensor.ener * 1550).toFixed(2)}</h4>
+            <p>IDR</p>
+          </hgroup>
         </div>
+        <footer>
+          <div class="parent-4c font-small">
+            <div>{powerSensor.amp} A</div>
+            <div>{powerSensor.volt} V</div>
+            <div>{powerSensor.pf} %</div>
+            <div>{powerSensor.freq} Hz</div>
+          </div>
         </footer>
       </article>
     </div>

@@ -40,7 +40,7 @@ const LoginPopUp = () => {
             <input name="htP" value={htP} onChange={handleChange} type="password" placeholder="Agent secret" autoComplete="password" />
             <input type="submit" value="Login" />
           </fieldset>
-          <small>{status.msg != "" ? status.msg : "Enter your agent secret to access this agent agent."}</small>
+          <small>{status.msg != "" ? status.msg : "Enter your agent secret to access this agent."}</small>
         </form>
         <footer>
           <small><i>{salt.name} agent at {salt.group}</i></small>

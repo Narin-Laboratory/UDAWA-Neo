@@ -21,7 +21,7 @@ function App() {
   function MainApp() {
 	const { selectedChannelId, cfg, ws, finishedSetup, authState, showSetupForm, setShowSetupForm, wsStatus } = useAppState();
 	const [latestCfg, setLatestCfg] = useState(cfg); // State to hold latest cfg
-	const [powerSensor, setPowerSensor] = useState({amp: 0, volt: 0, watt: 0, pf: 0, kwh: 0});
+	const [powerSensor, setPowerSensor] = useState({amp: 0, volt: 0, watt: 0, pf: 0, freq: 0, ener: 0});
 
 	useEffect(() => {
 		// Function to update latestCfg whenever cfg changes
@@ -89,8 +89,7 @@ function App() {
 							<PowerSensor powerSensor={powerSensor}></PowerSensor>
 						</article>
 						<article>
-						<ChannelSelector />
-						<p>Selected channel: {selectedChannelId}</p>
+							<ChannelSelector />
 						</article>
 						<article>
 							<button>Button</button>
@@ -123,7 +122,7 @@ function App() {
 		<footer>
 		  <section class="text-center mt-10">
 			<hr />
-			<small>❤️ PSTI UNDIKNAS ❤️</small>
+			<small><a href="https://udawa.or.id" target="_blank">❤️ PSTI UNDIKNAS ❤️</a></small>
 		  </section>
 		</footer>
 	  </div>

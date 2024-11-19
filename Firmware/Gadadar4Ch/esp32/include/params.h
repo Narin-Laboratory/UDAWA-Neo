@@ -11,23 +11,23 @@
 
 #define USE_LOCAL_WEB_INTERFACE
 #ifdef USE_LOCAL_WEB_INTERFACE
-#define WS_BLOCKED_DURATION 60000UL
-#define WS_RATE_LIMIT_INTERVAL 1000UL
+    #define WS_BLOCKED_DURATION 60000UL
+    #define WS_RATE_LIMIT_INTERVAL 1000UL
 #endif
 
 //#define USE_IOT
 #ifdef USE_IOT
-#define THINGSBOARD_ENABLE_STREAM_UTILS true
-#define USE_IOT_SECURE
-#define USE_IOT_OTA
-const uint8_t IOT_FIRMWARE_FAILURE_RETRIES = 10;
-const uint16_t IOT_FIRMWARE_PACKET_SIZE = 4096;
-#define IOT_MAX_MESSAGE_SIZE 2048UL
-#define IOT_BUFFER_SIZE 2048UL
-#define IOT_STACKSIZE_TB 6000UL
-#define THINGSBOARD_ENABLE_DYNAMIC true
-#define THINGSBOARD_ENABLE_OTA true
-#define THINGSBOARD_ENABLE_DEBUG false
+    #define THINGSBOARD_ENABLE_STREAM_UTILS true
+    #define USE_IOT_SECURE
+    #define USE_IOT_OTA
+    const uint8_t IOT_FIRMWARE_FAILURE_RETRIES = 10;
+    const uint16_t IOT_FIRMWARE_PACKET_SIZE = 4096;
+    #define IOT_MAX_MESSAGE_SIZE 2048UL
+    #define IOT_BUFFER_SIZE 2048UL
+    #define IOT_STACKSIZE_TB 6000UL
+    #define THINGSBOARD_ENABLE_DYNAMIC true
+    #define THINGSBOARD_ENABLE_OTA true
+    #define THINGSBOARD_ENABLE_DEBUG false
 #endif
 
 #define USE_WIFI_LOGGER
@@ -40,7 +40,11 @@ const uint16_t IOT_FIRMWARE_PACKET_SIZE = 4096;
 #define USE_HW_RTC
 #endif
 
-#define GROW_CONTROL_STACKSIZE 4096UL
+#define POWERSENSOR_STACKSIZE 3000UL
+#define ALARM_STACKSIZE 3000UL
+#define RELAYCONTROL_STACKSIZE 3000UL
+
+#define IOEXTENDER_ADDRESS 0x20
 
 const int tbPort = 8883;
 constexpr char tbAddr[] PROGMEM = "prita.undiknas.ac.id";
@@ -56,6 +60,10 @@ const bool fWeb = true;
 const int gmtOff = 28880;
 const uint16_t logPort = 29514;
 const bool fInit = false;
-
+const bool LEDOn = false;
+const uint8_t pinLEDR = 27;
+const uint8_t pinLEDG = 14;
+const uint8_t pinLEDB = 12;
+const uint8_t pinBuzz = 32;
 
 #endif
