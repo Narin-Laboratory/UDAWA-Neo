@@ -3,7 +3,8 @@ import { useEffect, useState } from 'preact/hooks';
 import { useAppState } from './AppStateContext';
 
 const SetupForm = () => {
-  const { cfg, setCfg, ws, WiFiList, scanning, setScanning, sendWsMessage, showSetupForm, setShowSetupForm } = useAppState();
+  const { cfg, setCfg, ws, WiFiList, scanning, setScanning, sendWsMessage, 
+    showSetupForm, setShowSetupForm, energyPrice, setEnergyPrice } = useAppState();
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -159,7 +160,7 @@ const SetupForm = () => {
                 onChange={handleChange}
                 placeholder={cfg.gmtOff}
               />
-              <small id="wpass-helper">
+              <small id="gmtOff">
                 Enter GMT Offset in seconds, e.g 28880 for GMT+8 (WITA)
               </small>
             </label>
@@ -171,6 +172,30 @@ const SetupForm = () => {
                 onChange={() => setSyncDatetime(!syncDatetime)}
               />
               Sync agents date and time.
+            </label>
+            <label>
+              Energy Price
+              <input
+                type="number"
+                name="energyPriceValue"
+                onChange={(e) => setEnergyPrice({ ...energyPrice, value: e.target.value })}
+                placeholder={energyPrice.value}
+              />
+              <small id="energyPriceValue">
+                Enter the energy price per KwH
+              </small>
+            </label>
+            <label>
+              Energy Price Currency
+              <input
+                type="text"
+                name="energyPriceCurrency"
+                onChange={(e) => setEnergyPrice({ ...energyPrice, currency: e.target.value })}
+                placeholder={energyPrice.currency}
+              />
+              <small id="energyPriceCurrency">
+                Enter the energy price currency
+              </small>
             </label>
           </fieldset>
         )}

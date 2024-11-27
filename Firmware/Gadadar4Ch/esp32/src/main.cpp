@@ -234,12 +234,12 @@ void powerSensorTaskRoutine(void *arg){
 
         uint8_t activeRelayCounter = 0;
         for(uint8_t i = 0; i < 4; i++){
-          if(relays[i].state == config.relayON &&
+          if(relays[i].state == true &&
           watt < 6.0){udawa.setAlarm(210+i, 1, 5, 1000);}
 
-          if(relays[i].state == config.relayON){activeRelayCounter++;}
+          if(relays[i].state == true){activeRelayCounter++;}
 
-          if( relays[i].state == config.relayON && 
+          if( relays[i].state == true && 
             (millis() - relays[i].lastActive) > relays[i].overrunInSec * 1000 && relays[i].overrunInSec != 0){
               udawa.setAlarm(215+i, 1, 5, 1000);
             }

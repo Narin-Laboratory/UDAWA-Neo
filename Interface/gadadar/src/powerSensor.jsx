@@ -1,7 +1,10 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { useAppState } from "./AppStateContext";
 
 const PowerSensor = ({ powerSensor }) => {
+
+  const { energyPrice } = useAppState();
 
   useEffect(() => {
   }, [powerSensor]);
@@ -20,8 +23,8 @@ const PowerSensor = ({ powerSensor }) => {
             <p>kWh</p>
           </hgroup>
           <hgroup>
-            <h4>{(powerSensor.ener * 1550).toFixed(2)}</h4>
-            <p>IDR</p>
+            <h4>{(powerSensor.ener * energyPrice.value).toFixed(2)}</h4>
+            <p>{energyPrice.currency}</p>
           </hgroup>
         </div>
         <footer>

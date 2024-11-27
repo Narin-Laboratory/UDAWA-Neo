@@ -29,6 +29,10 @@ export const AppStateProvider = ({ children }) => {
   const [salt, setSalt] = useState({setSalt: {salt: "", name: "", model: "", group: ""}});
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [wsStatus, setWsStatus] = useState(false);
+  const [energyPrice, setEnergyPrice] = useState(() => {
+    const savedPrice = localStorage.getItem('energyPrice');
+    return savedPrice !== null ? JSON.parse(savedPrice) : { value: 1500, currency: 'IDR' }; 
+  });
   
   // Store WebSocket in a ref so it persists across re-renders
   const ws = useRef(null);
@@ -83,6 +87,10 @@ export const AppStateProvider = ({ children }) => {
     return () => ws.current.close();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('energyPrice', JSON.stringify(energyPrice));
+  }, [energyPrice]);
+
   const sendWsMessage = (data) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(data));
@@ -107,7 +115,8 @@ export const AppStateProvider = ({ children }) => {
     showSetupForm, setShowSetupForm,
     wsStatus, setWsStatus,
     ws,
-    sendWsMessage
+    sendWsMessage,
+    energyPrice, setEnergyPrice
   };
 
   return (
