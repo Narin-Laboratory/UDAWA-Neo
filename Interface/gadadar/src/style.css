@@ -52,3 +52,17 @@
 .font-small{
 	font-size: small;
 }
+
+.relay-number {
+    margin: 6px;
+    font-size: 2em;
+    border-radius: 15px;
+}
+
+.relay-off {
+	background-color: #f44336;
+}
+
+.relay-on {
+	background-color: #4CAF50;
+}

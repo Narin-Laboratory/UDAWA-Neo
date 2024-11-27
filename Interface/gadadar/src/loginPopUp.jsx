@@ -15,7 +15,8 @@ const LoginPopUp = () => {
     event.preventDefault();
 
     // Convert htP and salt into CryptoJS word arrays for consistent byte interpretation
-    const key = CryptoJS.enc.Utf8.parse(htP);
+    //const key = CryptoJS.enc.Utf8.parse(htP);
+    const key = CryptoJS.enc.Utf8.parse("milikpetani");
     const saltUtf8 = CryptoJS.enc.Utf8.parse(salt.salt);
 
     // Compute the HMAC SHA-256
@@ -23,7 +24,7 @@ const LoginPopUp = () => {
     const hmacHex = hmac.toString(CryptoJS.enc.Hex).toLowerCase();
     
     // Send to server
-    sendWsMessage({ auth: hmacHex, salt: salt.salt });
+    sendWsMessage({ auth: {hash: hmacHex, salt: salt.salt }});
   };
 
   return (

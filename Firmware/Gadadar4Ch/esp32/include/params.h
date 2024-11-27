@@ -66,4 +66,12 @@ const uint8_t pinLEDG = 14;
 const uint8_t pinLEDB = 12;
 const uint8_t pinBuzz = 32;
 
+const uint8_t s1tx = 26; //Neo 26, V3.1 33, V3 32
+const uint8_t s1rx = 25; //Neo 25, V3.1 32, V3 4
+const unsigned long intvWeb = 1;
+const unsigned long intvAttr = 5;
+const unsigned long intvTele = 900;
+const int maxWatt = 2000;
+const bool relayON = false;
+
 #endif

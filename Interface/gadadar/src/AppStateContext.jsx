@@ -4,7 +4,6 @@ import { useContext, useEffect, useState, useRef } from 'preact/hooks';
 const AppStateContext = createContext(null);
 
 export const AppStateProvider = ({ children }) => {
-  const [selectedChannelId, setSelectedChannelId] = useState(null);
   const [cfg, setCfg] = useState({
     name: "",
     model: "",
@@ -23,7 +22,7 @@ export const AppStateProvider = ({ children }) => {
   const [WiFiList, setWiFiList] = useState(
     []
   );
-  const [channels, setChannels] = useState([]);
+
   const [scanning, setScanning] = useState(false);
   const [finishedSetup, setFinishedSetup] = useState(false);
   const [authState, setAuthState] = useState(false);
@@ -40,7 +39,7 @@ export const AppStateProvider = ({ children }) => {
     ws.current.onopen = () => {
       console.log('WebSocket connected');
       setWsStatus(true);
-      ws.current.send(JSON.stringify({ cmd: 'getConfig' }));
+      ws.current.send(JSON.stringify({ 'getConfig': "" }));
     };
 
     ws.current.onmessage = (event) => {
@@ -53,21 +52,21 @@ export const AppStateProvider = ({ children }) => {
         setStatus(data.status);
         if(data.status.code == 200){
           setAuthState(true);
-          sendWsMessage({cmd: "getConfig"});
+          sendWsMessage({getConfig: ''});
           console.log("Authenticated");
         }else{
           setAuthState(false);
         }
       }
-      else if (data.cmd == "setConfig" && data.cfg) {
+      else if (data.cfg) {
         setCfg(data.cfg);
       }
-      else if (data.cmd && data.cmd == "getAvailableWiFi" && data.WiFiList){
+      else if (data.WiFiList){
         setWiFiList(data.WiFiList);
         setScanning(false);
       }
-      else if (data.cmd && data.cmd == "setFinishedSetup" && data.fInit){
-        setFinishedSetup(data.fInit)
+      else if (data.setFinishedSetup && data.setFinishedSetup.fInit){
+        setFinishedSetup(data.setFinishedSetup.fInit)
       }
     };
 
@@ -87,16 +86,13 @@ export const AppStateProvider = ({ children }) => {
   const sendWsMessage = (data) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(data));
+      console.log('Sent:', data);
     } else {
       console.error('WebSocket is not open');
     }
   };
 
   const state = {
-    selectedChannelId,
-    setSelectedChannelId,
-    channels,
-    setChannels,
     cfg,
     setCfg,
     scanning,

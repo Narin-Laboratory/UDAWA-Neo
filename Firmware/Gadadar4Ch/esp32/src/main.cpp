@@ -4,15 +4,12 @@ Udawa udawa;
 
 void setup() {
   udawa.begin();
+  udawa.addOnWsEvent(_onWsEventMain);
+  udawa.addOnSyncClientAttributesCallback(_onSyncClientAttributesCallback);
+
+  udawa.logger->verbose(PSTR(__func__), PSTR("Initial config.relayON value: %d\n"), config.relayON);
   
   if (!udawa.crashState.fSafeMode) {
-    loadAppConfig();
-    saveAppConfig();
-    loadAppState();
-    saveAppState();
-    //loadAppRelay();
-    //saveAppRelay();
-
     if(state.xHandlePowerSensor == NULL){
       state.xReturnedPowerSensor = xTaskCreatePinnedToCore(powerSensorTaskRoutine, PSTR("powerSensor"), POWERSENSOR_STACKSIZE, NULL, 1, &state.xHandlePowerSensor, 1);
       if(state.xReturnedPowerSensor == pdPASS){
@@ -38,10 +35,6 @@ void loop() {
       udawa.logger->debug(PSTR(__func__), PSTR("%d\n"), ESP.getFreeHeap());
       timer = millis();
 
-      IOExtender.pinMode(P0, OUTPUT);
-      setRelay(P0, LOW);
-      IOExtender.pinMode(P1, OUTPUT);
-      setRelay(P1, LOW);
       /*setRelay(0, relays[0].state == config.relayON ? !config.relayON : config.relayON);
       setRelay(1, relays[1].state == config.relayON ? !config.relayON : config.relayON);
       setRelay(2, relays[2].state == config.relayON ? !config.relayON : config.relayON);
@@ -55,13 +48,13 @@ void loadAppConfig(){
   bool status = appConfig.load(doc);
   udawa.logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
   if(status){
-    if(doc[PSTR("s1tx")] != nullptr){config.s1tx = doc[PSTR("s1tx")].as<uint8_t>();} else{config.s1tx = 26;}
-    if(doc[PSTR("s1rx")] != nullptr){config.s1rx = doc[PSTR("s1rx")].as<uint8_t>();} else{config.s1rx = 25;}
-    if(doc[PSTR("intvWeb")] != nullptr){config.intvWeb = doc[PSTR("intvWeb")].as<unsigned long>();} else{config.intvWeb = 1;}
-    if(doc[PSTR("intvAttr")] != nullptr){config.intvAttr = doc[PSTR("intvAttr")].as<unsigned long>();} else{config.intvAttr = 5;}
-    if(doc[PSTR("intvTele")] != nullptr){config.intvTele = doc[PSTR("intvTele")].as<unsigned long>();} else{config.intvTele = 900;}
-    if(doc[PSTR("maxWatt")] != nullptr){config.maxWatt = doc[PSTR("maxWatt")].as<int>();} else{config.maxWatt = 2000;}
-    if(doc[PSTR("relayON")] != nullptr){config.relayON = doc[PSTR("relayON")].as<bool>();} else{config.relayON = true;}
+    if(doc[PSTR("s1tx")] != nullptr){config.s1tx = doc[PSTR("s1tx")].as<uint8_t>();} else{config.s1tx = s1tx;}
+    if(doc[PSTR("s1rx")] != nullptr){config.s1rx = doc[PSTR("s1rx")].as<uint8_t>();} else{config.s1rx = s1rx;}
+    if(doc[PSTR("intvWeb")] != nullptr){config.intvWeb = doc[PSTR("intvWeb")].as<unsigned long>();} else{config.intvWeb = intvWeb;}
+    if(doc[PSTR("intvAttr")] != nullptr){config.intvAttr = doc[PSTR("intvAttr")].as<unsigned long>();} else{config.intvAttr = intvAttr;}
+    if(doc[PSTR("intvTele")] != nullptr){config.intvTele = doc[PSTR("intvTele")].as<unsigned long>();} else{config.intvTele = intvTele;}
+    if(doc[PSTR("maxWatt")] != nullptr){config.maxWatt = doc[PSTR("maxWatt")].as<int>();} else{config.maxWatt = maxWatt;}
+    if(doc[PSTR("relayON")] != nullptr){config.relayON = doc[PSTR("relayON")].as<bool>();} else{config.relayON = relayON;}
   }
 }
 
@@ -112,6 +105,7 @@ void loadAppRelay(){
         relays[i].dutyCycle = doc[PSTR("relays")][i][PSTR("dutyCycle")].as<uint8_t>();
         relays[i].autoOff = doc[PSTR("relays")][i][PSTR("autoOff")].as<unsigned long>();
         relays[i].state = doc[PSTR("relays")][i][PSTR("state")].as<bool>();
+        relays[i].label = doc[PSTR("relays")][i][PSTR("label")].as<String>();
       }
     }
   }
@@ -128,6 +122,7 @@ void saveAppRelay(){
     _relays[i][PSTR("dutyCycle")] = relays[i].dutyCycle;
     _relays[i][PSTR("autoOff")] = relays[i].autoOff;
     _relays[i][PSTR("state")] = relays[i].state;
+    _relays[i][PSTR("label")] = relays[i].label;
   }
   bool status = appRelay.save(doc);
   udawa.logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
@@ -237,22 +232,20 @@ void powerSensorTaskRoutine(void *arg){
         if(freq < 0 || freq > 100){udawa.setAlarm(144, 1, 5, 1000);}
         if(watt > config.maxWatt || volt > 275){udawa.setAlarm(145, 1, 5, 1000);}
 
-        /*uint8_t activeRelayCounter = 0;
+        uint8_t activeRelayCounter = 0;
         for(uint8_t i = 0; i < 4; i++){
-          if(state.dutyState[i] == config.relayON &&
-          watt < 6.0){udawa.setAlarm(211+i, 1, 5, 1000);}
+          if(relays[i].state == config.relayON &&
+          watt < 6.0){udawa.setAlarm(210+i, 1, 5, 1000);}
 
-          if(myStates.dutyState[i] == config.relayON){activeRelayCounter++;}
+          if(relays[i].state == config.relayON){activeRelayCounter++;}
 
-          if( myStates.dutyState[i] == config.relayON && 
-            (millis() - myStates.stateOnTs[i]) > mySettings.chOvrnAlrm[i] * 1000 && mySettings.chOvrnAlrm[i] != 0){
-              udawa.setAlarm(216+i, 1, 5, 1000);
+          if( relays[i].state == config.relayON && 
+            (millis() - relays[i].lastActive) > relays[i].overrunInSec * 1000 && relays[i].overrunInSec != 0){
+              udawa.setAlarm(215+i, 1, 5, 1000);
             }
-        }*/
+        }
 
-        //if(activeRelayCounter == 0 && watt > 6){udawa.setAlarm(215, 1, 5, 1000);}
-        
-    
+        if(activeRelayCounter == 0 && watt > 6){udawa.setAlarm(214, 1, 5, 1000);}    
       }
 
       
@@ -261,6 +254,7 @@ void powerSensorTaskRoutine(void *arg){
 
     if(state.fResetPowerSensor){
       state.fResetPowerSensor = false;
+      udawa.logger->warn(PSTR(__func__), PSTR("Resetting power sensor.\n"));
       PZEM.resetEnergy();
     }
 
@@ -269,9 +263,7 @@ void powerSensorTaskRoutine(void *arg){
   }
 }
 
-void relayControlTaskRoutine(void *arg){
-  udawa.I2CScanner();
-  
+void relayControlTaskRoutine(void *arg){  
   for(uint8_t i = 0; i < countof(relays); i++){
     IOExtender.pinMode(relays[i].pin, OUTPUT);
     udawa.logger->verbose(PSTR(__func__), PSTR("Relay %d initialized as output.\n"), relays[i].pin);
@@ -329,18 +321,83 @@ void relayControlTaskRoutine(void *arg){
   }
 }
 
-void setRelay(uint8_t ch, bool state){
-  if(ch < countof(relays)){
+void setRelay(uint8_t index, bool state){
+  udawa.logger->debug(PSTR(__func__), PSTR("config.relayON value: %d\n"), config.relayON);
+  if(index < countof(relays)){
     if(state){
-      IOExtender.digitalWrite(relays[ch].pin, config.relayON);
-      relays[ch].state = config.relayON;
-      relays[ch].lastActive = millis();
-      udawa.logger->debug(PSTR(__func__), PSTR("Relay %d is ON.\n"), ch+1);
+      IOExtender.digitalWrite(relays[index].pin, config.relayON);
+      relays[index].state = true;
+      relays[index].lastActive = millis();
+      udawa.logger->debug(PSTR(__func__), PSTR("Relay %d is ON. %d was written to relay.\n"), index+1, config.relayON);
     }
     else{
-      IOExtender.digitalWrite(relays[ch].pin, !config.relayON);
-      relays[ch].state = !config.relayON;
-      udawa.logger->debug(PSTR(__func__), PSTR("Relay %d is OFF.\n"), ch+1);
+      IOExtender.digitalWrite(relays[index].pin, !config.relayON);
+      relays[index].state = false;
+      udawa.logger->debug(PSTR(__func__), PSTR("Relay %d is OFF. %d was written to relay.\n"), index+1, !config.relayON);
     }
   }
 }
+
+#ifdef USE_LOCAL_WEB_INTERFACE
+void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len) {
+  if (type == WS_EVT_CONNECT) {
+    // Handle WebSocket connection event
+  } else if (type == WS_EVT_DATA) {
+    // Handle WebSocket data event
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, data);
+    String incomming;
+    serializeJson(doc, incomming);
+    udawa.logger->debug(PSTR(__func__), PSTR("Incoming: %s\n"), incomming.c_str());
+
+    if(doc[PSTR("setRelayState")] != nullptr){
+      if(doc[PSTR("setRelayState")][PSTR("pin")] != nullptr && doc[PSTR("setRelayState")][PSTR("state")] != nullptr){
+        setRelay(doc[PSTR("setRelayState")][PSTR("pin")].as<uint8_t>(), doc[PSTR("setRelayState")][PSTR("state")].as<bool>());
+      }
+    }
+    else if(doc[PSTR("resetPowerSensor")] != nullptr){
+      state.fResetPowerSensor = true;
+    }
+    else if(doc[PSTR("relays")] != nullptr){
+      JsonArray _relays = doc[PSTR("relays")].as<JsonArray>();
+      for (uint8_t i = 0; i < countof(relays); i++) {
+        if(_relays[i] != nullptr){
+          if(_relays[i][PSTR("pin")] != nullptr){relays[i].pin = _relays[i][PSTR("pin")].as<uint8_t>();}
+          if(_relays[i][PSTR("mode")] != nullptr){relays[i].mode = _relays[i][PSTR("mode")].as<uint8_t>();}
+          if(_relays[i][PSTR("wattage")] != nullptr){relays[i].wattage = _relays[i][PSTR("wattage")].as<uint16_t>();}
+          if(_relays[i][PSTR("lastActive")] != nullptr){relays[i].lastActive = _relays[i][PSTR("lastActive")].as<unsigned long>();}
+          if(_relays[i][PSTR("dutyCycle")] != nullptr){relays[i].dutyCycle = _relays[i][PSTR("dutyCycle")].as<uint8_t>();}
+          if(_relays[i][PSTR("autoOff")] != nullptr){relays[i].autoOff = _relays[i][PSTR("autoOff")].as<unsigned long>();}
+          if(_relays[i][PSTR("state")] != nullptr){relays[i].state = _relays[i][PSTR("state")].as<bool>();}
+          if(_relays[i][PSTR("label")] != nullptr){relays[i].label = _relays[i][PSTR("label")].as<String>();}
+        }
+      }
+      saveAppRelay();
+    } 
+
+  }
+}
+
+void _onSyncClientAttributesCallback(uint8_t direction){
+  JsonDocument doc;
+  if(direction == 1 || direction == 3){
+    doc[PSTR("relays")] = state.fPanic;
+    //udawa.iotSendAttributes(doc);
+  }
+  else if(direction == 2 || direction == 3){
+    JsonArray _relays = doc[PSTR("relays")].to<JsonArray>();
+    for (uint8_t i = 0; i < countof(relays); i++) {
+      JsonObject relay = _relays.add<JsonObject>();
+      relay[PSTR("pin")] = relays[i].pin;
+      relay[PSTR("mode")] = relays[i].mode;
+      relay[PSTR("wattage")] = relays[i].wattage;
+      relay[PSTR("lastActive")] = relays[i].lastActive;
+      relay[PSTR("dutyCycle")] = relays[i].dutyCycle;
+      relay[PSTR("autoOff")] = relays[i].autoOff;
+      relay[PSTR("state")] = relays[i].state;
+      relay[PSTR("label")] = relays[i].label;
+    }
+    udawa.wsBroadcast(doc);
+  }
+}
+#endif

@@ -7,9 +7,8 @@ const SetupForm = () => {
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
-  const [disableSubmitButton, setDisableSubmitButton] = useState(false);
+  const [disableSubmitButton, setDisableSubmitButton] = useState(true);
   const [syncDatetime, setSyncDatetime] = useState(false);
-
 
   const handleChange = (e) => {
       const { name, value } = e.target;
@@ -25,26 +24,25 @@ const SetupForm = () => {
       const now = new Date();
       const gmtOffset = now.getTimezoneOffset() > 0 ? now.getTimezoneOffset() * -1 * 60 : now.getTimezoneOffset() * -1 * 60;
       const timestamp = (now.getTime() / 1000);
-      console.log(timestamp, gmtOffset);
-      sendWsMessage({ cmd: 'getAvailableWiFi' });
-      sendWsMessage({ cmd: 'setConfig', cfg: cfg }); // Send formData instead of cfg
+      sendWsMessage({ getAvailableWiFi: '' });
+      sendWsMessage({ setConfig: {cfg: cfg} }); // Send formData instead of cfg
       if(!cfg.fInit){
-        sendWsMessage({ cmd: 'setFInit', fInit: true });
+        sendWsMessage({ setFInit: {fInit: true} });
       }
       if(syncDatetime){
-        sendWsMessage({ cmd: 'setRTCUpdate', ts: timestamp + gmtOffset});
+        sendWsMessage({ setRTCUpdate: {ts: timestamp + gmtOffset}});
       }
       setDisableSubmitButton(true);
   };
 
   const handleScanWiFi = () => {
     setScanning(true);
-    sendWsMessage({ cmd: 'getAvailableWiFi' });
+    sendWsMessage({ getAvailableWiFi: ''});
   };
 
   const handleAgentReset = (state) => {
     if(state){
-      sendWsMessage({cmd: 'setFInit', fInit: false});
+      sendWsMessage({setFInit: {fInit: false}});
       setShowResetModal(false);
     }else{
       setShowResetModal(false);
@@ -60,9 +58,8 @@ const SetupForm = () => {
             <input
               type="text"
               name="name"
-              value={cfg.name}
               onChange={handleChange}
-              placeholder="e.g., Greenhouse 1 Gadadar"
+              placeholder={cfg.name}
             />
             <small id="hname-helper">
               Agent hostname to access the web interface, e.g. gadadar8 will be accessible from gadadar8.local
@@ -72,10 +69,9 @@ const SetupForm = () => {
             Agent Group
             <input 
               type="text" 
-              name="group" 
-              value={cfg.group} 
+              name="group"  
               onChange={handleChange}
-              placeholder="e.g., greenhouse1"
+              placeholder={cfg.group}
             />
             <small id="hname-helper">
               Agent group where it belongs to.
@@ -86,9 +82,8 @@ const SetupForm = () => {
             <input
               type="text"
               name="hname"
-              value={cfg.hname}
               onChange={handleChange}
-              placeholder="e.g., gadadar8"
+              placeholder={cfg.hname}
             />
             <small id="hname-helper">
               Agent hostname to access the web interface, e.g. gadadar8 will be accessible from gadadar8.local
@@ -99,7 +94,6 @@ const SetupForm = () => {
             <input
               type="password"
               name="htP"
-              value={cfg.htP}
               onChange={handleChange}
               placeholder="Enter agent secret"
             />
@@ -136,7 +130,6 @@ const SetupForm = () => {
             <input
               type="password"
               name="wpass"
-              value={cfg.wpass}
               onChange={handleChange}
               placeholder="Enter WiFi password"
             />
@@ -163,9 +156,8 @@ const SetupForm = () => {
               <input
                 type="number"
                 name="gmtOff"
-                value={cfg.gmtOff}
                 onChange={handleChange}
-                placeholder="e.g 28880"
+                placeholder={cfg.gmtOff}
               />
               <small id="wpass-helper">
                 Enter GMT Offset in seconds, e.g 28880 for GMT+8 (WITA)

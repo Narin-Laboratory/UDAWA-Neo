@@ -10,15 +10,19 @@
 #include "PCF8575.h"
 
 struct Config {
-    uint8_t s1tx = 26; //Neo 26, V3.1 33, V3 32
-    uint8_t s1rx = 25; //Neo 25, V3.1 32, V3 4
-    unsigned long intvWeb = 1;
-    unsigned long intvAttr = 5;
-    unsigned long intvTele = 900;
-    int maxWatt = 2000;
-    bool relayON = true;
+    uint8_t s1tx; //Neo 26, V3.1 33, V3 32
+    uint8_t s1rx; //Neo 25, V3.1 32, V3 4
+    unsigned long intvWeb;
+    unsigned long intvAttr;
+    unsigned long intvTele;
+    int maxWatt;
+    bool relayON;
+
+    Config(uint8_t s1tx, uint8_t s1rx, unsigned long intvWeb, unsigned long intvAttr, 
+        unsigned long intvTele, int maxWatt, bool relayON) : s1tx(s1tx), s1rx(s1rx), 
+        intvWeb(intvWeb), intvAttr(intvAttr), intvTele(intvTele), maxWatt(maxWatt), relayON(relayON) {}
 };
-Config config;
+Config config(s1tx, s1rx, intvWeb, intvAttr, intvTele, maxWatt, relayON);
 
 struct Relay {
     uint8_t pin;
@@ -30,17 +34,20 @@ struct Relay {
     unsigned long autoOff;
     bool state;
 
+    String label;
+    uint16_t overrunInSec;
 
     Relay(uint8_t pin, uint8_t mode, uint16_t wattage,  long lastActive, 
-        uint8_t dutyCycle, unsigned long autoOff, bool state) : pin(pin), 
+        uint8_t dutyCycle, unsigned long autoOff, bool state, String label, 
+        uint16_t overrunInSec) : pin(pin), 
         mode(mode), wattage(wattage), lastActive(lastActive), dutyCycle(dutyCycle), 
-        autoOff(autoOff), state(state) {}
+        autoOff(autoOff), state(state), label(label), overrunInSec(overrunInSec) {}
 };
 Relay relays[4] = {
-    Relay(0, 0, 0, 0, 0, 0, false),
-    Relay(1, 0, 0, 0, 0, 0, false),
-    Relay(2, 0, 0, 0, 0, 0, false),
-    Relay(3, 0, 0, 0, 0, 0, false)
+    Relay(0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
+    Relay(1, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
+    Relay(2, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
+    Relay(3, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600)
 };
 
 struct State {
@@ -71,7 +78,12 @@ void loadAppRelay();
 void saveAppRelay();
 void powerSensorTaskRoutine(void *arg);
 void relayControlTaskRoutine(void *arg);
-void setRelay(uint8_t ch, bool state);
+void setRelay(uint8_t index, bool state);
+
+#ifdef USE_LOCAL_WEB_INTERFACE
+void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
+#endif
+void _onSyncClientAttributesCallback(uint8_t direction);
 
 /**
  * @brief UDAWA Common Alarm Code Definition

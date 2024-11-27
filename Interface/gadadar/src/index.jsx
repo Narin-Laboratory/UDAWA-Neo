@@ -9,6 +9,7 @@ import { AppStateProvider, useAppState } from './AppStateContext';
 import SetupForm from './setupForm';
 import LoginPopUp from './loginPopUp';
 import PowerSensor from './powerSensor';
+import AlarmCard from './alarm';
 
 function App() {
 	return (
@@ -22,23 +23,26 @@ function App() {
 	const { selectedChannelId, cfg, ws, finishedSetup, authState, showSetupForm, setShowSetupForm, wsStatus } = useAppState();
 	const [latestCfg, setLatestCfg] = useState(cfg); // State to hold latest cfg
 	const [powerSensor, setPowerSensor] = useState({amp: 0, volt: 0, watt: 0, pf: 0, freq: 0, ener: 0});
+	const [alarm, setAlarm] = useState({code: 0, time: ''});
 
 	useEffect(() => {
 		// Function to update latestCfg whenever cfg changes
 		const updateCfg = () => {
-		setLatestCfg(cfg); 
+			setLatestCfg(cfg); 
 		};
 
 		// Subscribe to WebSocket messages
 		if (ws.current) {
 		ws.current.addEventListener('message', (event) => {
 			const data = JSON.parse(event.data);
-			if (data.cmd === 'setConfig' && data.cfg) {
+			if (data.cfg) {
 				updateCfg(); // Update latestCfg when new config is received
 			}
 			else if(data.powerSensor){
-				console.log(data.powerSensor);
 				setPowerSensor(data.powerSensor);
+			}
+			else if(data.alarm && data.alarm.code != 0){
+				setAlarm(data.alarm);
 			}
 		});
 		}
@@ -87,12 +91,10 @@ function App() {
 					<section>
 						<article>
 							<PowerSensor powerSensor={powerSensor}></PowerSensor>
+							<AlarmCard alarm={alarm}></AlarmCard>
 						</article>
 						<article>
 							<ChannelSelector />
-						</article>
-						<article>
-							<button>Button</button>
 						</article>
 						<dialog open={finishedSetup}>
 							<article>
