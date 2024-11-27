@@ -3,8 +3,8 @@ import { useEffect, useState } from 'preact/hooks';
 import { useAppState } from './AppStateContext';
 
 const SetupForm = () => {
-  const { cfg, setCfg, ws, WiFiList, scanning, setScanning, sendWsMessage, 
-    showSetupForm, setShowSetupForm, energyPrice, setEnergyPrice } = useAppState();
+  const { cfg, setCfg, WiFiList, scanning, setScanning, sendWsMessage, 
+    setShowSetupForm, energyPrice, setEnergyPrice } = useAppState();
 
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);

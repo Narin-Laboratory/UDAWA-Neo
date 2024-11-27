@@ -24,7 +24,7 @@ export const AppStateProvider = ({ children }) => {
   );
 
   const [scanning, setScanning] = useState(false);
-  const [finishedSetup, setFinishedSetup] = useState(false);
+  const [finishedSetup, setFinishedSetup] = useState(null);
   const [authState, setAuthState] = useState(false);
   const [salt, setSalt] = useState({setSalt: {salt: "", name: "", model: "", group: ""}});
   const [showSetupForm, setShowSetupForm] = useState(false);
@@ -38,7 +38,8 @@ export const AppStateProvider = ({ children }) => {
   const ws = useRef(null);
 
   useEffect(() => {
-    ws.current = new WebSocket('ws://' + "gadadar4ch.local" + "/ws");
+    //ws.current = new WebSocket('ws://' + "gadadar4ch.local" + "/ws");
+    ws.current = new WebSocket('ws://' + window.location.host + "/ws");
 
     ws.current.onopen = () => {
       console.log('WebSocket connected');
@@ -48,7 +49,7 @@ export const AppStateProvider = ({ children }) => {
 
     ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      //console.log(data);
+      console.log(data);
       if(data.setSalt){
         setSalt(data.setSalt);
       }
@@ -69,7 +70,7 @@ export const AppStateProvider = ({ children }) => {
         setWiFiList(data.WiFiList);
         setScanning(false);
       }
-      else if (data.setFinishedSetup && data.setFinishedSetup.fInit){
+      else if (data.setFinishedSetup){
         setFinishedSetup(data.setFinishedSetup.fInit)
       }
     };

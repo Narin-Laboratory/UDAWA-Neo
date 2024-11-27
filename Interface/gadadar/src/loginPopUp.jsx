@@ -15,8 +15,7 @@ const LoginPopUp = () => {
     event.preventDefault();
 
     // Convert htP and salt into CryptoJS word arrays for consistent byte interpretation
-    //const key = CryptoJS.enc.Utf8.parse(htP);
-    const key = CryptoJS.enc.Utf8.parse("milikpetani");
+    const key = CryptoJS.enc.Utf8.parse(htP);
     const saltUtf8 = CryptoJS.enc.Utf8.parse(salt.salt);
 
     // Compute the HMAC SHA-256

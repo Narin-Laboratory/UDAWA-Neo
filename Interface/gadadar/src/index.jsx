@@ -1,8 +1,6 @@
 import { render } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 
-import preactLogo from './assets/preact.svg';
-import gearSvg from './assets/gear.svg';
 import './style.css';
 import ChannelSelector from './channelSelector';
 import { AppStateProvider, useAppState } from './AppStateContext';
@@ -20,11 +18,11 @@ function App() {
   }
   
   function MainApp() {
-	const { selectedChannelId, cfg, ws, finishedSetup, authState, showSetupForm, setShowSetupForm, wsStatus } = useAppState();
+	const { cfg, ws, authState, showSetupForm, setShowSetupForm, wsStatus, finishedSetup, setFinishedSetup } = useAppState();
 	const [latestCfg, setLatestCfg] = useState(cfg); // State to hold latest cfg
 	const [powerSensor, setPowerSensor] = useState({amp: 0, volt: 0, watt: 0, pf: 0, freq: 0, ener: 0});
 	const [alarm, setAlarm] = useState({code: 0, time: ''});
-
+  
 	useEffect(() => {
 		// Function to update latestCfg whenever cfg changes
 		const updateCfg = () => {
@@ -43,6 +41,9 @@ function App() {
 			}
 			else if(data.alarm && data.alarm.code != 0){
 				setAlarm(data.alarm);
+			}
+			else if(data.setFinishedSetup){
+				setFinishedSetup(data.setFinishedSetup.fInit);
 			}
 		});
 		}
@@ -80,6 +81,20 @@ function App() {
 		  </article>
 		</header>
 		<main class="container">
+		<dialog open={finishedSetup}>
+			<article>
+				<header>
+				<p>
+					<strong>Agent Setup Completed!</strong>
+				</p>
+				</header>
+				<p>
+				Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the agent built-in web interface via <br/><br/>
+				<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/>
+				Thankyou and happy farming!
+				</p>
+			</article>
+		</dialog>
 			<LoginPopUp />
 			{!cfg.fInit ? (
 				<section>
@@ -96,22 +111,7 @@ function App() {
 						<article>
 							<ChannelSelector />
 						</article>
-						<dialog open={finishedSetup}>
-							<article>
-								<header>
-								<button aria-label="Close" rel="prev"></button>
-								<p>
-									<strong>Agent Setup Completed!</strong>
-								</p>
-								</header>
-								<p>
-								Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the agent built-in web interface via <br/><br/>
-								<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/>
-								Thankyou and happy farming!
-								</p>
-							</article>
-						</dialog>
-						<dialog open={showSetupForm}>
+						<dialog open={showSetupForm && !finishedSetup}>
 							<article>
 								<SetupForm></SetupForm>
 							</article>
