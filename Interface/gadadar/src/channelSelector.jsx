@@ -1,8 +1,9 @@
 import { h } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { useAppState } from './AppStateContext';
+import SlidersIcon from './assets/sliders.svg';
 
-const ChannelSelector = () => {
+const RelaySelector = () => {
   const { ws, sendWsMessage } = useAppState();
   const [relays, setRelays] = useState([
     {
@@ -15,9 +16,16 @@ const ChannelSelector = () => {
         "state": false,
         "label": "No label"
     }
-]);
+  ]);
+  const [availableRelayMode, setAvailableRelayMode] = useState(["Manual"]);
   const [selectedRelayIndex, setSelectedRelayIndex] = useState(0);
   
+  const [isRelayAdjustModalVisible, setIsRelayAdjustModalVisible] = useState(false);
+  const [disableSubmitButton, setDisableSubmitButton] = useState(true);
+
+  const toggleRelayAdjustModalVisibility = () => {
+    setIsRelayAdjustModalVisible(!isRelayAdjustModalVisible);
+  };
 
   useEffect(() => {
 		// Subscribe to WebSocket messages
@@ -28,6 +36,9 @@ const ChannelSelector = () => {
 				setRelays(data.relays);
         //console.log(data.relays);
 			}
+      else if(data.availableRelayMode){
+        setAvailableRelayMode(data.availableRelayMode);
+      }
 		});
 		}
 
@@ -39,9 +50,27 @@ const ChannelSelector = () => {
 		};
 	}, [ws]); // Run effect whenever cfg or ws changes
 
-  const handleChange = (event) => {
+  const handleSelectedRelayIndexChange = (event) => {
     setSelectedRelayIndex(parseInt(event.target.value));
-    console.log("Selected channel: " + (parseInt(event.target.value) + 1) + " Selected channel mode: " + relays[parseInt(event.target.value)].mode);
+  };
+
+  const handleRelayAdjustFormChange = (e) => {
+    const { name, value } = e.target;
+    setRelays((prevRelays) => {
+      const updatedRelays = [...prevRelays];
+      updatedRelays[selectedRelayIndex] = {
+        ...updatedRelays[selectedRelayIndex],
+        [name]: value
+      };
+      return updatedRelays;
+    });
+    setDisableSubmitButton(false);
+  };
+
+  const handleRelayAdjustFormSubmit = (event) => {
+    event.preventDefault();
+    sendWsMessage({ setRelay: {relay: relays[selectedRelayIndex], index: selectedRelayIndex} });
+    setDisableSubmitButton(true);
   };
 
   const handleToggleSwitchChange = (event) => {
@@ -66,21 +95,26 @@ const ChannelSelector = () => {
       <div class="parent-4c font-small">
         {relays.map((relay, index) => (
           <div key={index}>
-            <div className={relay.state ? 'relay-number text-center relay-on' : 'relay-number text-center relay-off'}>{`${index + 1}`}</div>
+            <div className={relay.state ? 'relay-number text-center relay-on' : 'relay-number text-center relay-off'}>
+              <div>{`${index + 1}`}</div>
+              <div className={"super-small"}><strong>{`${relay.state ? "ON" : "OFF"}`}</strong></div>
+            </div>
             <div class="text-center">{relay.mode == 0 ? "Manual" : "Auto"}</div>
           </div>
         ))}
       </div>
       <hr/>
       <fieldset role="group">
-        <select id="channel-select" value={selectedRelayIndex !== null ? selectedRelayIndex : ''} onChange={handleChange} aria-label="Select channel to control">
+        <select id="Relay-select" value={selectedRelayIndex !== null ? selectedRelayIndex : ''} onChange={handleSelectedRelayIndexChange} aria-label="Select Relay to control">
           {relays.map((relay, index) => (
             <option key={relay.pin} value={index}>
-              {`Channel ${relay.pin + 1} - ${relay.label}`}
+              {`Relay ${relay.pin + 1} - ${relay.label}`}
             </option>
           ))}
         </select>
-        <button class="outline secondary">⛮</button>
+        <button class="outline secondary" onClick={toggleRelayAdjustModalVisibility}>
+          <img src={SlidersIcon} alt="Adjust" />
+        </button>
       </fieldset>
       <hr/>
 
@@ -91,8 +125,54 @@ const ChannelSelector = () => {
         </label>
       </fieldset>
 
-    </div>
+      
+      <dialog open={isRelayAdjustModalVisible}>
+        <article>
+          <header>
+            <button aria-label="Close" rel="prev" onClick={toggleRelayAdjustModalVisibility}></button>
+            <p>
+              <strong>Adjust Relay {selectedRelayIndex+1} ({relays[selectedRelayIndex].label})</strong>
+            </p>
+          </header>
+          <form key={"relayAdjustForm"+selectedRelayIndex} onSubmit={handleRelayAdjustFormSubmit}>
+            <fieldset>
+              <label>
+                Relay Label
+                <input
+                  type="text"
+                  name="label"
+                  onChange={handleRelayAdjustFormChange}
+                  placeholder={relays[selectedRelayIndex].label}
+                />
+                <small id="hname-helper">
+                  Label for relay number {selectedRelayIndex+1}.
+                </small>
+              </label>
+              <fieldset role="group">
+                Relay Mode
+                <select
+                  name="mode"
+                  value={relays[selectedRelayIndex].mode}
+                  onChange={handleRelayAdjustFormChange}
+                  aria-label="Select relay mode..."
+                  required
+                >
+                  <option value={relays[selectedRelayIndex].mode} disabled>{availableRelayMode[relays[selectedRelayIndex].mode] ? availableRelayMode[relays[selectedRelayIndex].mode] : "Unavailable"}</option>
+                  {Array.isArray(availableRelayMode) && availableRelayMode.map((mode, index) => (
+                    <option key={index} value={index}>
+                      {mode}
+                    </option>
+                  ))}
+                </select>
+              </fieldset>
+            </fieldset>
+            <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? "Saved!" : "Save"} />
+          </form>
+        </article>
+      </dialog>
+
+    </div> 
   );
 };
 
-export default ChannelSelector;
+export default RelaySelector;

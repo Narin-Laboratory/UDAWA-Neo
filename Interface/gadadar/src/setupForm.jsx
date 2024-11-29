@@ -110,7 +110,7 @@ const SetupForm = () => {
                 aria-label="Select WiFi name..."
                 required
               >
-                <option value={cfg.wssid} disabled>{cfg.wssid}</option>
+                <option value={cfg.wssid ? cfg.wssid : "Select WiFi"} disabled>{cfg.wssid ? cfg.wssid : "Select WiFi"}</option>
                 {Array.isArray(WiFiList) && WiFiList.map((network, index) => (
                   <option key={network.ssid+index} value={network.ssid}>
                     {network.ssid} ({network.rssi}%)
@@ -178,6 +178,7 @@ const SetupForm = () => {
               <input
                 type="number"
                 name="energyPriceValue"
+                // @ts-ignore
                 onChange={(e) => setEnergyPrice({ ...energyPrice, value: e.target.value })}
                 placeholder={energyPrice.value}
               />
@@ -190,6 +191,7 @@ const SetupForm = () => {
               <input
                 type="text"
                 name="energyPriceCurrency"
+                // @ts-ignore
                 onChange={(e) => setEnergyPrice({ ...energyPrice, currency: e.target.value })}
                 placeholder={energyPrice.currency}
               />

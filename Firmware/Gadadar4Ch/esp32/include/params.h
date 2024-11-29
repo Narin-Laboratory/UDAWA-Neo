@@ -73,5 +73,6 @@ const unsigned long intvAttr = 5;
 const unsigned long intvTele = 900;
 const int maxWatt = 2000;
 const bool relayON = false;
+const std::array<String, 4> availableRelayMode = {PSTR("Manual"), PSTR("Duty Cycle"), PSTR("Time Daily"), PSTR("Specific Datetime")};
 
 #endif

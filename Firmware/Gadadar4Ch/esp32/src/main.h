@@ -17,12 +17,8 @@ struct Config {
     unsigned long intvTele;
     int maxWatt;
     bool relayON;
-
-    Config(uint8_t s1tx, uint8_t s1rx, unsigned long intvWeb, unsigned long intvAttr, 
-        unsigned long intvTele, int maxWatt, bool relayON) : s1tx(s1tx), s1rx(s1rx), 
-        intvWeb(intvWeb), intvAttr(intvAttr), intvTele(intvTele), maxWatt(maxWatt), relayON(relayON) {}
 };
-Config config(s1tx, s1rx, intvWeb, intvAttr, intvTele, maxWatt, relayON);
+Config config;
 
 struct Relay {
     uint8_t pin;
@@ -61,6 +57,8 @@ struct State {
     BaseType_t xReturnedRelayControl;
     unsigned long relayControlTaskRoutineLastActivity = 0;
     bool fPanic = false;
+    bool fsaveAppRelay = false;
+    bool fsyncClientAttributes = false;
 };
 State state;
 
@@ -78,7 +76,7 @@ void loadAppRelay();
 void saveAppRelay();
 void powerSensorTaskRoutine(void *arg);
 void relayControlTaskRoutine(void *arg);
-void setRelay(uint8_t index, bool state);
+void setRelay(uint8_t index, bool output);
 
 #ifdef USE_LOCAL_WEB_INTERFACE
 void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);

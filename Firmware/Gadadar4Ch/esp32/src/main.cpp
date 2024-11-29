@@ -4,6 +4,11 @@ Udawa udawa;
 
 void setup() {
   udawa.begin();
+
+  loadAppConfig();
+  loadAppState();
+  loadAppRelay();
+
   udawa.addOnWsEvent(_onWsEventMain);
   udawa.addOnSyncClientAttributesCallback(_onSyncClientAttributesCallback);
 
@@ -32,13 +37,32 @@ void loop() {
 
   if (!udawa.crashState.fSafeMode) {
     if (millis() - timer > 1000) {
-      udawa.logger->debug(PSTR(__func__), PSTR("%d\n"), ESP.getFreeHeap());
-      timer = millis();
+      
+      #ifdef USE_LOCAL_WEB_INTERFACE
+      if(udawa.ws.count() > 0){
+        JsonDocument doc;
+        JsonObject sysInfo = doc[PSTR("sysInfo")].to<JsonObject>();
 
-      /*setRelay(0, relays[0].state == config.relayON ? !config.relayON : config.relayON);
-      setRelay(1, relays[1].state == config.relayON ? !config.relayON : config.relayON);
-      setRelay(2, relays[2].state == config.relayON ? !config.relayON : config.relayON);
-      setRelay(3, relays[3].state == config.relayON ? !config.relayON : config.relayON);*/
+        sysInfo[PSTR("heap")] = ESP.getFreeHeap();
+        sysInfo[PSTR("uptime")] = millis();
+        sysInfo[PSTR("datetime")] = udawa.RTC.getDateTime();
+        sysInfo[PSTR("rssi")] = udawa.wiFiHelper.rssiToPercent(WiFi.RSSI());
+
+        udawa.wsBroadcast(doc);
+      }
+      #endif
+
+      if(state.fsaveAppRelay){
+        saveAppRelay();
+        state.fsaveAppRelay = false;
+      }
+
+      if(state.fsyncClientAttributes){
+        _onSyncClientAttributesCallback(3);
+        state.fsyncClientAttributes = false;
+      }
+
+      timer = millis();
     }
   }
 }
@@ -96,7 +120,7 @@ void loadAppRelay(){
   bool status = appRelay.load(doc);
   udawa.logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
   if(status){
-    for(uint8_t i = 0; i < sizeof(relays); i++){
+    for(uint8_t i = 0; i < countof(relays); i++){
       if(doc[PSTR("relays")][i] != nullptr){
         relays[i].pin = doc[PSTR("relays")][i][PSTR("pin")].as<uint8_t>();
         relays[i].mode = doc[PSTR("relays")][i][PSTR("mode")].as<uint8_t>();
@@ -113,8 +137,8 @@ void loadAppRelay(){
 
 void saveAppRelay(){
   JsonDocument doc;
-  for(uint8_t i = 0; i < sizeof(relays); i++){
-    JsonArray _relays = doc[PSTR("relays")].to<JsonArray>();
+  JsonArray _relays = doc[PSTR("relays")].to<JsonArray>();
+  for(uint8_t i = 0; i < countof(relays); i++){
     _relays[i][PSTR("pin")] = relays[i].pin;
     _relays[i][PSTR("mode")] = relays[i].mode;
     _relays[i][PSTR("wattage")] = relays[i].wattage;
@@ -321,19 +345,22 @@ void relayControlTaskRoutine(void *arg){
   }
 }
 
-void setRelay(uint8_t index, bool state){
+void setRelay(uint8_t index, bool output){
   udawa.logger->debug(PSTR(__func__), PSTR("config.relayON value: %d\n"), config.relayON);
   if(index < countof(relays)){
-    if(state){
+    if(output){
       IOExtender.digitalWrite(relays[index].pin, config.relayON);
       relays[index].state = true;
       relays[index].lastActive = millis();
       udawa.logger->debug(PSTR(__func__), PSTR("Relay %d is ON. %d was written to relay.\n"), index+1, config.relayON);
+    
+      state.fsyncClientAttributes = true;
     }
     else{
       IOExtender.digitalWrite(relays[index].pin, !config.relayON);
       relays[index].state = false;
       udawa.logger->debug(PSTR(__func__), PSTR("Relay %d is OFF. %d was written to relay.\n"), index+1, !config.relayON);
+      state.fsyncClientAttributes = true;
     }
   }
 }
@@ -358,21 +385,20 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
     else if(doc[PSTR("resetPowerSensor")] != nullptr){
       state.fResetPowerSensor = true;
     }
-    else if(doc[PSTR("relays")] != nullptr){
-      JsonArray _relays = doc[PSTR("relays")].as<JsonArray>();
-      for (uint8_t i = 0; i < countof(relays); i++) {
-        if(_relays[i] != nullptr){
-          if(_relays[i][PSTR("pin")] != nullptr){relays[i].pin = _relays[i][PSTR("pin")].as<uint8_t>();}
-          if(_relays[i][PSTR("mode")] != nullptr){relays[i].mode = _relays[i][PSTR("mode")].as<uint8_t>();}
-          if(_relays[i][PSTR("wattage")] != nullptr){relays[i].wattage = _relays[i][PSTR("wattage")].as<uint16_t>();}
-          if(_relays[i][PSTR("lastActive")] != nullptr){relays[i].lastActive = _relays[i][PSTR("lastActive")].as<unsigned long>();}
-          if(_relays[i][PSTR("dutyCycle")] != nullptr){relays[i].dutyCycle = _relays[i][PSTR("dutyCycle")].as<uint8_t>();}
-          if(_relays[i][PSTR("autoOff")] != nullptr){relays[i].autoOff = _relays[i][PSTR("autoOff")].as<unsigned long>();}
-          if(_relays[i][PSTR("state")] != nullptr){relays[i].state = _relays[i][PSTR("state")].as<bool>();}
-          if(_relays[i][PSTR("label")] != nullptr){relays[i].label = _relays[i][PSTR("label")].as<String>();}
-        }
+    else if(doc[PSTR("setRelay")] != nullptr && doc[PSTR("setRelay")][PSTR("relay")] != nullptr && doc[PSTR("setRelay")][PSTR("index")] != nullptr){
+      uint8_t index = doc[PSTR("setRelay")][PSTR("index")].as<uint8_t>();
+      if(index < countof(relays)){
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")] != nullptr){relays[index].pin = doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")].as<uint8_t>();} 
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")] != nullptr){relays[index].mode = doc[PSTR("setRelay")][PSTR("relay")][PSTR("mode")].as<uint8_t>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")] != nullptr){relays[index].wattage = doc[PSTR("setRelay")][PSTR("relay")][PSTR("wattage")].as<uint16_t>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")] != nullptr){relays[index].lastActive = doc[PSTR("setRelay")][PSTR("relay")][PSTR("lastActive")].as<unsigned long>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")] != nullptr){relays[index].dutyCycle = doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyCycle")].as<uint8_t>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")] != nullptr){relays[index].autoOff = doc[PSTR("setRelay")][PSTR("relay")][PSTR("autoOff")].as<unsigned long>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")] != nullptr){relays[index].state = doc[PSTR("setRelay")][PSTR("relay")][PSTR("state")].as<bool>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")] != nullptr){relays[index].label = doc[PSTR("setRelay")][PSTR("relay")][PSTR("label")].as<String>();}
       }
-      saveAppRelay();
+      
+      state.fsaveAppRelay = true;
     } 
 
   }
@@ -385,19 +411,27 @@ void _onSyncClientAttributesCallback(uint8_t direction){
     //udawa.iotSendAttributes(doc);
   }
   else if(direction == 2 || direction == 3){
+    doc.clear();
     JsonArray _relays = doc[PSTR("relays")].to<JsonArray>();
     for (uint8_t i = 0; i < countof(relays); i++) {
-      JsonObject relay = _relays.add<JsonObject>();
-      relay[PSTR("pin")] = relays[i].pin;
-      relay[PSTR("mode")] = relays[i].mode;
-      relay[PSTR("wattage")] = relays[i].wattage;
-      relay[PSTR("lastActive")] = relays[i].lastActive;
-      relay[PSTR("dutyCycle")] = relays[i].dutyCycle;
-      relay[PSTR("autoOff")] = relays[i].autoOff;
-      relay[PSTR("state")] = relays[i].state;
-      relay[PSTR("label")] = relays[i].label;
+      _relays[i][PSTR("pin")] = relays[i].pin;
+      _relays[i][PSTR("mode")] = relays[i].mode;
+      _relays[i][PSTR("wattage")] = relays[i].wattage;
+      _relays[i][PSTR("lastActive")] = relays[i].lastActive;
+      _relays[i][PSTR("dutyCycle")] = relays[i].dutyCycle;
+      _relays[i][PSTR("autoOff")] = relays[i].autoOff;
+      _relays[i][PSTR("state")] = relays[i].state;
+      _relays[i][PSTR("label")] = relays[i].label;
+    }
+    udawa.wsBroadcast(doc);
+
+    doc.clear();
+    JsonArray _availableRelayMode = doc[PSTR("availableRelayMode")].to<JsonArray>();
+    for(uint8_t i = 0; i < countof(availableRelayMode); i++){
+      _availableRelayMode.add(availableRelayMode[i]);
     }
     udawa.wsBroadcast(doc);
   }
 }
+
 #endif

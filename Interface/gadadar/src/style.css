@@ -66,3 +66,46 @@
 .relay-on {
 	background-color: #4CAF50;
 }
+
+div#indicator-bar {
+    position: relative;
+    margin-top: -15px;
+    margin-bottom: 25px;
+    padding: 5px 15px;
+    background-color: #3f0606;
+    font-size: 10pt;
+    text-shadow: 0px 0px 1px black;
+    border-top: 1px solid #372a2a;
+    border-bottom: 1px solid #372a2a;
+    color: #937575;
+	text-align: center;
+}
+
+
+div#copyleft {
+	font-size: 12pt;
+    border-radius: 7px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+}
+
+div#copyleft a, div#copyleft a:visited, div#copyleft a:link {
+	text-decoration: none;
+	color: #c2c7d0;
+}
+
+div.copyleft-item{
+	width: 180px;
+    background-color: #11141a;
+    padding: 5px 5px;
+    border-radius: 6px;
+    border-bottom: 2px solid #1f2531;
+}
+
+.super-small{
+	font-size: x-small;
+}

@@ -16,6 +16,7 @@ const LoginPopUp = () => {
 
     // Convert htP and salt into CryptoJS word arrays for consistent byte interpretation
     const key = CryptoJS.enc.Utf8.parse(htP);
+    //const key = CryptoJS.enc.Utf8.parse("milikpetani");
     const saltUtf8 = CryptoJS.enc.Utf8.parse(salt.salt);
 
     // Compute the HMAC SHA-256
@@ -37,7 +38,7 @@ const LoginPopUp = () => {
         </header>
         <form onSubmit={handleSubmit}>
           <fieldset role="group"> 
-            <input name="htP" value={htP} onChange={handleChange} type="password" placeholder="Agent secret" autoComplete="password" />
+            <input name="htP" onChange={handleChange} type="password" placeholder="Agent secret" autoComplete="password" />
             <input type="submit" value="Login" />
           </fieldset>
           <small>{status.msg != "" ? status.msg : "Enter your agent secret to access this agent."}</small>
