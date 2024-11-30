@@ -38,31 +38,27 @@ function App() {
 
 		// Subscribe to WebSocket messages
 		if (ws.current) {
-		ws.current.addEventListener('message', (event) => {
-			const data = JSON.parse(event.data);
-			if (data.cfg) {
-				updateCfg(); // Update latestCfg when new config is received
-			}
-			else if(data.powerSensor){
-				setPowerSensor(data.powerSensor);
-			}
-			else if(data.alarm && data.alarm.code != 0){
-				setAlarm(data.alarm);
-			}
-			else if(data.setFinishedSetup){
-				setFinishedSetup(data.setFinishedSetup.fInit);
-			}
-			else if(data.sysInfo){
-				setSysInfo(data.sysInfo);
-			}
-		});
+			ws.current.addEventListener('message', (event) => {
+				const data = JSON.parse(event.data);
+				if (data.cfg) {
+					updateCfg(); // Update latestCfg when new config is received
+				} else if (data.powerSensor) {
+					setPowerSensor(data.powerSensor);
+				} else if (data.alarm && data.alarm.code !== 0) {
+					setAlarm(data.alarm);
+				} else if (data.setFinishedSetup) {
+					setFinishedSetup(data.setFinishedSetup.fInit);
+				} else if (data.sysInfo) {
+					setSysInfo(data.sysInfo);
+				}
+			});
 		}
 
 		// Cleanup: Remove the event listener when component unmounts
 		return () => {
-		if (ws.current) {
-			ws.current.removeEventListener('message', updateCfg);
-		}
+			if (ws.current) {
+				ws.current.removeEventListener('message', updateCfg);
+			}
 		};
 	}, [cfg, ws]); // Run effect whenever cfg or ws changes
 

@@ -12,9 +12,11 @@ const RelaySelector = () => {
         "wattage": 0,
         "lastActive": 0,
         "dutyCycle": 0,
+        "dutyRange": 0,
         "autoOff": 0,
         "state": false,
-        "label": "No label"
+        "label": "No label",
+        "overrunInSec": 0
     }
   ]);
   const [availableRelayMode, setAvailableRelayMode] = useState(["Manual"]);
@@ -28,27 +30,34 @@ const RelaySelector = () => {
   };
 
   useEffect(() => {
-		// Subscribe to WebSocket messages
-		if (ws.current) {
-		ws.current.addEventListener('message', (event) => {
-			const data = JSON.parse(event.data);
-			if(data.relays){
-				setRelays(data.relays);
-        //console.log(data.relays);
-			}
-      else if(data.availableRelayMode){
-        setAvailableRelayMode(data.availableRelayMode);
-      }
-		});
-		}
+    sendWsMessage({ getConfig: '' });
+  }, [isRelayAdjustModalVisible]);
 
-		// Cleanup: Remove the event listener when component unmounts
-		return () => {
-		if (ws.current) {
-			ws.current.removeEventListener('message');
-		}
-		};
-	}, [ws]); // Run effect whenever cfg or ws changes
+  useEffect(() => {
+    // Subscribe to WebSocket messages
+    if (ws.current) {
+      const handleMessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.relays) {
+          if (!isRelayAdjustModalVisible) {
+            setRelays(data.relays);
+          }
+        } 
+        else if (data.availableRelayMode) {
+          setAvailableRelayMode(data.availableRelayMode);
+        }
+      };
+
+      ws.current.addEventListener('message', handleMessage);
+
+      // Cleanup: Remove the event listener when component unmounts
+      return () => {
+        if (ws.current) {
+          ws.current.removeEventListener('message', handleMessage);
+        }
+      };
+    }
+  }, [ws, isRelayAdjustModalVisible]); // Run effect whenever ws or isRelayAdjustModalVisible changes
 
   const handleSelectedRelayIndexChange = (event) => {
     setSelectedRelayIndex(parseInt(event.target.value));
@@ -120,9 +129,18 @@ const RelaySelector = () => {
 
       <fieldset>
         <label>
-          <input type="checkbox" role="switch" checked={relays[selectedRelayIndex].state} onChange={handleToggleSwitchChange}/>
+          <input type="checkbox" role="switch" checked={relays[selectedRelayIndex].state} onChange={handleToggleSwitchChange} disabled={relays[selectedRelayIndex].mode == 0 ? false : true}/>
           Status: {relays[selectedRelayIndex].state ? 'ON' : 'OFF'}
         </label>
+        <p>
+          This relay is operated by <strong>{availableRelayMode[relays[selectedRelayIndex].mode]}</strong> mode.
+          {relays[selectedRelayIndex].mode == 0 && (
+            <span> Auto Off: <strong>{relays[selectedRelayIndex].autoOff} seconds</strong>.</span>
+          )}
+          {relays[selectedRelayIndex].mode == 1 && (
+            <span> Duty Cycle: <strong>{relays[selectedRelayIndex].dutyCycle}%</strong> for <strong>{relays[selectedRelayIndex].dutyRange} seconds</strong>.</span>
+          )}
+        </p>
       </fieldset>
 
       
@@ -148,8 +166,20 @@ const RelaySelector = () => {
                   Label for relay number {selectedRelayIndex+1}.
                 </small>
               </label>
+              <label>
+                Overrun Threshold
+                <input
+                  type="number"
+                  name="overrunInSec"
+                  onChange={handleRelayAdjustFormChange}
+                  placeholder={relays[selectedRelayIndex].overrunInSec.toString()}
+                />
+                <small id="overrunInSec-helper">
+                  Maximum seconds the relay is ON before marked as overrun.
+                </small>
+              </label>
               <fieldset role="group">
-                Relay Mode
+                <label>
                 <select
                   name="mode"
                   value={relays[selectedRelayIndex].mode}
@@ -164,8 +194,56 @@ const RelaySelector = () => {
                     </option>
                   ))}
                 </select>
+                <br/>
+                <small id="mode-helper">
+                  Change operation mode.
+                </small>
+                </label>
               </fieldset>
             </fieldset>
+            {/* Start Only for Manual Mode */}
+            {relays[selectedRelayIndex].mode == 0 && (
+                <fieldset>
+                  <label>
+                    Auto Off
+                    <input
+                      type="number"
+                      name="autoOff"
+                      onChange={handleRelayAdjustFormChange}
+                      placeholder={relays[selectedRelayIndex].autoOff.toString()}
+                    />
+                    <small id="autoOff-helper">
+                      Turn off relay automatically after N seconds.
+                    </small>
+                  </label>
+                </fieldset>
+            )}
+            {/* End Only for Manual Mode */}
+            {/* Start Only for Duty Cycle Mode */}
+            {relays[selectedRelayIndex].mode == 1 && (
+                <fieldset>
+                  <label>
+                    Duty Cycle <strong>({relays[selectedRelayIndex].dutyCycle}%)</strong>
+                    <input type="range" name="dutyCycle" value={relays[selectedRelayIndex].dutyCycle} onChange={handleRelayAdjustFormChange} />
+                    <small id="dutyCycle-helper">
+                      Control relay based on duty cycle. e.g. 50% means relay is ON for 50% of the duty range.
+                    </small>
+                  </label>
+                  <label>
+                    Duty Range
+                    <input
+                      type="number"
+                      name="dutyRange"
+                      onChange={handleRelayAdjustFormChange}
+                      placeholder={relays[selectedRelayIndex].dutyRange.toString()}
+                    />
+                    <small id="dutyRange-helper">
+                      Duty range in seconds.
+                    </small>
+                  </label>
+                </fieldset>
+            )}
+            {/* End Only for Duty Cycle Mode */}
             <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? "Saved!" : "Save"} />
           </form>
         </article>

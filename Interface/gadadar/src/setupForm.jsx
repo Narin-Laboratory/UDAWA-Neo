@@ -10,6 +10,8 @@ const SetupForm = () => {
   const [showResetModal, setShowResetModal] = useState(false);
   const [disableSubmitButton, setDisableSubmitButton] = useState(true);
   const [syncDatetime, setSyncDatetime] = useState(false);
+  const [wifiPassInvalid, setWiFiPassInvalid] = useState(false);
+  const [htPInvalid, sethtPInvalid] = useState(false);
 
   const handleChange = (e) => {
       const { name, value } = e.target;
@@ -17,6 +19,28 @@ const SetupForm = () => {
           ...prevData,
           [name]: value
       }));
+
+      if(name === 'wpass' || name === 'wpass2'){
+        const newCfg = { ...cfg, [name]: value };
+        if(newCfg.wpass !== newCfg.wpass2){
+          setWiFiPassInvalid(true);
+          setDisableSubmitButton(true);
+          return;
+        }else{
+          setWiFiPassInvalid(false);
+        }
+      }
+      else if(name === 'htP' || name === 'htP2'){
+        const newCfg = { ...cfg, [name]: value };
+        if(newCfg.htP !== newCfg.htP2){
+          sethtPInvalid(true);
+          setDisableSubmitButton(true);
+          return;
+        }else{
+          sethtPInvalid(false);
+        }
+      }
+
       setDisableSubmitButton(false);
   };
 
@@ -63,7 +87,7 @@ const SetupForm = () => {
               placeholder={cfg.name}
             />
             <small id="hname-helper">
-              Agent hostname to access the web interface, e.g. gadadar8 will be accessible from gadadar8.local
+              Agent name to easily identify the agent
             </small>
           </label>
           <label>
@@ -75,7 +99,7 @@ const SetupForm = () => {
               placeholder={cfg.group}
             />
             <small id="hname-helper">
-              Agent group where it belongs to.
+              Agent group where it belongs to. e.g. "Greenhouse 1" for Greenhouse 1 group
             </small>
           </label>
           <label>
@@ -97,9 +121,17 @@ const SetupForm = () => {
               name="htP"
               onChange={handleChange}
               placeholder="Enter agent secret"
+              aria-invalid={htPInvalid}
+            />
+            <input
+              type="password"
+              name="htP2"
+              onChange={handleChange}
+              placeholder="Enter again to verify"
+              aria-invalid={htPInvalid}
             />
             <small id="htP-helper">
-              Agent secret to access everything related to agent (access the built-in web interface, connect to other agents, and to connect to the offline mode WiFi.)
+              {htPInvalid ? "Check again both agent secret are the same." : "Agent secret to access everything related to agent (access the built-in web interface, connect to other agents, and to connect to the offline mode WiFi.)"}
             </small>
           </label>
           <fieldset role="group">
@@ -110,7 +142,7 @@ const SetupForm = () => {
                 aria-label="Select WiFi name..."
                 required
               >
-                <option value={cfg.wssid ? cfg.wssid : "Select WiFi"} disabled>{cfg.wssid ? cfg.wssid : "Select WiFi"}</option>
+                <option value={cfg.wssid != '' ? cfg.wssid : "Select WiFi"} disabled>{cfg.wssid != '' ? cfg.wssid : "Select WiFi"}</option>
                 {Array.isArray(WiFiList) && WiFiList.map((network, index) => (
                   <option key={network.ssid+index} value={network.ssid}>
                     {network.ssid} ({network.rssi}%)
@@ -133,9 +165,17 @@ const SetupForm = () => {
               name="wpass"
               onChange={handleChange}
               placeholder="Enter WiFi password"
+              aria-invalid={wifiPassInvalid}
+            />
+            <input
+              type="password"
+              name="wpass2"
+              onChange={handleChange}
+              placeholder="Enter again WiFi password to verify"
+              aria-invalid={wifiPassInvalid}
             />
             <small id="wpass-helper">
-              WiFi password to connect with (in online mode).
+              {wifiPassInvalid ? "Check again both WiFi password are the same." : "WiFi password to connect with (in online mode)."}
             </small>
           </label>
         </fieldset>

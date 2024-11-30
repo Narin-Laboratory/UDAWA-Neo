@@ -25,25 +25,27 @@ struct Relay {
     uint8_t mode;
     uint16_t wattage;
     unsigned long lastActive;
+    unsigned long lastChanged;
 
     uint8_t dutyCycle;
+    unsigned long dutyRange;
     unsigned long autoOff;
     bool state;
 
     String label;
     uint16_t overrunInSec;
 
-    Relay(uint8_t pin, uint8_t mode, uint16_t wattage,  long lastActive, 
-        uint8_t dutyCycle, unsigned long autoOff, bool state, String label, 
+    Relay(uint8_t pin, uint8_t mode, uint16_t wattage,  unsigned long lastActive, unsigned long lastChanged, 
+        uint8_t dutyCycle, unsigned long dutyRange, unsigned long autoOff, bool state, String label, 
         uint16_t overrunInSec) : pin(pin), 
-        mode(mode), wattage(wattage), lastActive(lastActive), dutyCycle(dutyCycle), 
-        autoOff(autoOff), state(state), label(label), overrunInSec(overrunInSec) {}
+        mode(mode), wattage(wattage), lastActive(lastActive), lastChanged(lastChanged), dutyCycle(dutyCycle), 
+        dutyRange(dutyRange), autoOff(autoOff), state(state), label(label), overrunInSec(overrunInSec) {}
 };
 Relay relays[4] = {
-    Relay(0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
-    Relay(1, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
-    Relay(2, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
-    Relay(3, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600)
+    Relay(0, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
+    Relay(1, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
+    Relay(2, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
+    Relay(3, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600)
 };
 
 struct State {
@@ -58,6 +60,7 @@ struct State {
     unsigned long relayControlTaskRoutineLastActivity = 0;
     bool fPanic = false;
     bool fsaveAppRelay = false;
+    bool fSaveAppState = false;
     bool fsyncClientAttributes = false;
 };
 State state;
@@ -70,10 +73,13 @@ PCF8575 IOExtender(IOEXTENDER_ADDRESS);
 
 void loadAppConfig();
 void saveAppConfig();
+void convertAppConfig(JsonDocument &doc, bool direction);
 void loadAppState();
 void saveAppState();
+void convertAppState(JsonDocument &doc, bool direction);
 void loadAppRelay();
 void saveAppRelay();
+void convertAppRelay(JsonDocument &doc, bool direction);
 void powerSensorTaskRoutine(void *arg);
 void relayControlTaskRoutine(void *arg);
 void setRelay(uint8_t index, bool output);

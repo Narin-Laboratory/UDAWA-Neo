@@ -49,7 +49,7 @@ export const AppStateProvider = ({ children }) => {
 
     ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log(data);
+      //console.log(data);
       if(data.setSalt){
         setSalt(data.setSalt);
       }
