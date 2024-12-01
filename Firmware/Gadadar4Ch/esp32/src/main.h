@@ -20,6 +20,16 @@ struct Config {
 };
 Config config;
 
+struct TimerConfig {
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+    unsigned long duration; // Duration in seconds
+
+    TimerConfig() : hour(0), minute(0), second(0), duration(0) {}
+    TimerConfig(uint8_t h, uint8_t m, uint8_t s, uint16_t d) : hour(h), minute(m), second(s), duration(d) {}
+};
+
 struct Relay {
     uint8_t pin;
     uint8_t mode;
@@ -35,17 +45,27 @@ struct Relay {
     String label;
     uint16_t overrunInSec;
 
+    TimerConfig timers[maxTimers];
+
+    unsigned long datetime;
+    unsigned long duration;
+
     Relay(uint8_t pin, uint8_t mode, uint16_t wattage,  unsigned long lastActive, unsigned long lastChanged, 
         uint8_t dutyCycle, unsigned long dutyRange, unsigned long autoOff, bool state, String label, 
-        uint16_t overrunInSec) : pin(pin), 
+        uint16_t overrunInSec, unsigned long datetime, unsigned long duration) : pin(pin), 
         mode(mode), wattage(wattage), lastActive(lastActive), lastChanged(lastChanged), dutyCycle(dutyCycle), 
-        dutyRange(dutyRange), autoOff(autoOff), state(state), label(label), overrunInSec(overrunInSec) {}
+        dutyRange(dutyRange), autoOff(autoOff), state(state), label(label), overrunInSec(overrunInSec),
+        datetime(datetime), duration(duration) {
+            for (uint8_t i = 0; i < maxTimers; i++) {
+                timers[i] = TimerConfig();
+            }
+        }
 };
 Relay relays[4] = {
-    Relay(0, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
-    Relay(1, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
-    Relay(2, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600),
-    Relay(3, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600)
+    Relay(0, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600, 0, 0),
+    Relay(1, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600, 0, 0),
+    Relay(2, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600, 0, 0),
+    Relay(3, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600, 0, 0)
 };
 
 struct State {

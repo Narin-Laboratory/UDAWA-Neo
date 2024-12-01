@@ -351,6 +351,62 @@ void relayControlTaskRoutine(void *arg){
         }
       }
       /* End Duty Cycle Control Mode */
+      /* Start Time Daily Control Mode */
+      if(relays[i].mode == 2){
+        bool flag_isInTimeWindow = false;
+        int activeTimeWindowCounter = 0;
+        for(uint8_t j = 0; j < maxTimers; j++)
+        {
+          int currHour = udawa.RTC.getHour(true);
+          int currHourToSec = currHour * 3600;
+          int currMinute = udawa.RTC.getMinute();
+          int currMinuteToSec = currMinute * 60;
+          int currSecond = udawa.RTC.getSecond();
+          String currDT = udawa.RTC.getDateTime();
+          int currentTimeInSec = currHourToSec + currMinuteToSec + currSecond;
+
+          int duration = relays[i].timers[j].duration;
+          int targetHour = relays[i].timers[j].hour;
+          int targetHourToSec = targetHour * 3600;
+          int targetMinute = relays[i].timers[j].minute;
+          int targetMinuteToSec =targetMinute * 60;
+          int targetSecond = relays[i].timers[j].second;
+          int targetTimeInSec = targetHourToSec + targetMinuteToSec + targetSecond;
+
+          int activationOffset = targetTimeInSec - currentTimeInSec;
+          int deactivationOffset = activationOffset + duration;
+          int activeTimeWindow = deactivationOffset - activationOffset;
+          flag_isInTimeWindow = ( activationOffset <= 0 && deactivationOffset >= 0 ) ? true : false;
+          const char * isInTimeWindow = flag_isInTimeWindow ? "TRUE" : "FALSE";
+
+          //udawa.logger->debug(PSTR(__func__), PSTR("Relay %d timer index %d hour %d minute %d second %d duration %d IsInTImeWindow %s activeTimeWindowCounter %d\n"), i+1, j, targetHour, targetMinute, targetSecond, duration, isInTimeWindow, activeTimeWindowCounter);
+          if(flag_isInTimeWindow){
+            activeTimeWindowCounter++;
+          }
+        }
+        if (relays[i].state == false && activeTimeWindowCounter > 0){
+          relays[i].state = true;
+          setRelay(i, true);
+        }else if(relays[i].state == true && activeTimeWindowCounter < 1) {
+          relays[i].state = false;
+          setRelay(i, false);
+        }
+      }
+      /* Stop Time Daily Control Mode */
+      /* Start Exact Datetime Control Mode */
+      if(relays[i].duration > 0 && relays[i].mode == 3){
+        if(relays[i].datetime <= (udawa.RTC.getEpoch()) && (relays[i].duration) >=
+          (udawa.RTC.getEpoch() - relays[i].datetime) && relays[i].state == false){
+            relays[i].state = true;
+            setRelay(i, true);
+        }
+        else if(relays[i].state == true && (relays[i].duration) <=
+          (udawa.RTC.getEpoch() - relays[i].datetime)){
+            relays[i].state = false;
+            setRelay(i, false);
+        }
+      }
+      /* Start Exact Datetime Control Mode */
     }
 
     state.relayControlTaskRoutineLastActivity = millis();
@@ -358,7 +414,6 @@ void relayControlTaskRoutine(void *arg){
 }
 
 void setRelay(uint8_t index, bool output){
-  udawa.logger->debug(PSTR(__func__), PSTR("config.relayON value: %d\n"), config.relayON);
   if(index < countof(relays)){
     if(output){
       IOExtender.digitalWrite(relays[index].pin, config.relayON);
@@ -366,19 +421,17 @@ void setRelay(uint8_t index, bool output){
       relays[index].lastActive = millis();
       relays[index].lastChanged = millis();
       udawa.logger->debug(PSTR(__func__), PSTR("Relay %d is ON. %d was written to relay.\n"), index+1, config.relayON);
-      //state.fsyncClientAttributes = true;
-      //state.fsaveAppRelay = true;
+      state.fsyncClientAttributes = true;
+      state.fsaveAppRelay = true;
     }
     else{
       IOExtender.digitalWrite(relays[index].pin, !config.relayON);
       relays[index].state = false;
       relays[index].lastChanged = millis();
       udawa.logger->debug(PSTR(__func__), PSTR("Relay %d is OFF. %d was written to relay.\n"), index+1, !config.relayON);
-      //state.fsyncClientAttributes = true;
-      //state.fsaveAppRelay = true;
+      state.fsyncClientAttributes = true;
+      state.fsaveAppRelay = true;
     }
-    _onSyncClientAttributesCallback(3);
-    saveAppRelay();
   }
 }
 
@@ -390,9 +443,9 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
     // Handle WebSocket data event
     JsonDocument doc;
     DeserializationError err = deserializeJson(doc, data);
-    String incomming;
-    serializeJson(doc, incomming);
-    udawa.logger->debug(PSTR(__func__), PSTR("Incoming: %s\n"), incomming.c_str());
+    //String incomming;
+    //serializeJson(doc, incomming);
+    //udawa.logger->debug(PSTR(__func__), PSTR("Incoming: %s\n"), incomming.c_str());
 
     if(doc[PSTR("setRelayState")] != nullptr){
       if(doc[PSTR("setRelayState")][PSTR("pin")] != nullptr && doc[PSTR("setRelayState")][PSTR("state")] != nullptr){
@@ -413,6 +466,16 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
         if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("autoOff")] != nullptr){relays[index].autoOff = doc[PSTR("setRelay")][PSTR("relay")][PSTR("autoOff")].as<unsigned long>();}
         if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("label")] != nullptr){relays[index].label = doc[PSTR("setRelay")][PSTR("relay")][PSTR("label")].as<String>();}
         if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("overrunInSec")] != nullptr){relays[index].overrunInSec = doc[PSTR("setRelay")][PSTR("relay")][PSTR("overrunInSec")].as<uint16_t>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("datetime")] != nullptr){relays[index].datetime = doc[PSTR("setRelay")][PSTR("relay")][PSTR("datetime")].as<unsigned long>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("duration")] != nullptr){relays[index].duration = doc[PSTR("setRelay")][PSTR("relay")][PSTR("duration")].as<unsigned long>();}
+        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")] != nullptr){
+          for(uint8_t j = 0; j < maxTimers; j++){
+            if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("h")] != nullptr){relays[index].timers[j].hour = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("h")].as<uint8_t>();}
+            if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("i")] != nullptr){relays[index].timers[j].minute = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("i")].as<uint8_t>();}
+            if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("s")] != nullptr){relays[index].timers[j].second = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("s")].as<uint8_t>();}
+            if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("d")] != nullptr){relays[index].timers[j].duration = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("d")].as<unsigned long>();} 
+          }
+        }
       }
       
       state.fsaveAppRelay = true;
@@ -472,6 +535,16 @@ void convertAppRelay(JsonDocument &doc, bool direction){
         if(doc[PSTR("relays")][i][PSTR("state")] != nullptr){relays[i].state = doc[PSTR("relays")][i][PSTR("state")].as<bool>();}else{relays[i].state = false;}
         if(doc[PSTR("relays")][i][PSTR("label")] != nullptr){relays[i].label = doc[PSTR("relays")][i][PSTR("label")].as<String>();}else{relays[i].label = PSTR("No label");}
         if(doc[PSTR("relays")][i][PSTR("overrunInSec")] != nullptr){relays[i].overrunInSec = doc[PSTR("relays")][i][PSTR("overrunInSec")].as<uint16_t>();}else{relays[i].overrunInSec = 3600;}
+        if(doc[PSTR("relays")][i][PSTR("duration")] != nullptr){relays[i].duration = doc[PSTR("relays")][i][PSTR("duration")].as<unsigned long>();}else{relays[i].duration = 0;}
+        if(doc[PSTR("relays")][i][PSTR("datetime")] != nullptr){relays[i].datetime = doc[PSTR("relays")][i][PSTR("datetime")].as<unsigned long>();}else{relays[i].datetime = 0;}
+        if(doc[PSTR("relays")][i][PSTR("timers")] != nullptr){
+          for(uint8_t j = 0; j < countof(relays[i].timers); j++){
+            if(doc[PSTR("relays")][i][PSTR("timers")][j][PSTR("h")] != nullptr){relays[i].timers[j].hour = doc[PSTR("relays")][i][PSTR("timers")][j][PSTR("h")].as<uint8_t>();}else{relays[i].timers[j].hour = 0;}
+            if(doc[PSTR("relays")][i][PSTR("timers")][j][PSTR("i")] != nullptr){relays[i].timers[j].minute = doc[PSTR("relays")][i][PSTR("timers")][j][PSTR("i")].as<uint8_t>();}else{relays[i].timers[j].minute = 0;}
+            if(doc[PSTR("relays")][i][PSTR("timers")][j][PSTR("s")] != nullptr){relays[i].timers[j].second = doc[PSTR("relays")][i][PSTR("timers")][j][PSTR("s")].as<uint8_t>();}else{relays[i].timers[j].second = 0;}
+            if(doc[PSTR("relays")][i][PSTR("timers")][j][PSTR("d")] != nullptr){relays[i].timers[j].duration = doc[PSTR("relays")][i][PSTR("timers")][j][PSTR("d")].as<unsigned long>();}else{relays[i].timers[j].duration = 0;}
+          }
+        }
       }
     }
   }
@@ -490,6 +563,17 @@ void convertAppRelay(JsonDocument &doc, bool direction){
       _relays[i][PSTR("state")] = relays[i].state;
       _relays[i][PSTR("label")] = relays[i].label;
       _relays[i][PSTR("overrunInSec")] = relays[i].overrunInSec;
+      _relays[i][PSTR("duration")] = relays[i].duration;
+      _relays[i][PSTR("datetime")] = relays[i].datetime;
+      
+      // Add timers array
+      JsonArray timers = _relays[i][PSTR("timers")].to<JsonArray>();
+      for (uint8_t j = 0; j < maxTimers; j++) {
+          timers[j][PSTR("h")] = relays[i].timers[j].hour;
+          timers[j][PSTR("i")] = relays[i].timers[j].minute;
+          timers[j][PSTR("s")] = relays[i].timers[j].second;
+          timers[j][PSTR("d")] = relays[i].timers[j].duration;
+      }
     }
   }
 }

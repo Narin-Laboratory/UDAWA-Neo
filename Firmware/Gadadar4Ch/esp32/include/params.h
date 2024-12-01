@@ -40,39 +40,43 @@
 #define USE_HW_RTC
 #endif
 
-#define POWERSENSOR_STACKSIZE 3000UL
-#define ALARM_STACKSIZE 3000UL
-#define RELAYCONTROL_STACKSIZE 3000UL
+#define POWERSENSOR_STACKSIZE 4096UL
+#define ALARM_STACKSIZE 4096UL
+#define RELAYCONTROL_STACKSIZE 4096UL
 
 #define IOEXTENDER_ADDRESS 0x20
 
-const int tbPort = 8883;
-constexpr char tbAddr[] PROGMEM = "prita.undiknas.ac.id";
-constexpr char spiffsBinUrl[] PROGMEM = "http://prita.undiknas.ac.id/cdn/firmware/gadadar4ch.spiffs.bin";
-constexpr char model[] PROGMEM = "Gadadar4Ch";
-constexpr char hname[] PROGMEM = "gadadar4ch";
-constexpr char group[] PROGMEM = "Gadadar";
-constexpr char logIP[] PROGMEM = "255.255.255.255";
-const uint8_t logLev = 5;
-const bool fIoT = true;
-const bool fWOTA = true;
-const bool fWeb = true;
-const int gmtOff = 28880;
-const uint16_t logPort = 29514;
-const bool fInit = false;
-const bool LEDOn = false;
-const uint8_t pinLEDR = 27;
-const uint8_t pinLEDG = 14;
-const uint8_t pinLEDB = 12;
-const uint8_t pinBuzz = 32;
+#define MAX_CRASH_COUNTER 3
 
-const uint8_t s1tx = 26; //Neo 26, V3.1 33, V3 32
-const uint8_t s1rx = 25; //Neo 25, V3.1 32, V3 4
-const unsigned long intvWeb = 1;
-const unsigned long intvAttr = 5;
-const unsigned long intvTele = 900;
-const int maxWatt = 2000;
-const bool relayON = false;
-const std::array<String, 4> availableRelayMode = {PSTR("Manual"), PSTR("Duty Cycle"), PSTR("Time Daily"), PSTR("Specific Datetime")};
+static const int tbPort = 8883;
+static constexpr char tbAddr[] PROGMEM = "prita.undiknas.ac.id";
+static constexpr char spiffsBinUrl[] PROGMEM = "http://prita.undiknas.ac.id/cdn/firmware/gadadar4ch.spiffs.bin";
+static constexpr char model[] PROGMEM = "Gadadar4Ch";
+static constexpr char hname[] PROGMEM = "gadadar4ch";
+static constexpr char group[] PROGMEM = "Gadadar";
+static constexpr char logIP[] PROGMEM = "255.255.255.255";
+static const uint8_t logLev = 5;
+static const bool fIoT = true;
+static const bool fWOTA = true;
+static const bool fWeb = true;
+static const int gmtOff = 28880;
+static const uint16_t logPort = 29514;
+static const bool fInit = false;
+static const bool LEDOn = false;
+static const uint8_t pinLEDR = 27;
+static const uint8_t pinLEDG = 14;
+static const uint8_t pinLEDB = 12;
+static const uint8_t pinBuzz = 32;
+
+static const uint8_t s1tx = 26; //Neo 26, V3.1 33, V3 32
+static const uint8_t s1rx = 25; //Neo 25, V3.1 32, V3 4
+static const unsigned long intvWeb = 1;
+static const unsigned long intvAttr = 5;
+static const unsigned long intvTele = 900;
+static const int maxWatt = 2000;
+static const bool relayON = false;
+static const std::array<String, 4> availableRelayMode = {PSTR("Manual"), PSTR("Duty Cycle"), PSTR("Time Daily"), PSTR("Specific Datetime")};
+static const uint8_t maxTimers = 10;
+
 
 #endif

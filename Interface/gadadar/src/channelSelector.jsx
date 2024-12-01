@@ -4,7 +4,7 @@ import { useAppState } from './AppStateContext';
 import SlidersIcon from './assets/sliders.svg';
 
 const RelaySelector = () => {
-  const { ws, sendWsMessage } = useAppState();
+  const { ws, sendWsMessage, cfg } = useAppState();
   const [relays, setRelays] = useState([
     {
         "pin": 0,
@@ -16,7 +16,10 @@ const RelaySelector = () => {
         "autoOff": 0,
         "state": false,
         "label": "No label",
-        "overrunInSec": 0
+        "overrunInSec": 0,
+        "timers": [{}],
+        "datetime": 0,
+        "duration": 0
     }
   ]);
   const [availableRelayMode, setAvailableRelayMode] = useState(["Manual"]);
@@ -27,6 +30,19 @@ const RelaySelector = () => {
 
   const toggleRelayAdjustModalVisibility = () => {
     setIsRelayAdjustModalVisible(!isRelayAdjustModalVisible);
+  };
+
+  const handleTimerChange = (index, event) => {
+    const { name, value } = event.target;
+    setRelays((prevRelays) => {
+      const updatedRelays = [...prevRelays];
+      updatedRelays[selectedRelayIndex].timers[index] = {
+        ...updatedRelays[selectedRelayIndex].timers[index],
+        [name]: parseInt(value)
+      };
+      setDisableSubmitButton(false);
+      return updatedRelays;
+    });
   };
 
   useEffect(() => {
@@ -41,6 +57,7 @@ const RelaySelector = () => {
         if (data.relays) {
           if (!isRelayAdjustModalVisible) {
             setRelays(data.relays);
+            console.log(data)
           }
         } 
         else if (data.availableRelayMode) {
@@ -64,7 +81,13 @@ const RelaySelector = () => {
   };
 
   const handleRelayAdjustFormChange = (e) => {
-    const { name, value } = e.target;
+    var { name, value } = e.target;
+
+    console.log(value);
+    if(name == "datetime"){
+      value = (new Date(value).getTime() / 1000) + cfg.gmtOff;
+    }
+    console.log(value);
     setRelays((prevRelays) => {
       const updatedRelays = [...prevRelays];
       updatedRelays[selectedRelayIndex] = {
@@ -132,15 +155,26 @@ const RelaySelector = () => {
           <input type="checkbox" role="switch" checked={relays[selectedRelayIndex].state} onChange={handleToggleSwitchChange} disabled={relays[selectedRelayIndex].mode == 0 ? false : true}/>
           Status: {relays[selectedRelayIndex].state ? 'ON' : 'OFF'}
         </label>
-        <p>
-          This relay is operated by <strong>{availableRelayMode[relays[selectedRelayIndex].mode]}</strong> mode.
-          {relays[selectedRelayIndex].mode == 0 && (
-            <span> Auto Off: <strong>{relays[selectedRelayIndex].autoOff} seconds</strong>.</span>
+        <div>
+          <br/>
+          <p>This relay is operated by <strong>{availableRelayMode[relays[selectedRelayIndex].mode]}</strong> mode.</p>
+          {relays[selectedRelayIndex].mode == 0 && relays[selectedRelayIndex].autoOff > 0 && (
+            <p> Auto Off: <strong>{relays[selectedRelayIndex].autoOff} seconds</strong>.</p>
           )}
           {relays[selectedRelayIndex].mode == 1 && (
-            <span> Duty Cycle: <strong>{relays[selectedRelayIndex].dutyCycle}%</strong> for <strong>{relays[selectedRelayIndex].dutyRange} seconds</strong>.</span>
+            <p> Duty Cycle: <strong>{relays[selectedRelayIndex].dutyCycle}%</strong> for <strong>{relays[selectedRelayIndex].dutyRange} seconds</strong>.</p>
           )}
-        </p>
+          {relays[selectedRelayIndex].mode == 2 && (
+            relays[selectedRelayIndex].timers.map((timer, index) => (
+              timer.d > 0 && (
+                <p key={index}> Timer operation ({index+1}): <strong>{timer.h}:{timer.i}:{timer.s}</strong> for <strong>{timer.d} seconds</strong>.</p>
+              )
+            ))
+          )}
+          {relays[selectedRelayIndex].mode == 3 && (
+            <p> Specific datetime: <strong>{relays[selectedRelayIndex].datetime ? new Date(relays[selectedRelayIndex].datetime * 1000).toISOString().slice(0, 16) : ''}</strong> for <strong>{relays[selectedRelayIndex].duration} seconds</strong>.</p>
+          )}
+        </div>
       </fieldset>
 
       
@@ -244,6 +278,53 @@ const RelaySelector = () => {
                 </fieldset>
             )}
             {/* End Only for Duty Cycle Mode */}
+            {/* Start Only for Time Daily Mode */}
+            {relays[selectedRelayIndex].mode == 2 && (
+              <fieldset>
+                Timer Configuration
+                <p>
+                  <small>
+                    Relay will be activated at the specified time daily and duration.
+                    E.g. 06:00:00:300 for 6 AM (5 minutes ON), 18:00:00:120 for 6 PM (2 minutes ON).
+                  </small>
+                </p>
+                {relays[selectedRelayIndex].timers.map((timer, index) => (
+                  <fieldset key={index} role="group">
+                    <legend>Timer {index + 1}</legend>
+                    <input name="h" type="number" value={timer.h} placeholder="Hour" onChange={(e) => handleTimerChange(index, e)} />
+                    <input name="i" type="number" value={timer.i} placeholder="Minute" onChange={(e) => handleTimerChange(index, e)} />
+                    <input name="s" type="number" value={timer.s} placeholder="Second" onChange={(e) => handleTimerChange(index, e)} />
+                    <input name="d" type="number" value={timer.d} placeholder="Duration" onChange={(e) => handleTimerChange(index, e)}/>
+                  </fieldset>
+                ))}
+              </fieldset>
+            )}
+            {/* End Only for Time Daily Mode */}
+            {/* Start Only for Exact Datetime Mode */}
+            {relays[selectedRelayIndex].mode == 3 && (
+                <fieldset>
+                  <label>
+                    Datetime <strong>({relays[selectedRelayIndex].datetime ? new Date(relays[selectedRelayIndex].datetime * 1000).toISOString().slice(0, 16) : ''})</strong>
+                    <input type="datetime-local" name="datetime" aria-label="Datetime" value={relays[selectedRelayIndex].datetime ? new Date(relays[selectedRelayIndex].datetime * 1000).toISOString().slice(0, 16) : ''} onChange={handleRelayAdjustFormChange}></input>
+                    <small id="datetime-helper">
+                      Control relay based on exact date and time.
+                    </small>
+                  </label>
+                  <label>
+                    Duration
+                    <input
+                      type="number"
+                      name="duration"
+                      onChange={handleRelayAdjustFormChange}
+                      placeholder={relays[selectedRelayIndex].duration.toString()}
+                    />
+                    <small id="duration-helper">
+                      Active duration in seconds.
+                    </small>
+                  </label>
+                </fieldset>
+            )}
+            {/* End Only for Exact Datetime Mode */}
             <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? "Saved!" : "Save"} />
           </form>
         </article>
