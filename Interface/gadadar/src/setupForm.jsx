@@ -247,7 +247,7 @@ const SetupForm = () => {
           )}
           <input 
               type="button" 
-              onClick={() => sendWsMessage({reboot: ''})} 
+              onClick={() => sendWsMessage({reboot: ''})}
               value="Reboot" 
               class="outline secondary" 
             />
