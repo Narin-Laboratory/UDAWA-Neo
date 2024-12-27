@@ -300,9 +300,6 @@ void relayControlTaskRoutine(void *arg){
       }
       state.fIOExtender = IOExtender.begin();
       udawa.logger->error(PSTR(__func__), PSTR("Failed to initialize IOExtender!\n"));
-
-      vTaskDelay((const TickType_t) 1000 / portTICK_PERIOD_MS);
-      continue;
     }
 
     vTaskDelay((const TickType_t) 1000 / portTICK_PERIOD_MS);
