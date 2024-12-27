@@ -1,7 +1,4 @@
 #include "main.h"
-
-Udawa udawa;
-
 void setup() {
   udawa.begin();
 
@@ -11,6 +8,7 @@ void setup() {
 
   udawa.addOnWsEvent(_onWsEventMain);
   udawa.addOnSyncClientAttributesCallback(_onSyncClientAttributesCallback);
+  udawa.addOnThingsboardConnected(_onThingsboardConnectedCallback);
 
   udawa.logger->verbose(PSTR(__func__), PSTR("Initial config.relayON value: %d\n"), config.relayON);
   
@@ -144,11 +142,9 @@ void powerSensorTaskRoutine(void *arg){
 
   while (true)
   {
-    HardwareSerial PZEMSerial(1);
-    PZEM004Tv30 PZEM(PZEMSerial, config.s1rx, config.s1tx);
     state.fPowerSensor = !isnan(PZEM.voltage());
     if(!state.fPowerSensor){
-      udawa.logger->warn(PSTR(__func__), PSTR("Failed to initialize powerSensor!\n"));
+      //udawa.logger->warn(PSTR(__func__), PSTR("Failed to initialize powerSensor!\n"));
     }
 
     bool fFailureReadings = false;
@@ -278,7 +274,7 @@ void relayControlTaskRoutine(void *arg){
   state.fIOExtender =  IOExtender.begin();
 
   if(!state.fIOExtender){
-    udawa.logger->error(PSTR(__func__), PSTR("Failed to initialize IOExtender!\n"));
+    //udawa.logger->error(PSTR(__func__), PSTR("Failed to initialize IOExtender!\n"));
   }
   else{
     udawa.logger->verbose(PSTR(__func__), PSTR("IOExtender initialized.\n"));
@@ -299,7 +295,6 @@ void relayControlTaskRoutine(void *arg){
         IOExtender.pinMode(relays[i].pin, OUTPUT);
       }
       state.fIOExtender = IOExtender.begin();
-      udawa.logger->error(PSTR(__func__), PSTR("Failed to initialize IOExtender!\n"));
     }
 
     vTaskDelay((const TickType_t) 1000 / portTICK_PERIOD_MS);
@@ -610,5 +605,29 @@ void convertAppConfig(JsonDocument &doc, bool direction){
   }
 }
 
+#ifdef USE_IOT
+void _onThingsboardConnectedCallback(){
+  udawa.tb.RPC_Subscribe(state.callbacks.cbegin(), state.callbacks.cend());
+}
+
+void processRPCSwitch(const JsonVariantConst &data, JsonDocument &response) {
+  uint8_t index = 255;
+  if(data[PSTR("index")] != nullptr){
+    index = data[PSTR("index")].as<uint8_t>();
+  }
+
+  if(index < 255 && index >= 0 && index < countof(relays) && data[PSTR("state")] != nullptr){
+    setRelay(index, data[PSTR("state")].as<bool>());
+    response.set(PSTR("OK"));
+  }
+  else if(index < 255 && index >= 0 && index < countof(relays)){
+    response[PSTR("channel")] = index + 1;
+    response[PSTR("state")] = relays[data[PSTR("index")].as<uint8_t>()].state ? PSTR("ON") : PSTR("OFF");
+  }
+  else{
+    response.set(PSTR("Invalid parameters."));
+  }
+}
+#endif
 
 #endif

@@ -68,6 +68,11 @@ Relay relays[4] = {
     Relay(3, 0, 0, 0, 0, 0, 0, 0, false, PSTR("No label"), 3600, 0, 0)
 };
 
+#ifdef USE_IOT
+void _onThingsboardConnectedCallback();
+void processRPCSwitch(const JsonVariantConst &data, JsonDocument &response);
+#endif
+
 struct State {
     bool fPowerSensor = false;
     bool fResetPowerSensor = false;
@@ -82,14 +87,18 @@ struct State {
     bool fsaveAppRelay = false;
     bool fSaveAppState = false;
     bool fsyncClientAttributes = false;
+
+    #ifdef USE_IOT
+    const std::array<RPC_Callback, 1> callbacks = {
+      RPC_Callback{ PSTR("switch"), processRPCSwitch }
+    };
+    #endif
 };
 State state;
 
 GenericConfig appConfig(PSTR("/appConfig.json"));
 GenericConfig appState(PSTR("/appState.json"));
 GenericConfig appRelay(PSTR("/appRelay.json"));
-
-PCF8575 IOExtender(IOEXTENDER_ADDRESS);
 
 void loadAppConfig();
 void saveAppConfig();
@@ -107,7 +116,14 @@ void setRelay(uint8_t index, bool output);
 #ifdef USE_LOCAL_WEB_INTERFACE
 void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
 #endif
+
+
 void _onSyncClientAttributesCallback(uint8_t direction);
+
+Udawa udawa;
+HardwareSerial PZEMSerial(1);
+PZEM004Tv30 PZEM(PZEMSerial, config.s1rx, config.s1tx);
+PCF8575 IOExtender(IOEXTENDER_ADDRESS);
 
 /**
  * @brief UDAWA Common Alarm Code Definition

@@ -15,10 +15,10 @@
     #define WS_RATE_LIMIT_INTERVAL 1000UL
 #endif
 
-//#define USE_IOT
+#define USE_IOT
 #ifdef USE_IOT
     #define THINGSBOARD_ENABLE_STREAM_UTILS true
-    #define USE_IOT_SECURE
+    //#define USE_IOT_SECURE
     #define USE_IOT_OTA
     const uint8_t IOT_FIRMWARE_FAILURE_RETRIES = 10;
     const uint16_t IOT_FIRMWARE_PACKET_SIZE = 4096;
@@ -50,7 +50,7 @@
 
 static const int tbPort = 8883;
 static constexpr char tbAddr[] PROGMEM = "prita.undiknas.ac.id";
-static constexpr char spiffsBinUrl[] PROGMEM = "http://prita.undiknas.ac.id/cdn/firmware/gadadar4ch.spiffs.bin";
+static constexpr char spiffsBinUrl[] PROGMEM = "http://udawa.local/cdn/firmware/gadadar4ch.spiffs.bin";
 static constexpr char model[] PROGMEM = "Gadadar4Ch";
 static constexpr char hname[] PROGMEM = "gadadar4ch";
 static constexpr char group[] PROGMEM = "Gadadar";
