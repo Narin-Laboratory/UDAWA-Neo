@@ -16,10 +16,10 @@ board_build.filesystem = littlefs
 framework = arduino
 monitor_speed = 115200
 monitor_filters = esp32_exception_decoder
-upload_protocol = esptool
-upload_port = /dev/ttyUSB0
+;upload_protocol = esptool
+;upload_port = /dev/ttyUSB0
 ;upload_protocol = espota
-;upload_port = sf-jembrana.local  ;pompa.local
+;upload_port = 192.168.1.102  ;gadadar4ch.local
 ;upload_flags =
 ;	--port=3232
 ;	--auth=password
@@ -31,5 +31,8 @@ build_flags =
 	-I include         ; For your "include" directory
     -I .               ; Add this line to include the project root
     -I src             ; For your "src" directory (optional)
+	-I .pio/libdeps/Gadadar4Ch/libudawa-esp32/src
 lib_deps =
 	https://github.com/Narin-Laboratory/libudawa-esp32.git#gigarefactor
+	https://github.com/mandulaj/PZEM-004T-v30.git
+	https://github.com/xreef/PCF8575_library.git
