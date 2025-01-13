@@ -294,13 +294,19 @@ const SetupForm = () => {
           { cfg.fInit && (
             <input type="button" onClick={() => setShowSetupForm(false)} value="Close" class="outline primary" />
           )}
-          { cfg.fInit && (
           <input 
               type="button" 
               onClick={() => sendWsMessage({reboot: 3})}
               value="Reboot" 
               class="outline secondary" 
             />
+          { cfg.fInit && (
+            <input 
+            type="button" 
+            onClick={() => sendWsMessage({FSUpdate: true})}
+            value="Update Web Interface" 
+            class="outline secondary" 
+          />
           )}
           { cfg.fInit && (
             <input 
