@@ -96,10 +96,10 @@ void loadAppConfig(){
     convertAppConfig(doc, true);
     if(config.s1rx == 0){config.s1rx = s1rx;}
     if(config.s1tx == 0){config.s1rx = s1tx;}
-    if(config.intvWeb == 0){config.intvWeb = 1;}
-    if(config.intvAttr == 0){config.intvAttr = 5;}
-    if(config.intvTele == 0){config.intvTele = 900;}
-    if(config.maxWatt == 0){config.maxWatt = 2000;}
+    if(config.intvWeb == 0){config.intvWeb = intvWeb;}
+    if(config.intvAttr == 0){config.intvAttr = intvAttr;}
+    if(config.intvTele == 0){config.intvTele = intvTele;}
+    if(config.maxWatt == 0){config.maxWatt = maxWatt;}
   }else{
     udawa->crashState.fFSDownloading = true;
   }
