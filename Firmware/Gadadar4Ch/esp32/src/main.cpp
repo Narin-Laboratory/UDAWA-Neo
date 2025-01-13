@@ -101,6 +101,8 @@ void loadAppConfig(){
     if(config.intvTele == 0){config.intvTele = intvTele;}
     if(config.maxWatt == 0){config.maxWatt = maxWatt;}
   }else{
+    loadAppRelay();
+    loadAppState();
     udawa->crashState.fFSDownloading = true;
   }
   
@@ -158,6 +160,7 @@ void powerSensorTaskRoutine(void *arg){
 
   while (true)
   {
+    udawa->logger->debug(PSTR(__func__), PSTR("Power sensor task is running. s1rx: $s, s1tx: %s\n"), config.s1rx, config.s1tx);
     HardwareSerial PZEMSerial(1);
     PZEM004Tv30 PZEM(PZEMSerial, config.s1rx, config.s1tx);
     
