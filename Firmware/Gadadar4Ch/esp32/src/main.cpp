@@ -14,12 +14,12 @@ void setup() {
   udawa->logger->verbose(PSTR(__func__), PSTR("Initial config.relayON value: %d\n"), config.relayON);
   
   if (!udawa->crashState.fSafeMode) {
-    /*if(state.xHandlePowerSensor == NULL){
+    if(state.xHandlePowerSensor == NULL){
       state.xReturnedPowerSensor = xTaskCreatePinnedToCore(powerSensorTaskRoutine, PSTR("powerSensor"), POWERSENSOR_STACKSIZE, NULL, 1, &state.xHandlePowerSensor, 1);
       if(state.xReturnedPowerSensor == pdPASS){
         udawa->logger->warn(PSTR(__func__), PSTR("Task powerSensor has been created.\n"));
       }
-    }*/
+    }
 
     if(state.xHandleRelayControl == NULL){
       state.xReturnedRelayControl = xTaskCreatePinnedToCore(relayControlTaskRoutine, PSTR("relayControl"), RELAYCONTROL_STACKSIZE, NULL, 1, &state.xHandleRelayControl, 1);
