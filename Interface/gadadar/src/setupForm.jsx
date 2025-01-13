@@ -239,18 +239,69 @@ const SetupForm = () => {
                 Enter the energy price currency
               </small>
             </label>
+            <hr/>
+            <label>
+              <input
+                type="checkbox"
+                name="fIoT"
+                checked={cfg.fIoT}
+                onChange={(e) => {
+                  setCfg({ ...cfg, fIoT: e.target.checked });
+                  setDisableSubmitButton(false);
+                }}
+              />
+              Enable IoT mode
+            </label>
+            <label>
+              Tier 2 Agent Address
+              <input
+                type="text"
+                name="cfg.tbAddr"
+                onChange={handleChange}
+                placeholder={cfg.tbAddr}
+              />
+              <small id="tbAddr">
+                Enter the URL of the Tier 2 agent. E.g. udawa.local
+              </small>
+            </label>
+            <label>
+              Tier 2 Agent Port
+              <input
+                type="text"
+                name="cfg.tbPort"
+                onChange={handleChange}
+                placeholder={cfg.tbPort}
+              />
+              <small id="tbAddr">
+                Enter the port of the Tier 2 agent. E.g. 1883
+              </small>
+            </label>
+            <label>
+              Binary Update URL
+              <input
+                type="text"
+                name="binURL"
+                onChange={handleChange}
+                placeholder={cfg.binURL}
+              />
+              <small id="binURL">
+                Enter the URL of the binary file of the interface. E.g. http://udawa.local/cdn/firmware/gadadar4ch.bin
+              </small>
+            </label>
           </fieldset>
         )}
           <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? "Saved!" : "Save"} />
           { cfg.fInit && (
             <input type="button" onClick={() => setShowSetupForm(false)} value="Close" class="outline primary" />
           )}
+          { cfg.fInit && (
           <input 
               type="button" 
-              onClick={() => sendWsMessage({reboot: ''})}
+              onClick={() => sendWsMessage({reboot: 3})}
               value="Reboot" 
               class="outline secondary" 
             />
+          )}
           { cfg.fInit && (
             <input 
               type="button" 

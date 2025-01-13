@@ -119,6 +119,7 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
 
 
 void _onSyncClientAttributesCallback(uint8_t direction);
+void _onFSDownloadedCallback();
 
 Udawa udawa;
 PCF8575 IOExtender(IOEXTENDER_ADDRESS);

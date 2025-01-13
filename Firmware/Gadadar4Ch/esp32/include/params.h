@@ -54,7 +54,7 @@
 
 static const int tbPort = 1883;
 static constexpr char tbAddr[] PROGMEM = "udawa.local";
-static constexpr char spiffsBinUrl[] PROGMEM = "http://udawa.local/cdn/firmware/gadadar4ch.spiffs.bin";
+static constexpr char binURL[] PROGMEM = "http://udawa.or.id/cdn/firmware/gadadar4ch.bin";
 static constexpr char model[] PROGMEM = "Gadadar4Ch";
 static constexpr char hname[] PROGMEM = "gadadar4ch";
 static constexpr char group[] PROGMEM = "Gadadar";

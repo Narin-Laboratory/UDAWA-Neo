@@ -9,6 +9,7 @@ void setup() {
   udawa.addOnWsEvent(_onWsEventMain);
   udawa.addOnSyncClientAttributesCallback(_onSyncClientAttributesCallback);
   udawa.addOnThingsboardConnected(_onThingsboardConnectedCallback);
+  udawa.addOnFSDownloadedCallback(_onFSDownloadedCallback);
 
   udawa.logger->verbose(PSTR(__func__), PSTR("Initial config.relayON value: %d\n"), config.relayON);
   
@@ -93,6 +94,8 @@ void loadAppConfig(){
   udawa.logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
   if(status){
     convertAppConfig(doc, true);
+  }else{
+    udawa.crashState.fFSDownloading = true;
   }
 }
 
@@ -641,5 +644,11 @@ void processRPCSwitch(const JsonVariantConst &data, JsonDocument &response) {
   }
 }
 #endif
+
+void _onFSDownloadedCallback(){
+  saveAppConfig();
+  saveAppRelay();
+  saveAppState();
+}
 
 #endif
