@@ -10,13 +10,13 @@
 #include "PCF8575.h"
 
 struct Config {
-    uint8_t s1tx; //Neo 26, V3.1 33, V3 32
-    uint8_t s1rx; //Neo 25, V3.1 32, V3 4
-    unsigned long intvWeb;
-    unsigned long intvAttr;
-    unsigned long intvTele;
-    int maxWatt;
-    bool relayON;
+    uint8_t s1tx = 26; //Neo 26, V3.1 33, V3 32
+    uint8_t s1rx = 26; //Neo 25, V3.1 32, V3 4
+    unsigned long intvWeb = 1;
+    unsigned long intvAttr = 5;
+    unsigned long intvTele = 900;
+    int maxWatt = 2200;
+    bool relayON = false;
 };
 Config config;
 
