@@ -18,14 +18,14 @@
 #define USE_IOT
 #ifdef USE_IOT
     #define THINGSBOARD_ENABLE_STREAM_UTILS true
-    //#define USE_IOT_SECURE
+    #define USE_IOT_SECURE
     #define USE_IOT_OTA
     const uint8_t IOT_FIRMWARE_FAILURE_RETRIES = 10;
     const uint16_t IOT_FIRMWARE_PACKET_SIZE = 4096;
     #define IOT_MAX_MESSAGE_SIZE 2048UL
     #define IOT_BUFFER_SIZE 2048UL
     #ifdef USE_IOT_SECURE
-    #define IOT_STACKSIZE_TB 6000UL
+    #define IOT_STACKSIZE_TB 9000UL
     #else
     #define IOT_STACKSIZE_TB 6000UL
     #endif    

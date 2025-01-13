@@ -256,7 +256,7 @@ const SetupForm = () => {
               Tier 2 Agent Address
               <input
                 type="text"
-                name="cfg.tbAddr"
+                name="tbAddr"
                 onChange={handleChange}
                 placeholder={cfg.tbAddr}
               />
@@ -268,7 +268,7 @@ const SetupForm = () => {
               Tier 2 Agent Port
               <input
                 type="text"
-                name="cfg.tbPort"
+                name="tbPort"
                 onChange={handleChange}
                 placeholder={cfg.tbPort}
               />
@@ -286,6 +286,30 @@ const SetupForm = () => {
               />
               <small id="binURL">
                 Enter the URL of the binary file of the interface. E.g. http://udawa.local/cdn/firmware/gadadar4ch.bin
+              </small>
+            </label>
+            <label>
+              Device Provisioning Key
+              <input
+                type="text"
+                name="provDK"
+                onChange={handleChange}
+                placeholder=""
+              />
+              <small id="provDK">
+                Enter the device provisioning key. You can get the key from Thingsboard Tier 2 agent.
+              </small>
+            </label>
+            <label>
+              Device Provisioning Secret
+              <input
+                type="text"
+                name="provDS"
+                onChange={handleChange}
+                placeholder=""
+              />
+              <small id="provDS">
+                Enter the device provisioning secret. You can get the secret from Thingsboard Tier 2 agent.
               </small>
             </label>
           </fieldset>

@@ -71,6 +71,7 @@ Relay relays[4] = {
 #ifdef USE_IOT
 void _onThingsboardConnectedCallback();
 void processRPCSwitch(const JsonVariantConst &data, JsonDocument &response);
+void processRPCFSUpdate(const JsonVariantConst &data, JsonDocument &response);
 #endif
 
 struct State {
@@ -89,8 +90,9 @@ struct State {
     bool fsyncClientAttributes = false;
 
     #ifdef USE_IOT
-    const std::array<RPC_Callback, 1> callbacks = {
-      RPC_Callback{ PSTR("switch"), processRPCSwitch }
+    const std::array<RPC_Callback, 2> callbacks = {
+      RPC_Callback{ PSTR("switch"), processRPCSwitch },
+      RPC_Callback{ PSTR("FSUpdate"), processRPCFSUpdate }
     };
     #endif
 };
@@ -121,7 +123,7 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
 void _onSyncClientAttributesCallback(uint8_t direction);
 void _onFSDownloadedCallback();
 
-Udawa udawa;
+Udawa* udawa = Udawa::getInstance();
 PCF8575 IOExtender(IOEXTENDER_ADDRESS);
 
 /**
