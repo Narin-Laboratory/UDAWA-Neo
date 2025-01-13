@@ -121,8 +121,6 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
 void _onSyncClientAttributesCallback(uint8_t direction);
 
 Udawa udawa;
-HardwareSerial PZEMSerial(1);
-PZEM004Tv30 PZEM(PZEMSerial, config.s1rx, config.s1tx);
 PCF8575 IOExtender(IOEXTENDER_ADDRESS);
 
 /**

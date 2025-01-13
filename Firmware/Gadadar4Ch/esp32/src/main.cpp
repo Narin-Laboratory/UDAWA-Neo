@@ -52,6 +52,12 @@ void loop() {
       }
       #endif
 
+      #ifdef USE_IOT
+      JsonDocument doc;
+      doc[PSTR("heap")] = ESP.getFreeHeap();
+      udawa.iotSendTelemetry(doc);
+      #endif
+
       if(state.fsaveAppRelay){
         saveAppRelay();
         state.fsaveAppRelay = false;
@@ -142,6 +148,9 @@ void powerSensorTaskRoutine(void *arg){
 
   while (true)
   {
+    HardwareSerial PZEMSerial(1);
+    PZEM004Tv30 PZEM(PZEMSerial, config.s1rx, config.s1tx);
+    
     state.fPowerSensor = !isnan(PZEM.voltage());
     if(!state.fPowerSensor){
       //udawa.logger->warn(PSTR(__func__), PSTR("Failed to initialize powerSensor!\n"));
@@ -424,6 +433,11 @@ void setRelay(uint8_t index, bool output){
       state.fsyncClientAttributes = true;
       state.fsaveAppRelay = true;
     }
+
+    #ifdef USE_IOT
+    JsonDocument doc;
+    doc[(String("ch") + String(index+1)).c_str()] = relays[index].state;
+    #endif
   }
 }
 

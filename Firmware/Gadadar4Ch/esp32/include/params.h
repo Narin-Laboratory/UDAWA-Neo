@@ -24,7 +24,11 @@
     const uint16_t IOT_FIRMWARE_PACKET_SIZE = 4096;
     #define IOT_MAX_MESSAGE_SIZE 2048UL
     #define IOT_BUFFER_SIZE 2048UL
+    #ifdef USE_IOT_SECURE
     #define IOT_STACKSIZE_TB 6000UL
+    #else
+    #define IOT_STACKSIZE_TB 6000UL
+    #endif    
     #define THINGSBOARD_ENABLE_DYNAMIC true
     #define THINGSBOARD_ENABLE_OTA true
     #define THINGSBOARD_ENABLE_DEBUG false
@@ -48,8 +52,8 @@
 
 #define MAX_CRASH_COUNTER 3
 
-static const int tbPort = 8883;
-static constexpr char tbAddr[] PROGMEM = "prita.undiknas.ac.id";
+static const int tbPort = 1883;
+static constexpr char tbAddr[] PROGMEM = "udawa.local";
 static constexpr char spiffsBinUrl[] PROGMEM = "http://udawa.local/cdn/firmware/gadadar4ch.spiffs.bin";
 static constexpr char model[] PROGMEM = "Gadadar4Ch";
 static constexpr char hname[] PROGMEM = "gadadar4ch";
