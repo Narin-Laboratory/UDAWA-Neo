@@ -160,7 +160,6 @@ void powerSensorTaskRoutine(void *arg){
 
   while (true)
   {
-    udawa->logger->debug(PSTR(__func__), PSTR("Power sensor task is running. s1rx: %d, s1tx: %d\n"), config.s1rx, config.s1tx);
     HardwareSerial PZEMSerial(1);
     PZEM004Tv30 PZEM(PZEMSerial, config.s1rx, config.s1tx);
     
