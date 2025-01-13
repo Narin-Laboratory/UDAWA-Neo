@@ -18,7 +18,7 @@
 #define USE_IOT
 #ifdef USE_IOT
     #define THINGSBOARD_ENABLE_STREAM_UTILS true
-    //#define USE_IOT_SECURE
+    #define USE_IOT_SECURE
     #define USE_IOT_OTA
     const uint8_t IOT_FIRMWARE_FAILURE_RETRIES = 10;
     const uint16_t IOT_FIRMWARE_PACKET_SIZE = 4096;
@@ -52,9 +52,15 @@
 
 #define MAX_CRASH_COUNTER 3
 
+#ifdef USE_IOT_SECURE
+static const int tbPort = 8883;
+static constexpr char tbAddr[] PROGMEM = "prita.undiknas.ac.id";
+static constexpr char binURL[] PROGMEM = "https://udawa.or.id/cdn/firmware/gadadar4ch.bin";
+#else
 static const int tbPort = 1883;
 static constexpr char tbAddr[] PROGMEM = "udawa.local";
 static constexpr char binURL[] PROGMEM = "http://udawa.or.id/cdn/firmware/gadadar4ch.bin";
+#endif
 static constexpr char model[] PROGMEM = "Gadadar4Ch";
 static constexpr char hname[] PROGMEM = "gadadar4ch";
 static constexpr char group[] PROGMEM = "Gadadar";

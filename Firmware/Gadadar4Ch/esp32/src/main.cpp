@@ -448,7 +448,8 @@ void setRelay(uint8_t index, bool output){
 
     #ifdef USE_IOT
     JsonDocument doc;
-    doc[(String("ch") + String(index+1)).c_str()] = relays[index].state;
+    doc[(String("r") + String(index+1)).c_str()] = relays[index].state;
+    udawa->iotSendTelemetry(doc);
     #endif
   }
 }
@@ -508,7 +509,22 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
 void _onSyncClientAttributesCallback(uint8_t direction){
   JsonDocument doc;
   if(direction == 1 || direction == 3){
-    //udawa->iotSendAttributes(doc);
+    convertAppRelay(doc, false);
+    udawa->iotSendAttributes(doc);
+
+    doc.clear();
+    doc[PSTR("r1")] = relays[0].state;
+    doc[PSTR("r2")] = relays[1].state;
+    doc[PSTR("r3")] = relays[2].state;
+    doc[PSTR("r4")] = relays[3].state;
+    udawa->iotSendAttributes(doc);
+    
+    doc.clear();
+    JsonArray _availableRelayMode = doc[PSTR("availableRelayMode")].to<JsonArray>();
+    for(uint8_t i = 0; i < countof(availableRelayMode); i++){
+      _availableRelayMode.add(availableRelayMode[i]);
+    }
+    udawa->iotSendAttributes(doc);
   }
   if(direction == 2 || direction == 3){
     doc.clear();
