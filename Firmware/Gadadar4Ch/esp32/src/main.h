@@ -8,6 +8,9 @@
 #include <time.h>
 #include <PZEM004Tv30.h>
 #include "PCF8575.h"
+#ifdef USE_IOT
+#include <RPC_Callback.h>
+#endif
 
 struct Config {
     uint8_t s1tx = 26; //Neo 26, V3.1 33, V3 32
@@ -69,9 +72,7 @@ Relay relays[4] = {
 };
 
 #ifdef USE_IOT
-void _onThingsboardConnectedCallback();
-void processRPCSwitch(const JsonVariantConst &data, JsonDocument &response);
-void processRPCFSUpdate(const JsonVariantConst &data, JsonDocument &response);
+
 #endif
 
 struct State {
@@ -90,10 +91,7 @@ struct State {
     bool fsyncClientAttributes = false;
 
     #ifdef USE_IOT
-    const std::array<RPC_Callback, 2> callbacks = {
-      RPC_Callback{ PSTR("switch"), processRPCSwitch },
-      RPC_Callback{ PSTR("FSUpdate"), processRPCFSUpdate }
-    };
+
     #endif
 };
 State state;
@@ -104,13 +102,13 @@ GenericConfig appRelay(PSTR("/appRelay.json"));
 
 void loadAppConfig();
 void saveAppConfig();
-void convertAppConfig(JsonDocument &doc, bool direction);
+void convertAppConfig(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction);
 void loadAppState();
 void saveAppState();
-void convertAppState(JsonDocument &doc, bool direction);
+void convertAppState(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction);
 void loadAppRelay();
 void saveAppRelay();
-void convertAppRelay(JsonDocument &doc, bool direction);
+void convertAppRelay(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction);
 void powerSensorTaskRoutine(void *arg);
 void relayControlTaskRoutine(void *arg);
 void setRelay(uint8_t index, bool output);
