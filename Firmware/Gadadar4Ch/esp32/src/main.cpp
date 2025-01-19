@@ -2,7 +2,7 @@
 #include <ArduinoJson.h>
 
 // Forward declaration
-void convertAppRelay(const StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction);
+void convertAppRelay(const StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction);
 void setup() {
   udawa->begin();
 
@@ -43,7 +43,7 @@ void loop() {
       
       #ifdef USE_LOCAL_WEB_INTERFACE
       if(udawa->ws.count() > 0){
-        StaticJsonDocument<JSON_DOC_XLARGE> doc;
+        StaticJsonDocument<JSON_DOC_SIZE> doc;
         JsonObject sysInfo = doc[PSTR("sysInfo")].to<JsonObject>();
 
         sysInfo[PSTR("heap")] = ESP.getFreeHeap();
@@ -58,7 +58,7 @@ void loop() {
       #endif
 
       #ifdef USE_IOT
-      StaticJsonDocument<JSON_DOC_XLARGE> doc;
+      StaticJsonDocument<JSON_DOC_SIZE> doc;
       doc[PSTR("heap")] = ESP.getFreeHeap();
       String jsonString;
       serializeJson(doc, jsonString);
@@ -95,7 +95,7 @@ void loop() {
 }
 
 void loadAppConfig(){
-  StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+  StaticJsonDocument<JSON_DOC_SIZE> doc;
   bool status = appConfig.load(doc);
   udawa->logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
   if(status){
@@ -115,7 +115,7 @@ void loadAppConfig(){
 }
 
 void saveAppConfig(){
-  StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+  StaticJsonDocument<JSON_DOC_SIZE> doc;
   convertAppConfig(doc, false);
 
   bool status = appConfig.save(doc);
@@ -123,7 +123,7 @@ void saveAppConfig(){
 }
 
 void loadAppState(){
-  StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+  StaticJsonDocument<JSON_DOC_SIZE> doc;
   bool status = appState.load(doc);
   udawa->logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
   if(status){
@@ -132,7 +132,7 @@ void loadAppState(){
 }
 
 void saveAppState(){
-  StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+  StaticJsonDocument<JSON_DOC_SIZE> doc;
 
   convertAppState(doc, false);
 
@@ -141,7 +141,7 @@ void saveAppState(){
 }
 
 void loadAppRelay(){
-  StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+  StaticJsonDocument<JSON_DOC_SIZE> doc;
   bool status = appRelay.load(doc);
   udawa->logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
   if(status){
@@ -150,7 +150,7 @@ void loadAppRelay(){
 }
 
 void saveAppRelay(){
-  StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+  StaticJsonDocument<JSON_DOC_SIZE> doc;
   convertAppRelay(doc, false);
   bool status = appRelay.save(doc);
   udawa->logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
@@ -194,7 +194,7 @@ void powerSensorTaskRoutine(void *arg){
     unsigned long now = millis();
     if(state.fPowerSensor && !fFailureReadings)
     {
-      StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+      StaticJsonDocument<JSON_DOC_SIZE> doc;
       String buffer;
       JsonObject powerSensor = doc[PSTR("powerSensor")].to<JsonObject>();
 
@@ -459,7 +459,7 @@ void setRelay(uint8_t index, bool output){
     }
 
     #ifdef USE_IOT
-    StaticJsonDocument<JSON_DOC_SMALL> doc;
+    StaticJsonDocument<JSON_DOC_SIZE> doc;
     doc[(String("r") + String(index+1)).c_str()] = relays[index].state;
     String jsonString;
     serializeJson(doc, jsonString);
@@ -470,12 +470,12 @@ void setRelay(uint8_t index, bool output){
 
 #ifdef USE_LOCAL_WEB_INTERFACE
 void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len) {
-  StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+  StaticJsonDocument<JSON_DOC_SIZE> doc;
   if (type == WS_EVT_CONNECT) {
     // Handle WebSocket connection event
   } else if (type == WS_EVT_DATA) {
     // Handle WebSocket data event
-    StaticJsonDocument<JSON_DOC_XXLARGE> doc;
+    StaticJsonDocument<JSON_DOC_SIZE> doc;
     DeserializationError err = deserializeJson(doc, data);
     //String incomming;
     //serializeJson(doc, incomming);
@@ -522,9 +522,9 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
 }
 
 void _onSyncClientAttributesCallback(uint8_t direction){
-  StaticJsonDocument<JSON_DOC_LARGE> doc;
+  StaticJsonDocument<JSON_DOC_SIZE> doc;
   if(direction == 1 || direction == 3){
-    StaticJsonDocument<JSON_DOC_XXLARGE> tempDoc;
+    StaticJsonDocument<JSON_DOC_SIZE> tempDoc;
     convertAppRelay(tempDoc, false);
     String jsonString;
     serializeJson(tempDoc, jsonString);
@@ -545,7 +545,7 @@ void _onSyncClientAttributesCallback(uint8_t direction){
     udawa->iotSendAttributes(jsonString.c_str());
   }
   if(direction == 2 || direction == 3){
-    StaticJsonDocument<JSON_DOC_LARGE> tempDoc;
+    StaticJsonDocument<JSON_DOC_SIZE> tempDoc;
     convertAppRelay(tempDoc, false);
     String jsonString;
     serializeJson(tempDoc, jsonString);
@@ -573,7 +573,7 @@ void _onSyncClientAttributesCallback(uint8_t direction){
  *                  - `true`: Transfer data from the JSON document to the relay objects.
  *                  - `false`: Transfer data from the relay objects to the JSON document.
  */
-void convertAppRelay(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction){
+void convertAppRelay(StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction){
   // direction = true means from doc to relays
   if(direction){
     for(uint8_t i = 0; i < countof(relays); i++){
@@ -631,7 +631,7 @@ void convertAppRelay(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction){
 }
 
 
-void convertAppState(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction){
+void convertAppState(StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction){
   // direction = true means from doc to state
   if(direction){
     if(!doc[PSTR("fPanic")].isNull()){state.fPanic = doc[PSTR("fPanic")].as<bool>();}else{state.fPanic = false;}
@@ -642,7 +642,7 @@ void convertAppState(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction){
   }
 }
 
-void convertAppConfig(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction){
+void convertAppConfig(StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction){
   // direction = true means from doc to config
   if(direction){
     if(!doc[PSTR("s1tx")].isNull()){config.s1tx = doc[PSTR("s1tx")].as<uint8_t>();} else{config.s1tx = s1tx;}
@@ -666,28 +666,6 @@ void convertAppConfig(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction)
 }
 
 #ifdef USE_IOT
-void _onThingsboardConnectedCallback(){
-  //udawa->tb.RPC_Subscribe(state.callbacks.cbegin(), state.callbacks.cend());
-}
-
-void processRPCSwitch(const JsonVariantConst &data, StaticJsonDocument<> &response) {
-  uint8_t index = 255;
-  if(!data[PSTR("index")].isNull()){
-    index = data[PSTR("index")].as<uint8_t>();
-  }
-
-  if(index < 255 && index >= 0 && index < countof(relays) && !data[PSTR("state")].isNull()){
-    setRelay(index, data[PSTR("state")].as<bool>());
-    response.set(PSTR("OK"));
-  }
-  else if(index < 255 && index >= 0 && index < countof(relays)){
-    response[PSTR("channel")] = index + 1;
-    response[PSTR("state")] = relays[data[PSTR("index")].as<uint8_t>()].state ? PSTR("ON") : PSTR("OFF");
-  }
-  else{
-    response.set(PSTR("Invalid parameters."));
-  }
-}
 
 #endif
 

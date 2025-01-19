@@ -102,13 +102,13 @@ GenericConfig appRelay(PSTR("/appRelay.json"));
 
 void loadAppConfig();
 void saveAppConfig();
-void convertAppConfig(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction);
+void convertAppConfig(StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction);
 void loadAppState();
 void saveAppState();
-void convertAppState(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction);
+void convertAppState(StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction);
 void loadAppRelay();
 void saveAppRelay();
-void convertAppRelay(StaticJsonDocument<JSON_DOC_XXLARGE> &doc, bool direction);
+void convertAppRelay(StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction);
 void powerSensorTaskRoutine(void *arg);
 void relayControlTaskRoutine(void *arg);
 void setRelay(uint8_t index, bool output);
