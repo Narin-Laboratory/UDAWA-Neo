@@ -8,7 +8,9 @@ void setup() {
 
   udawa->addOnWsEvent(_onWsEventMain);
   udawa->addOnSyncClientAttributesCallback(_onSyncClientAttributesCallback);
+  #ifdef USE_IOT
   udawa->addOnThingsboardConnected(_onThingsboardConnectedCallback);
+  #endif
   udawa->addOnFSDownloadedCallback(_onFSDownloadedCallback);
 
   udawa->logger->verbose(PSTR(__func__), PSTR("Initial config.relayON value: %d\n"), config.relayON);
@@ -631,7 +633,7 @@ void convertAppConfig(JsonDocument &doc, bool direction){
 
 #ifdef USE_IOT
 void _onThingsboardConnectedCallback(){
-  udawa->tb.RPC_Subscribe(state.callbacks.cbegin(), state.callbacks.cend());
+  //udawa->tb.RPC_Subscribe(state.callbacks.cbegin(), state.callbacks.cend());
 }
 
 void processRPCSwitch(const JsonVariantConst &data, JsonDocument &response) {
