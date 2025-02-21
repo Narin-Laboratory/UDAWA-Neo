@@ -96,13 +96,8 @@ void loadAppConfig(){
   udawa->logger->debug(PSTR(__func__), PSTR("%d\n"), (int)status);
   if(status){
     convertAppConfig(doc, true);
-    if(config.s1rx == 0){config.s1rx = s1rx;}
-    if(config.s1tx == 0){config.s1tx = s1tx;}
-    if(config.intvWeb == 0){config.intvWeb = intvWeb;}
-    if(config.intvAttr == 0){config.intvAttr = intvAttr;}
-    if(config.intvTele == 0){config.intvTele = intvTele;}
-    if(config.maxWatt == 0){config.maxWatt = maxWatt;}
   }else{
+    convertAppConfig(doc, true);
     loadAppRelay();
     loadAppState();
     udawa->crashState.fFSDownloading = true;
