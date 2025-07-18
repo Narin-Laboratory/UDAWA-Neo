@@ -57,14 +57,6 @@ void loop() {
       }
       #endif
 
-      #ifdef USE_IOT
-      StaticJsonDocument<JSON_DOC_SIZE> doc;
-      doc[PSTR("heap")] = ESP.getFreeHeap();
-      String jsonString;
-      serializeJson(doc, jsonString);
-      udawa->iotSendTelemetry(jsonString.c_str());
-      #endif
-
       if(state.fsaveAppRelay){
         saveAppRelay();
         state.fsaveAppRelay = false;
@@ -216,44 +208,6 @@ void powerSensorTaskRoutine(void *arg){
       }
       #endif
       
-      #ifdef USE_IOT
-      if( (now - timerAttribute) > (config.intvAttr * 1000))
-      {
-        doc[PSTR("_volt")] = volt;
-        doc[PSTR("_amp")] = amp;
-        doc[PSTR("_watt")] = watt;
-        doc[PSTR("_freq")] = freq;
-        doc[PSTR("_pf")] = pf;
-        doc[PSTR("_ener")] = ener;
-        String jsonString;
-        serializeJson(doc, jsonString);
-        udawa->iotSendAttributes(jsonString.c_str());
-        doc.clear();
-
-        timerAttribute = now;
-      }
-
-      if( (now - timerTelemetry) > (config.intvTele * 1000) )
-      {
-
-        doc[PSTR("volt")] = volt;  
-        doc[PSTR("amp")] = amp; 
-        doc[PSTR("watt")] = watt;
-        doc[PSTR("pf")] = pf; 
-        doc[PSTR("freq")] = freq;
-        doc[PSTR("ener")] = ener;
-        #ifdef USE_DISK_LOG  
-        writeCardLogger(doc);
-        #endif
-        String jsonString;
-        serializeJson(doc, jsonString);
-        udawa->iotSendTelemetry(jsonString.c_str());
-        doc.clear();
-      
-        timerTelemetry = now;
-      }
-      #endif
-
     }
   
     if( (now - timerAlarm) > 30000 )
@@ -458,13 +412,6 @@ void setRelay(uint8_t index, bool output){
       state.fsaveAppRelay = true;
     }
 
-    #ifdef USE_IOT
-    StaticJsonDocument<JSON_DOC_SIZE> doc;
-    doc[(String("r") + String(index+1)).c_str()] = relays[index].state;
-    String jsonString;
-    serializeJson(doc, jsonString);
-    udawa->iotSendTelemetry(jsonString.c_str());
-    #endif
   }
 }
 
@@ -523,27 +470,6 @@ void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsE
 
 void _onSyncClientAttributesCallback(uint8_t direction){
   StaticJsonDocument<JSON_DOC_SIZE> doc;
-  if(direction == 1 || direction == 3){
-    StaticJsonDocument<JSON_DOC_SIZE> tempDoc;
-    convertAppRelay(tempDoc, false);
-    String jsonString;
-    serializeJson(tempDoc, jsonString);
-    udawa->iotSendAttributes(jsonString.c_str());
-
-    doc.clear();
-    doc[PSTR("r1")] = relays[0].state;
-    doc[PSTR("r2")] = relays[1].state;
-    doc[PSTR("r3")] = relays[2].state;
-    doc[PSTR("r4")] = relays[3].state;
-    udawa->iotSendAttributes(jsonString.c_str());
-    
-    doc.clear();
-    JsonArray _availableRelayMode = doc[PSTR("availableRelayMode")].to<JsonArray>();
-    for(uint8_t i = 0; i < countof(availableRelayMode); i++){
-      _availableRelayMode.add(availableRelayMode[i]);
-    }
-    udawa->iotSendAttributes(jsonString.c_str());
-  }
   if(direction == 2 || direction == 3){
     StaticJsonDocument<JSON_DOC_SIZE> tempDoc;
     convertAppRelay(tempDoc, false);
@@ -570,8 +496,8 @@ void _onSyncClientAttributesCallback(uint8_t direction){
  *
  * @param doc The JSON document containing relay data.
  * @param direction The direction of the data transfer.
- *                  - `true`: Transfer data from the JSON document to the relay objects.
- *                  - `false`: Transfer data from the relay objects to the JSON document.
+ * - `true`: Transfer data from the JSON document to the relay objects.
+ * - `false`: Transfer data from the relay objects to the JSON document.
  */
 void convertAppRelay(StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction){
   // direction = true means from doc to relays
@@ -664,10 +590,6 @@ void convertAppConfig(StaticJsonDocument<JSON_DOC_SIZE> &doc, bool direction){
     doc[PSTR("relayON")] = config.relayON;
   }
 }
-
-#ifdef USE_IOT
-
-#endif
 
 void _onFSDownloadedCallback(){
   saveAppConfig();
