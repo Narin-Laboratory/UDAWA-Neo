@@ -15,7 +15,7 @@
     #define WS_RATE_LIMIT_INTERVAL 1000UL
 #endif
 
-#define USE_IOT
+//#define USE_IOT
 #ifdef USE_IOT
     #define THINGSBOARD_ENABLE_STREAM_UTILS true
     #define USE_IOT_SECURE
@@ -47,15 +47,15 @@
 #define USE_HW_RTC
 #endif
 
-#define POWERSENSOR_STACKSIZE 4096UL
-#define ALARM_STACKSIZE 4096UL
-#define RELAYCONTROL_STACKSIZE 4096UL
+#define POWERSENSOR_STACKSIZE 8192UL
+#define ALARM_STACKSIZE 8192UL
+#define RELAYCONTROL_STACKSIZE 8192UL
 
 #define JSON_DOC_SIZE_TINY 256
 #define JSON_DOC_SIZE_SMALL 512
 #define JSON_DOC_SIZE_MEDIUM 768
 #define JSON_DOC_SIZE_LARGE 1024
-#define JSON_DOC_SIZE_XLARGE 1500
+#define JSON_DOC_SIZE_XLARGE 8096
 
 #define IOEXTENDER_ADDRESS 0x20
 
@@ -64,12 +64,11 @@
 #ifdef USE_IOT_SECURE
 static const int tbPort = 8883;
 static constexpr char tbAddr[] PROGMEM = "prita.undiknas.ac.id";
-static constexpr char binURL[] PROGMEM = "https://udawa.or.id/cdn/firmware/gadadar4ch.bin";
 #else
 static const int tbPort = 1883;
 static constexpr char tbAddr[] PROGMEM = "udawa.local";
-static constexpr char binURL[] PROGMEM = "http://udawa.or.id/cdn/firmware/gadadar4ch.bin";
 #endif
+static constexpr char binURL[] PROGMEM = "http://udawa.or.id/cdn/firmware/gadadar4ch.bin";
 static constexpr char model[] PROGMEM = "Gadadar4Ch";
 static constexpr char hname[] PROGMEM = "gadadar4ch";
 static constexpr char group[] PROGMEM = "Gadadar";
@@ -87,15 +86,15 @@ static const uint8_t pinLEDG = 14;
 static const uint8_t pinLEDB = 12;
 static const uint8_t pinBuzz = 32;
 
-static const uint8_t s1tx = 26; //Neo 26, V3.1 33, V3 32
-static const uint8_t s1rx = 25; //Neo 25, V3.1 32, V3 4
-static const unsigned long intvWeb = 1;
-static const unsigned long intvAttr = 5;
-static const unsigned long intvTele = 900;
-static const int maxWatt = 2000;
-static const bool relayON = false;
-static const std::array<String, 4> availableRelayMode = {PSTR("Manual"), PSTR("Duty Cycle"), PSTR("Time Daily"), PSTR("Specific Datetime")};
-static const uint8_t maxTimers = 10;
+const uint8_t s1tx = 26; //Neo 26, V3.1 33, V3 32
+const uint8_t s1rx = 25; //Neo 25, V3.1 32, V3 4
+const unsigned long intvWeb = 1;
+const unsigned long intvAttr = 5;
+const unsigned long intvTele = 900;
+const int maxWatt = 2000;
+const bool relayON = false;
+const std::array<String, 4> availableRelayMode = {PSTR("Manual"), PSTR("Duty Cycle"), PSTR("Time Daily"), PSTR("Specific Datetime")};
+const uint8_t maxTimers = 10;
 
 
 #endif
