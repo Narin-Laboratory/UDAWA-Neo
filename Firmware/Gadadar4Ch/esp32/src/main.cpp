@@ -205,12 +205,12 @@ void powerSensorTaskRoutine(void *arg){
       #ifdef USE_LOCAL_WEB_INTERFACE
       if( (now - timerWebIface) > (config.intvWeb * 1000))
       {
-        powerSensor[PSTR("volt")] = volt;
-        powerSensor[PSTR("amp")] = amp;
-        powerSensor[PSTR("watt")] = watt;
-        powerSensor[PSTR("freq")] = freq;
-        powerSensor[PSTR("pf")] = pf;
-        powerSensor[PSTR("ener")] = ener;
+        powerSensor[PSTR("volt")] = String(volt, 2);
+        powerSensor[PSTR("amp")] = String(amp, 2);
+        powerSensor[PSTR("watt")] = String(watt, 2);
+        powerSensor[PSTR("freq")] = String(freq, 2);
+        powerSensor[PSTR("pf")] = String(pf, 2);
+        powerSensor[PSTR("ener")] = String(ener, 2);
         String jsonString;
         serializeJson(doc, jsonString);
         udawa->wsBroadcast(jsonString.c_str());
