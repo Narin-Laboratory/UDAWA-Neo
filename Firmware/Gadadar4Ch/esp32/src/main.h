@@ -91,13 +91,13 @@ GenericConfig appRelay(PSTR("/appRelay.json"));
 
 void loadAppConfig();
 void saveAppConfig();
-void convertAppConfig(StaticJsonDocument<JSON_DOC_SIZE_XLARGE> &doc, bool direction);
+void convertAppConfig(JsonDocument &doc, bool direction);
 void loadAppState();
 void saveAppState();
-void convertAppState(StaticJsonDocument<JSON_DOC_SIZE_XLARGE> &doc, bool direction);
+void convertAppState(JsonDocument &doc, bool direction);
 void loadAppRelay();
 void saveAppRelay();
-void convertAppRelay(StaticJsonDocument<JSON_DOC_SIZE_XLARGE> &doc, bool direction);
+void convertAppRelay(JsonDocument &doc, bool direction);
 void powerSensorTaskRoutine(void *arg);
 void relayControlTaskRoutine(void *arg);
 void setRelay(uint8_t index, bool output);
@@ -112,8 +112,6 @@ void _onFSDownloadedCallback();
 
 Udawa* udawa = Udawa::getInstance();
 PCF8575 IOExtender(IOEXTENDER_ADDRESS);
-
-StaticJsonDocument<JSON_DOC_SIZE_XLARGE> _doc_xlarge;
 
 /**
  * @brief UDAWA Common Alarm Code Definition
