@@ -12,6 +12,10 @@ void setup() {
   udawa->addOnFSDownloadedCallback(_onFSDownloadedCallback);
 
   udawa->logger->verbose(PSTR(__func__), PSTR("Initial config.relayON value: %d\n"), config.relayON);
+
+  #ifdef USE_IOT_SECURE
+  espClient.setCACert(CA_CERT);
+  #endif
   
   if (!udawa->crashState.fSafeMode) {
     if(state.xHandlePowerSensor == NULL){
@@ -34,6 +38,8 @@ void setup() {
 unsigned long timer = millis();
 void loop() {
   udawa->run();
+  
+  tbRun();
 
   unsigned long now = millis();
   if (!udawa->crashState.fSafeMode) {
@@ -86,6 +92,79 @@ void loop() {
 
       timer = now;
     }
+  }
+}
+
+void tbRun(){
+  if(!udawa->crashState.fSafeMode){
+    if (udawa->config.state.provSent) {
+      if (!tb.connected()) {
+        // Connect to the ThingsBoard server as a client wanting to provision a new device
+        udawa->logger->debug(PSTR(__func__), PSTR("Connecting to: %s\n"), udawa->config.state.tbAddr);
+        if (!tb.connect(udawa->config.state.tbAddr, "provision", udawa->config.state.tbPort)) {
+          udawa->logger->debug(PSTR(__func__), PSTR("Failed to connect to: %s\n"), udawa->config.state.tbAddr);
+          return;
+        }
+      }
+      udawa->logger->debug(PSTR(__func__), PSTR("Sending provisioning request: %s\n"), udawa->config.state.name);
+
+      const Provision_Callback provisionCallback(Access_Token(), &processProvisionResponse, udawa->config.state.provDK, udawa->config.state.provDS, udawa->config.state.name, IOT_REQUEST_TIMEOUT_MICROSECONDS, &provisionRequestTimedOut);
+      udawa->config.state.provSent = prov.Provision_Request(provisionCallback);
+    }
+    else if (udawa->config.state.provSent) {
+      if (!tb.connected()) {
+        // Connect to the ThingsBoard server, as the provisioned client
+        udawa->logger->debug(PSTR(__func__), PSTR("Connecting to: %s\n"), udawa->config.state.tbAddr);
+        if (!tb.connect(udawa->config.state.tbAddr, udawa->config.state.accTkn, udawa->config.state.tbPort, udawa->config.state.name)) {
+          udawa->logger->warn(PSTR(__func__), PSTR("Failed to connect: %s:%d using clientID %s\n"), udawa->config.state.tbAddr, udawa->config.state.tbPort, udawa->config.state.name);
+          return;
+        } else {
+          udawa->logger->warn(PSTR(__func__), PSTR("Connected!\n"));
+          onTbConnected();
+        }
+      }
+    }
+
+    tb.loop();
+  }
+}
+
+void provisionRequestTimedOut() {
+  udawa->logger->warn((PSTR(__func__)), PSTR("Provision request timed out did not receive a response in (%llu) microseconds. Ensure client is connected to the MQTT broker\n"), IOT_REQUEST_TIMEOUT_MICROSECONDS);
+}
+
+void processProvisionResponse(const JsonDocument &data) {
+  String buffer;
+  serializeJson(data, buffer);
+  Serial.printf("Received device provision response (%s)\n", buffer.c_str());
+
+  if (strcmp(data["status"].as<const char*>(), "SUCCESS") != 0) {
+    Serial.printf("Provision response contains the error: (%s)\n", data["errorMsg"].as<const char*>());
+    return;
+  }
+
+  const char* credentialsType = data["credentialsType"].as<const char*>();
+  if (strcmp(credentialsType, "ACCESS_TOKEN") == 0) {
+    strlcpy(udawa->config.state.accTkn, data["credentialsValue"].as<const char*>(), sizeof(udawa->config.state.accTkn));
+  }
+  else if (strcmp(credentialsType, "MQTT_BASIC") == 0) {
+    JsonObjectConst credentialsValue = data["credentialsValue"].as<JsonObjectConst>();
+    strlcpy(udawa->config.state.name, credentialsValue["clientId"].as<const char*>(), sizeof(udawa->config.state.name));
+    strlcpy(udawa->config.state.accTkn, credentialsValue["userName"].as<const char*>(), sizeof(udawa->config.state.accTkn));
+    // password is not used for token-based auth with ThingsBoard MQTT
+  }
+  else {
+    Serial.printf("Unexpected provision credentialsType: (%s)\n", credentialsType);
+    return;
+  }
+
+  udawa->config.state.provSent = true;
+  udawa->config.save();
+
+  // Disconnect from the cloud client connected to the provision account, because it is no longer needed the device has been provisioned
+  // and we can reconnect to the cloud with the newly generated credentials.
+  if (tb.connected()) {
+    tb.disconnect();
   }
 }
 

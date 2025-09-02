@@ -1,5 +1,6 @@
 #ifndef main_h
 #define main_h
+#include "params.h"
 #include <Arduino.h>
 #include "UdawaLogger.h"
 #include "UdawaSerialLogger.h"
@@ -8,6 +9,42 @@
 #include <time.h>
 #include <PZEM004Tv30.h>
 #include "PCF8575.h"
+
+#ifdef USE_IOT
+#include <WiFiClientSecure.h>
+#include <Arduino_MQTT_Client.h>
+#include <Provision.h>
+#include <ThingsBoard.h>
+#endif
+
+#ifdef USE_IOT
+
+#ifdef USE_IOT_SECURE
+    WiFiClientSecure espClient;
+#else
+    WiFiClient espClient;
+#endif
+
+Arduino_MQTT_Client mqttClient(espClient);
+Provision<> prov;
+const std::array<IAPI_Implementation*, 1U> apis = {
+    &prov
+};
+
+
+/* 2. Instantiate the ThingsBoardSized object with your custom logger and parameters */
+ThingsBoardSized<UdawaThingsboardLogger> tb(
+    mqttClient,                      // Your MQTT client instance
+    IOT_MAX_MESSAGE_RECEIVE_SIZE,    // Max receive buffer size
+    IOT_MAX_MESSAGE_SEND_SIZE,       // Max send buffer size
+    IOT_DEFAULT_MAX_STACK_SIZE,      // Max stack allocation before using heap
+    IOT_BUFFERING_SIZE,              // Buffering size for StreamUtils
+    IOT_DEFAULT_MAX_RESPONSE_SIZE,   // Max size for deserializing responses
+    apis.cbegin(), // Pass the begin iterator
+    apis.cend()    // Pass the end iterator
+);
+
+#endif
 
 struct Config {
     uint8_t s1tx = s1tx; //Neo 26, V3.1 33, V3 32
@@ -101,6 +138,13 @@ void convertAppRelay(JsonDocument &doc, bool direction);
 void powerSensorTaskRoutine(void *arg);
 void relayControlTaskRoutine(void *arg);
 void setRelay(uint8_t index, bool output);
+
+#ifdef USE_IOT
+void tbRun();
+void processProvisionResponse(const JsonDocument &data);
+void provisionRequestTimedOut();
+void onTbConnected();
+#endif
 
 #ifdef USE_LOCAL_WEB_INTERFACE
 void _onWsEventMain(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
