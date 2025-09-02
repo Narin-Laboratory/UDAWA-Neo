@@ -39,7 +39,9 @@ unsigned long timer = millis();
 void loop() {
   udawa->run();
   
-  tbRun();
+  if(WiFi.isConnected()){
+    tbRun();
+  }
 
   unsigned long now = millis();
   if (!udawa->crashState.fSafeMode) {
