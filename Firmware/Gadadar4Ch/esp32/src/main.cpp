@@ -10,6 +10,7 @@ void setup() {
 
   udawa->addOnWsEvent(_onWsEventMain);
   udawa->addOnFSDownloadedCallback(_onFSDownloadedCallback);
+  udawa->wiFiHelper.addOnGotIPCallback(_onWiFiGotIP);
 
   udawa->logger->verbose(PSTR(__func__), PSTR("Initial config.relayON value: %d\n"), config.relayON);
 
@@ -38,9 +39,11 @@ void setup() {
 unsigned long timer = millis();
 void loop() {
   udawa->run();
-  
-  if(WiFi.isConnected()){
-    tbRun();
+
+  if(!udawa->crashState.fSafeMode){
+    if(state.fWiFiGotIP && udawa->config.state.tbAddr[0] != '\0'){
+      tbRun();
+    }
   }
 
   unsigned long now = millis();
@@ -70,11 +73,6 @@ void loop() {
 
       if(state.fsyncClientAttributes){
         _onSyncClientAttributesCallback(1);
-        _onSyncClientAttributesCallback(1);
-        _onSyncClientAttributesCallback(1);
-        _onSyncClientAttributesCallback(1);
-        _onSyncClientAttributesCallback(1);
-        _onSyncClientAttributesCallback(1);
         state.fsyncClientAttributes = false;
       }
 
@@ -97,77 +95,123 @@ void loop() {
   }
 }
 
-void tbRun(){
-  if(!udawa->crashState.fSafeMode){
-    if (udawa->config.state.provSent) {
-      if (!tb.connected()) {
-        // Connect to the ThingsBoard server as a client wanting to provision a new device
-        udawa->logger->debug(PSTR(__func__), PSTR("Connecting to: %s\n"), udawa->config.state.tbAddr);
-        if (!tb.connect(udawa->config.state.tbAddr, "provision", udawa->config.state.tbPort)) {
-          udawa->logger->debug(PSTR(__func__), PSTR("Failed to connect to: %s\n"), udawa->config.state.tbAddr);
-          return;
-        }
-      }
-      udawa->logger->debug(PSTR(__func__), PSTR("Sending provisioning request: %s\n"), udawa->config.state.name);
-
-      const Provision_Callback provisionCallback(Access_Token(), &processProvisionResponse, udawa->config.state.provDK, udawa->config.state.provDS, udawa->config.state.name, IOT_REQUEST_TIMEOUT_MICROSECONDS, &provisionRequestTimedOut);
-      udawa->config.state.provSent = prov.Provision_Request(provisionCallback);
-    }
-    else if (udawa->config.state.provSent) {
-      if (!tb.connected()) {
-        // Connect to the ThingsBoard server, as the provisioned client
-        udawa->logger->debug(PSTR(__func__), PSTR("Connecting to: %s\n"), udawa->config.state.tbAddr);
-        if (!tb.connect(udawa->config.state.tbAddr, udawa->config.state.accTkn, udawa->config.state.tbPort, udawa->config.state.name)) {
-          udawa->logger->warn(PSTR(__func__), PSTR("Failed to connect: %s:%d using clientID %s\n"), udawa->config.state.tbAddr, udawa->config.state.tbPort, udawa->config.state.name);
-          return;
-        } else {
-          udawa->logger->warn(PSTR(__func__), PSTR("Connected!\n"));
-          onTbConnected();
-        }
-      }
-    }
-
-    tb.loop();
-  }
+void _onWiFiGotIP(){
+  state.fWiFiGotIP = true;
+  gWiFiHasIP = true;
 }
+
+static void ensureTbBegin() {
+  if (gTbBegun) return;
+  if (!gWiFiHasIP || !WiFi.isConnected()) return;
+  if (!isValidHost(udawa->config.state.tbAddr) || udawa->config.state.tbPort == 0) return;
+  // IMPORTANT: ensure underlying mqtt client was created globally BEFORE this
+  // tb.begin(mqttClient); // uncomment / adapt to your ThingsBoard client
+  gTbBegun = true;
+  udawa->logger->info(PSTR("ensureTbBegin"), PSTR("TB client begun.\n"));
+}
+
+static bool isValidHost(const char *h) {
+  if(!h) return false;
+  size_t len = strnlen(h, 64);
+  if(len == 0 || len >= 64) return false;
+  for(size_t i=0;i<len;i++){
+    char c=h[i];
+    if(!( (c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9')||c=='.'||c=='-' )) return false;
+  }
+  return true;
+}
+
+void tbRun(){
+  if(udawa->crashState.fSafeMode) return;
+  if(!gWiFiHasIP || !WiFi.isConnected()) return;
+
+  ensureTbBegin();
+  if(!gTbBegun) return;
+
+  // udawa->config.state.provSent == false -> NOT YET provisioned
+  if(!udawa->config.state.provSent){
+    if(!gProvisionInFlight){
+      if(!isValidHost(udawa->config.state.tbAddr)){
+        udawa->logger->warn(PSTR(__func__), PSTR("Invalid tbAddr, skip provisioning.\n"));
+        return;
+      }
+      if(!tb.connected()){
+        udawa->logger->debug(PSTR(__func__), PSTR("Provision connect %s:%d\n"),
+                              udawa->config.state.tbAddr, udawa->config.state.tbPort);
+        if(!tb.connect("prita.undiknas.ac.id", "provision", 8883)){
+          udawa->logger->warn(PSTR(__func__), PSTR("Provision connect failed.\n"));
+          return;
+        }
+      }
+      const Provision_Callback provisionCallback(
+        Access_Token(),
+        &processProvisionResponse,
+        udawa->config.state.provDK,
+        udawa->config.state.provDS,
+        udawa->config.state.name,
+        IOT_REQUEST_TIMEOUT_MICROSECONDS,
+        &provisionRequestTimedOut);
+      gProvisionInFlight = prov.Provision_Request(provisionCallback);
+    }
+    if(tb.connected()){
+      tb.loop(); // pump only if connected
+    }
+    return;
+  }
+
+  // Already provisioned: connect with device token
+  if(!tb.connected()){
+    if(udawa->config.state.accTkn[0] == '\0'){
+      udawa->logger->warn(PSTR(__func__), PSTR("Empty access token though provisioned.\n"));
+      return;
+    }
+    udawa->logger->debug(PSTR(__func__), PSTR("Device connect %s:%d\n"),
+                          udawa->config.state.tbAddr, udawa->config.state.tbPort);
+    if(!tb.connect(udawa->config.state.tbAddr,
+                   udawa->config.state.accTkn,
+                   udawa->config.state.tbPort,
+                   udawa->config.state.name)){
+      udawa->logger->warn(PSTR(__func__), PSTR("Device connect failed.\n"));
+      return;
+    } else {
+      udawa->logger->info(PSTR(__func__), PSTR("Device connected.\n"));
+      onTbConnected();
+    }
+  }
+  // Now safe to loop
+  tb.loop();
+}
+
+void onTbConnected(){}
 
 void provisionRequestTimedOut() {
   udawa->logger->warn((PSTR(__func__)), PSTR("Provision request timed out did not receive a response in (%llu) microseconds. Ensure client is connected to the MQTT broker\n"), IOT_REQUEST_TIMEOUT_MICROSECONDS);
 }
 
 void processProvisionResponse(const JsonDocument &data) {
-  String buffer;
-  serializeJson(data, buffer);
-  Serial.printf("Received device provision response (%s)\n", buffer.c_str());
+  String buffer; serializeJson(data, buffer);
+  udawa->logger->debug(PSTR(__func__), PSTR("Provision response: %s\n"), buffer.c_str());
 
-  if (strcmp(data["status"].as<const char*>(), "SUCCESS") != 0) {
-    Serial.printf("Provision response contains the error: (%s)\n", data["errorMsg"].as<const char*>());
+  if(strcmp(data["status"].as<const char*>(),"SUCCESS")!=0){
+    udawa->logger->warn(PSTR(__func__), PSTR("Provision failed.\n"));
+    gProvisionInFlight = false;
     return;
   }
-
   const char* credentialsType = data["credentialsType"].as<const char*>();
-  if (strcmp(credentialsType, "ACCESS_TOKEN") == 0) {
+  if(strcmp(credentialsType,"ACCESS_TOKEN")==0){
     strlcpy(udawa->config.state.accTkn, data["credentialsValue"].as<const char*>(), sizeof(udawa->config.state.accTkn));
-  }
-  else if (strcmp(credentialsType, "MQTT_BASIC") == 0) {
-    JsonObjectConst credentialsValue = data["credentialsValue"].as<JsonObjectConst>();
-    strlcpy(udawa->config.state.name, credentialsValue["clientId"].as<const char*>(), sizeof(udawa->config.state.name));
-    strlcpy(udawa->config.state.accTkn, credentialsValue["userName"].as<const char*>(), sizeof(udawa->config.state.accTkn));
-    // password is not used for token-based auth with ThingsBoard MQTT
-  }
-  else {
-    Serial.printf("Unexpected provision credentialsType: (%s)\n", credentialsType);
+  } else if(strcmp(credentialsType,"MQTT_BASIC")==0){
+    JsonObjectConst cv = data["credentialsValue"].as<JsonObjectConst>();
+    strlcpy(udawa->config.state.name,   cv["clientId"].as<const char*>(), sizeof(udawa->config.state.name));
+    strlcpy(udawa->config.state.accTkn, cv["userName"].as<const char*>(), sizeof(udawa->config.state.accTkn));
+  } else {
+    gProvisionInFlight = false;
     return;
   }
-
-  udawa->config.state.provSent = true;
+  udawa->config.state.provSent = true; // NOW means provision COMPLETE
+  gProvisionInFlight = false;
   udawa->config.save();
-
-  // Disconnect from the cloud client connected to the provision account, because it is no longer needed the device has been provisioned
-  // and we can reconnect to the cloud with the newly generated credentials.
-  if (tb.connected()) {
-    tb.disconnect();
-  }
+  if(tb.connected()) tb.disconnect(); // reconnect with device creds next pass
 }
 
 void loadAppConfig(){

@@ -31,17 +31,8 @@ const std::array<IAPI_Implementation*, 1U> apis = {
     &prov
 };
 
-
-/* 2. Instantiate the ThingsBoardSized object with your custom logger and parameters */
-ThingsBoardSized<UdawaThingsboardLogger> tb(
-    mqttClient,                      // Your MQTT client instance
-    IOT_MAX_MESSAGE_RECEIVE_SIZE,    // Max receive buffer size
-    IOT_MAX_MESSAGE_SEND_SIZE,       // Max send buffer size
-    IOT_DEFAULT_MAX_STACK_SIZE,      // Max stack allocation before using heap
-    IOT_BUFFERING_SIZE,              // Buffering size for StreamUtils
-    IOT_DEFAULT_MAX_RESPONSE_SIZE,   // Max size for deserializing responses
-    apis.cbegin(), // Pass the begin iterator
-    apis.cend()    // Pass the end iterator
+ThingsBoard tb(
+    mqttClient
 );
 
 #endif
@@ -119,6 +110,7 @@ struct State {
     bool fsaveAppRelay = false;
     bool fSaveAppState = false;
     bool fsyncClientAttributes = false;
+    bool fWiFiGotIP = false;
 };
 State state;
 
@@ -138,12 +130,19 @@ void convertAppRelay(JsonDocument &doc, bool direction);
 void powerSensorTaskRoutine(void *arg);
 void relayControlTaskRoutine(void *arg);
 void setRelay(uint8_t index, bool output);
+void _onWiFiGotIP();
 
 #ifdef USE_IOT
+static bool gWiFiHasIP = false;
+static bool gTbBegun = false;
+static bool gProvisionInFlight = false;
+
 void tbRun();
 void processProvisionResponse(const JsonDocument &data);
 void provisionRequestTimedOut();
 void onTbConnected();
+static bool isValidHost(const char *h);
+static void ensureTbBegin();
 #endif
 
 #ifdef USE_LOCAL_WEB_INTERFACE

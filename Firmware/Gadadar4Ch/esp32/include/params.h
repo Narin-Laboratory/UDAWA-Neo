@@ -20,15 +20,15 @@
     #define THINGSBOARD_ENABLE_STREAM_UTILS true
     #define USE_IOT_SECURE
     #define USE_IOT_OTA
-    const uint8_t IOT_FIRMWARE_FAILURE_RETRIES = 10;
-    const uint16_t IOT_FIRMWARE_PACKET_SIZE = 4096;
-    #define IOT_MAX_MESSAGE_RECEIVE_SIZE 2048UL
-    #define IOT_MAX_MESSAGE_SEND_SIZE 2048UL
-    #define IOT_DEFAULT_MAX_STACK_SIZE 2048UL
-    #define IOT_DEFAULT_MAX_RESPONSE_SIZE 2048UL
-    #define IOT_MAX_ATTRIBUTES 10UL
-    #define IOT_BUFFERING_SIZE 2048UL
-    #define IOT_REQUEST_TIMEOUT_MICROSECONDS 3000UL
+    const uint8_t  IOT_FIRMWARE_FAILURE_RETRIES = 10;
+    const uint16_t IOT_FIRMWARE_PACKET_SIZE = 2048;     // was 4096
+    #define IOT_MAX_MESSAGE_RECEIVE_SIZE   1024UL       // was 2048
+    #define IOT_MAX_MESSAGE_SEND_SIZE      1024UL       // was 2048
+    #define IOT_DEFAULT_MAX_STACK_SIZE     1024UL       // was 2048
+    #define IOT_DEFAULT_MAX_RESPONSE_SIZE  1024UL       // was 2048
+    #define IOT_MAX_ATTRIBUTES             8UL          // was 10 (adjust if needed)
+    #define IOT_BUFFERING_SIZE             1024UL       // was 2048
+    #define IOT_REQUEST_TIMEOUT_MICROSECONDS 3000000UL  // 3 seconds (was 3000 µs)
     #ifdef USE_IOT_SECURE
     #define IOT_STACKSIZE 9000UL
     #else
