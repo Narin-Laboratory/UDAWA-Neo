@@ -108,8 +108,9 @@ void UdawaWiFiHelper::getAvailableWiFi(JsonDocument &doc){
     int num = WiFi.scanNetworks();
     _logger->debug(PSTR(__func__), PSTR("Scan finished. Found %d networks.\n"), num);
 
+    JsonArray arr = doc.to<JsonArray>();
     for(int i = 0; i < num; i++){
-        JsonObject obj = doc.createNestedObject();
+        JsonObject obj = arr.add<JsonObject>();
         obj["ssid"] = WiFi.SSID(i);
         obj["rssi"] = rssiToPercent(WiFi.RSSI(i));
         _logger->debug(PSTR(__func__), PSTR("Found %s with signal strength %i\n"), WiFi.SSID(i).c_str(), WiFi.RSSI(i));

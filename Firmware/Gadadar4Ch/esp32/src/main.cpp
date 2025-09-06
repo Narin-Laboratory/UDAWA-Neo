@@ -5,6 +5,7 @@ void setup(){
     loggingSetup();
     storageSetup();
     networkingSetup();
+    coreroutineSetup();
 
     //strcpy(config.state.wssid, "Govinda");
     //strcpy(config.state.wpass, "goloka8881");

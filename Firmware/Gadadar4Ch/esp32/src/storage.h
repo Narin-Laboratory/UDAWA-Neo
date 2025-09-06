@@ -1,10 +1,7 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
-#include "params.h"
-
-#include "UdawaConfig.h"
-#include "logging.h"
+#include "main.h"
 
 struct CrashState{
     unsigned long rtcp = 0;

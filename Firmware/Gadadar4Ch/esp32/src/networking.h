@@ -1,9 +1,7 @@
 #ifndef NETWORKING_H
 #define NETWORKING_H
 
-#include "UdawaWiFiHelper.h"
-#include <LittleFS.h>
-#include "storage.h"
+#include "main.h"
 
 extern UdawaWiFiHelper wiFiHelper;
 
