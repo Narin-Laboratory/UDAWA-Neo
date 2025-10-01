@@ -24,6 +24,35 @@
 #include <ArduinoOTA.h>
 #endif
 #include <ESPmDNS.h>
+#include <ArduinoHttpClient.h>
+#include <Update.h>
+#ifdef USE_LOCAL_WEB_INTERFACE
+#include <../lib/Crypto/src/Crypto.h>
+#include <../lib/Crypto/src/SHA256.h>
+#include <mbedtls/sha256.h>
+#include <base64.h>
+#include <map>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include "mbedtls/md.h"
+#include "mbedtls/base64.h"
+#include <mbedtls/ctr_drbg.h>
+#include <mbedtls/entropy.h>
+#endif
+
+#ifdef USE_IOT
+#include <Arduino_MQTT_Client.h>
+#include <ThingsBoard.h>
+#include <Provision.h>
+#ifdef USE_IOT_SECURE
+#include <WiFiClientSecure.h>
+#else
+#include <WiFiClient.h>
+#endif
+#ifdef THINGSBOARD_ENABLE_STREAM_UTILS
+#include <StreamUtils.h>
+#endif
+#endif
 
 #include "storage.h"
 #include "logging.h"

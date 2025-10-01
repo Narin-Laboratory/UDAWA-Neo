@@ -14,4 +14,6 @@ void setup(){
     logger->debug(PSTR(__func__), PSTR("Hello world!\n"));
 }
 
-void loop(){}
+void loop(){
+    coreroutineLoop();
+}

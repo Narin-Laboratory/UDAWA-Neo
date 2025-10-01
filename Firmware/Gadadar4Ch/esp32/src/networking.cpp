@@ -18,8 +18,18 @@ void networkingSetup(){
     wiFiHelper.begin(config.state.wssid, config.state.wpass, config.state.dssid, config.state.dpass, config.state.model, config.state.htP);
 }
 
-void networkingOnWiFiConnected(){}
-void networkingOnWiFiDisconnected(){}
-void networkingOnWiFiGotIP(){}
+void networkingOnWiFiConnected(){
+    coreroutineSetAlarm(0, 0, 3, 50);
+}
+void networkingOnWiFiDisconnected(){
+    coreroutineSetAlarm(0, 0, 3, 50);
+}
+void networkingOnWiFiGotIP(){
+    crashState.fStartServices = true;
+    coreroutineSetAlarm(0, 0, 3, 50);
+}
 void networkingOnWiFiAPNewClientIP(){}
-void networkingOnWiFiAPStart(){}
+void networkingOnWiFiAPStart(){
+    crashState.fDoInit = true;
+    coreroutineSetAlarm(0, 0, 3, 50);
+}

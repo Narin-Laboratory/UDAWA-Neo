@@ -12,6 +12,20 @@ struct AlarmMessage
 };
 
 
+#ifdef USE_IOT
+struct IoTState{
+    TaskHandle_t xHandleIoT = NULL;
+    BaseType_t xReturnedIoT;
+    SemaphoreHandle_t xSemaphoreThingsboard = NULL;
+    bool fSharedAttributesSubscribed = false;
+    bool fRebootRPCSubscribed = false;
+    bool fConfigSaveRPCSubscribed = false;
+    bool fIoTCurrentFWSent = false;
+    bool fIoTUpdateRequestSent = false;
+    bool fIoTUpdateStarted = false;
+};
+#endif
+
 extern ESP32Time RTC;
 #ifdef USE_HW_RTC
 extern ErriezDS3231 hwRTC;
@@ -20,10 +34,33 @@ extern TaskHandle_t xHandleAlarm;
 extern BaseType_t xReturnedAlarm;
 extern QueueHandle_t xQueueAlarm;
 
+#ifdef USE_IOT
+extern IoTState iotState;
+#ifdef USE_IOT_SECURE
+    extern WiFiClientSecure tcpClient;
+#else
+    extern WiFiClient tcpClient;
+#endif
+extern Arduino_MQTT_Client mqttClient;
+// The SDK setup with 128 bytes for JSON payload and 32 fields for JSON object
+extern ThingsBoardSized<UdawaThingsboardLogger> tb;
+#endif
+
+#ifdef USE_LOCAL_WEB_INTERFACE
+    extern AsyncWebServer http;
+    extern AsyncWebSocket ws;
+    extern SemaphoreHandle_t xSemaphoreWSBroadcast;
+    extern std::map<uint32_t, bool> wsClientAuthenticationStatus;
+    extern std::map<IPAddress, unsigned long> wsClientAuthAttemptTimestamps; 
+    extern std::map<uint32_t, String> wsClientSalts;
+#endif
+
 void reboot(int countDown);
+void coreroutineSetFInit(bool fInit);
 void coreroutineSetup();
+void coreroutineLoop();
 void coreroutineDoInit();
-void coreroutuneStartServices();
+void coreroutineStartServices();
 void coreroutineStopServices();
 void coreroutineCrashStateTruthKeeper(uint8_t direction);
 void coreroutineRTCUpdate(long ts);
@@ -35,6 +72,18 @@ void coreroutineSetLEDBuzzer(uint8_t color, uint8_t isBlink, int32_t blinkCount,
     void coreroutineOnWiFiOTAEnd();
     void coreroutineOnWiFiOTAProgress(unsigned int progress, unsigned int total);
     void coreroutineOnWiFiOTAError(ota_error_t error);
+#endif
+void coreroutineFSDownloader();
+void coreroutineSyncClientAttr(uint8_t direction);
+#ifdef USE_LOCAL_WEB_INTERFACE
+    String hmacSha256(String htP, String salt);
+    void wsBcast(JsonDocument &doc);
+    void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
+#endif
+#ifdef USE_IOT
+    void coreroutineProcessTBProvResp(const JsonDocument &data);
+    void coreroutineRunIoT();
+    void coreroutineIoTProvRequestTimedOut();
 #endif
 
 #endif

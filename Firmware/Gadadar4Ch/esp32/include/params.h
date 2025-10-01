@@ -9,7 +9,7 @@
 
 #define USE_WIFI_OTA
 
-//#define USE_LOCAL_WEB_INTERFACE
+#define USE_LOCAL_WEB_INTERFACE
 #ifdef USE_LOCAL_WEB_INTERFACE
     #define WS_BLOCKED_DURATION 60000UL
     #define WS_RATE_LIMIT_INTERVAL 1000UL
@@ -37,6 +37,7 @@
     #define THINGSBOARD_ENABLE_DYNAMIC true
     #define THINGSBOARD_ENABLE_OTA true
     #define THINGSBOARD_ENABLE_DEBUG false
+    #define IOT_PROVISIONING_TIMEOUT 10
 #endif
 
 #define USE_WIFI_LOGGER
@@ -61,7 +62,10 @@
 
 #define IOEXTENDER_ADDRESS 0x20
 
-#define MAX_CRASH_COUNTER 3
+#define MAX_CRASH_COUNTER 30
+#define SAFEMODE_CLEAR_DURATION 300 // seconds
+#define SAFE_CHECKPOINT_TIME 30 //seconds
+#define FSTIMESAVER_INTERVAL 1 // hours
 
 #ifdef USE_IOT_SECURE
 static const int tbPort = 8883;
