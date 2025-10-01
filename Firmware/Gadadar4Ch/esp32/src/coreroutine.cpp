@@ -82,9 +82,9 @@ void coreroutineSetup(){
     #endif
 
     #ifdef USE_IOT
+    if(iotState.xSemaphoreThingsboard == NULL){iotState.xSemaphoreThingsboard = xSemaphoreCreateMutex();}
     #ifdef USE_IOT_SECURE
     tcpClient.setCACert(CA_CERT);
-
     #endif
 
     tb.Subscribe_API_Implementation(IAPIProv);
@@ -106,7 +106,9 @@ void coreroutineLoop(){
     #endif
 
     #ifdef USE_IOT
-    coreroutineRunIoT();
+    if(WiFi.getMode() == WIFI_MODE_STA && WiFi.isConnected()){
+      coreroutineRunIoT();
+    }
     #endif
 
     if( !crashState.crashStateCheckedFlag && (now - crashState.crashStateCheckTimer) > SAFEMODE_CLEAR_DURATION * 1000 ){
@@ -1050,12 +1052,14 @@ void coreroutineProcessTBProvResp(const JsonDocument &data){
   }
 }
 
-void coreroutineIoTProvRequestTimedOut(){}
+void coreroutineIoTProvRequestTimedOut(){
+  logger->verbose(PSTR(__func__), PSTR("Provisioning request timed out.\n"));
+}
 
 void coreroutineRunIoT(){
   if(!config.state.provSent){
       if (tb.connect(config.state.tbAddr, PSTR("provision"), config.state.tbPort)) {
-        const Provision_Callback provisionCallback(Access_Token(), &coreroutineProcessTBProvResp, config.state.provDK, config.state.provDS, config.state.name, IOT_PROVISIONING_TIMEOUT * 1000000, &coreroutineIoTProvRequestTimedOut);
+        const Provision_Callback provisionCallback(Access_Token(), &coreroutineProcessTBProvResp, config.state.provDK, config.state.provDS, config.state.hwid, IOT_PROVISIONING_TIMEOUT * 1000000, &coreroutineIoTProvRequestTimedOut);
         if(IAPIProv.Provision_Request(provisionCallback))
         {
           logger->info(PSTR(__func__),PSTR("Connected to provisioning server: %s:%d. Sending provisioning response: DK: %s, DS: %s, Id: %s \n"),  
