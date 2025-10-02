@@ -25,12 +25,8 @@ char constexpr REQUEST_ID_NULL[] = "Internal request id is NULL";
 // RPC data keys.
 char constexpr RPC_METHOD_KEY[] = "method";
 char constexpr RPC_PARAMS_KEY[] = "params";
-// Shared attribute update API topics.
-char constexpr ATTRIBUTE_TOPIC[] = "v1/devices/me/attributes";
 // Shared attribute request keys.
 char constexpr SHARED_RESPONSE_KEY[] = "shared";
-// Publish data topics.
-char constexpr TELEMETRY_TOPIC[] = "v1/devices/me/telemetry";
 
 
 /// @brief Base functionality required by all API implementation
