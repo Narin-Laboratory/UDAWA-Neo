@@ -26,6 +26,6 @@ echo "--- Running Full Project Build for Gadadar4Ch ---"
 
 # 4. Run the PlatformIO build command. We need to explicitly target 
 # the environment named 'Gadadar4Ch' which is specified in your platformio.ini.
-pio run --environment Gadadar4Ch
+# pio run --environment Gadadar4Ch
 
 echo "--- Environment Setup Complete ---"
