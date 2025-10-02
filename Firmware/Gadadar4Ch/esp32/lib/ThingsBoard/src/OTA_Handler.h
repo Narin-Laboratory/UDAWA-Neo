@@ -15,12 +15,6 @@
 #include <string.h>
 
 
-// Firmware data keys.
-char constexpr FW_STATE_DOWNLOADING[] = "DOWNLOADING";
-char constexpr FW_STATE_DOWNLOADED[] = "DOWNLOADED";
-char constexpr FW_STATE_UPDATING[] = "UPDATING";
-char constexpr FW_STATE_FAILED[] = "FAILED";
-char constexpr FW_STATE_UPDATED[] = "UPDATED";
 
 // Log messages.
 char constexpr OTA_CB_IS_NULL[] = "OTA update callback is NULL, has it been deleted";

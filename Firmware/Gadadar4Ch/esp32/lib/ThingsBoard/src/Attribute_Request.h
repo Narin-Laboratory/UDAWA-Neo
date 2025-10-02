@@ -8,9 +8,9 @@
 
 
 // Attribute request API topics.
-char constexpr ATTRIBUTE_REQUEST_TOPIC[] = "v1/devices/me/attributes/request/%u";
+char constexpr ATTRIBUTE_REQUEST_TOPIC_TEMPLATE[] = "v1/devices/me/attributes/request/%u";
 char constexpr ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC[] = "v1/devices/me/attributes/response/+";
-char constexpr ATTRIBUTE_RESPONSE_TOPIC[] = "v1/devices/me/attributes/response/";
+char constexpr ATTRIBUTE_RESPONSE_TOPIC_BASE[] = "v1/devices/me/attributes/response/";
 // Client side attribute request keys.
 char constexpr CLIENT_REQUEST_KEYS[] = "clientKeys";
 char constexpr CLIENT_RESPONSE_KEY[] = "client";
@@ -91,8 +91,8 @@ class Attribute_Request : public IAPI_Implementation {
     }
 
     void Process_Json_Response(char const * topic, JsonDocument const & data) override {
-        auto const request_id = Helper::Split_Topic_Into_Request_ID(topic, strlen(ATTRIBUTE_RESPONSE_TOPIC));
-        JsonObject object = data.as<JsonObject>();
+        auto const request_id = Helper::Split_Topic_Into_Request_ID(topic, strlen(ATTRIBUTE_RESPONSE_TOPIC_BASE));
+        JsonObjectConst object = data.as<JsonObjectConst>();
 
         Timeoutable_Request * request_callback = nullptr;
 #if THINGSBOARD_ENABLE_STL
@@ -117,7 +117,7 @@ class Attribute_Request : public IAPI_Implementation {
                 goto delete_callback;
             }
 
-            if (object.containsKey(attribute_response_key)) {
+            if (object[attribute_response_key].is<JsonVariant>()) {
                 object = object[attribute_response_key];
             }
 
@@ -142,7 +142,7 @@ class Attribute_Request : public IAPI_Implementation {
     }
 
     bool Is_Response_Topic_Matching(char const * topic) const override {
-        return strncmp(ATTRIBUTE_RESPONSE_TOPIC, topic, strlen(ATTRIBUTE_RESPONSE_TOPIC)) == 0;
+        return strncmp(ATTRIBUTE_RESPONSE_TOPIC_BASE, topic, strlen(ATTRIBUTE_RESPONSE_TOPIC_BASE)) == 0;
     }
 
     bool Unsubscribe() override {
@@ -167,7 +167,7 @@ class Attribute_Request : public IAPI_Implementation {
         // Nothing to do
     }
 
-    void Set_Client_Callbacks(Callback<void, IAPI_Implementation &>::function subscribe_api_callback, Callback<bool, char const * const, JsonDocument const &>::function send_json_callback, Callback<bool, char const * const, char const * const>::function send_json_string_callback, Callback<bool, char const * const>::function subscribe_topic_callback, Callback<bool, char const * const>::function unsubscribe_topic_callback, Callback<uint16_t>::function get_receive_size_callback, Callback<uint16_t>::function get_send_size_callback, Callback<bool, uint16_t, uint16_t>::function set_buffer_size_callback, Callback<size_t *>::function get_request_id_callback) override {
+    void Set_Client_Callbacks(Callback<void, IAPI_Implementation &>::function subscribe_api_callback, Callback<bool, char const * const, JsonDocument const &, Deserialization_Options>::function send_json_callback, Callback<bool, char const * const, char const * const>::function send_json_string_callback, Callback<bool, char const * const>::function subscribe_topic_callback, Callback<bool, char const * const>::function unsubscribe_topic_callback, Callback<uint16_t>::function get_receive_size_callback, Callback<uint16_t>::function get_send_size_callback, Callback<bool, uint16_t, uint16_t>::function set_buffer_size_callback, Callback<size_t *>::function get_request_id_callback) override {
         m_send_json_callback.Set_Callback(send_json_callback);
         m_subscribe_topic_callback.Set_Callback(subscribe_topic_callback);
         m_unsubscribe_topic_callback.Set_Callback(unsubscribe_topic_callback);
@@ -255,9 +255,9 @@ class Attribute_Request : public IAPI_Implementation {
         auto & request_callback = registered_callback->Get_Request_Timeout();
         request_callback.Start_Timeout_Timer();
 
-        char topic[Helper::Calculate_Print_Size(ATTRIBUTE_REQUEST_TOPIC, request_id)] = {};
-        (void)snprintf(topic, sizeof(topic), ATTRIBUTE_REQUEST_TOPIC, request_id);
-        return m_send_json_callback.Call_Callback(topic, request_buffer);
+        char topic[Helper::Calculate_Print_Size(ATTRIBUTE_REQUEST_TOPIC_TEMPLATE, request_id)] = {};
+        (void)snprintf(topic, sizeof(topic), ATTRIBUTE_REQUEST_TOPIC_TEMPLATE, request_id);
+        return m_send_json_callback.Call_Callback(topic, request_buffer, Deserialization_Options::NONE);
     }
 
     /// @brief Subscribes to attribute response topic
@@ -287,7 +287,7 @@ class Attribute_Request : public IAPI_Implementation {
         return m_unsubscribe_topic_callback.Call_Callback(ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC);
     }
 
-    Callback<bool, char const * const, JsonDocument const &> m_send_json_callback = {};          // Send json document callback
+    Callback<bool, char const * const, JsonDocument const &, Deserialization_Options> m_send_json_callback = {};          // Send json document callback
     Callback<bool, char const * const>                       m_subscribe_topic_callback = {};    // Subscribe mqtt topic client callback
     Callback<bool, char const * const>                       m_unsubscribe_topic_callback = {};  // Unubscribe mqtt topic client callback
     Callback<size_t *>                                       m_get_request_id_callback = {};     // Get internal request id callback
