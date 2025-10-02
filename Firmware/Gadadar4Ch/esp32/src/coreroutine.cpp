@@ -27,17 +27,12 @@ WiFiClient tcpClient;
 #endif
 Arduino_MQTT_Client mqttClient(tcpClient);
 Provision<> IAPIProv;
-/*Server_Side_RPC<> IAPIRPC;
+Server_Side_RPC<> IAPIRPC;
 Shared_Attribute_Update<> IAPISharedAttr;
 Attribute_Request<> IAPISharedAttrReq;
 Espressif_Updater<> IoTUpdater;
-OTA_Firmware_Update<> IAPIOta;*/
-ThingsBoardSized<UdawaThingsboardLogger> tb(
-    mqttClient,
-    IOT_MAX_MESSAGE_RECEIVE_SIZE,    // receive_buffer_size
-    IOT_MAX_MESSAGE_SEND_SIZE,    // send_buffer_size
-    IOT_DEFAULT_MAX_STACK_SIZE    // max_stack_size
-);
+OTA_Firmware_Update<> IAPIOta;
+ThingsBoard tb(mqttClient);
 #endif
 
 void reboot(int countDown = 0){

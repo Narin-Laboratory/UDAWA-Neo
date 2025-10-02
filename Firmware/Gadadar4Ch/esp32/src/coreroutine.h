@@ -43,7 +43,7 @@ extern IoTState iotState;
 #endif
 extern Arduino_MQTT_Client mqttClient;
 // The SDK setup with 128 bytes for JSON payload and 32 fields for JSON object
-extern ThingsBoardSized<UdawaThingsboardLogger> tb;
+extern ThingsBoard tb;
 #endif
 
 #ifdef USE_LOCAL_WEB_INTERFACE
