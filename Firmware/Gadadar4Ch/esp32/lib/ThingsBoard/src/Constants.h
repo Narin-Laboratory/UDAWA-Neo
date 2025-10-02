@@ -91,4 +91,11 @@ char constexpr CLIENT_SCOPE[] = "client";
 char constexpr KEY[] = "key";
 char constexpr VALUE_KEY[] = "value";
 
+/// @brief Options for deserializing JSON content, allows to use PROGMEM
+/// as a string buffer for the serialized json, which will then be sent over MQTT
+enum Deserialization_Options {
+  NONE,
+  PROGMEM
+};
+
 #endif // Constants_h
