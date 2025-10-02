@@ -19,7 +19,7 @@ monitor_filters = esp32_exception_decoder
 upload_protocol = esptool
 upload_port = COM3
 ;upload_protocol = espota
-;upload_port = 192.168.1.103  ;gadadar4ch.local
+;upload_port = gadadar4ch.local  ;gadadar4ch.local
 ;upload_flags =
 ;	--port=3232
 ;	--auth=harinama
@@ -38,10 +38,9 @@ lib_deps =
 	bblanchon/StreamUtils@^1.9.0
 	https://github.com/mandulaj/PZEM-004T-v30.git
 	https://github.com/xreef/PCF8575_library.git
-	;https://github.com/mathieucarbou/ESPAsyncWebServer
-	;https://github.com/Narin-Laboratory/thingsboard-client-sdk.git
-    ;https://github.com/Narin-Laboratory/pubsubclient.git#master
-    ;https://github.com/arduino-libraries/ArduinoHttpClient.git#master
+	https://github.com/mathieucarbou/ESPAsyncWebServer
+    https://github.com/Narin-Laboratory/pubsubclient.git#master
+    https://github.com/arduino-libraries/ArduinoHttpClient.git#master
 	https://github.com/Erriez/ErriezDS3231.git#master
 	https://github.com/arduino-libraries/NTPClient.git#master
 	https://github.com/fbiego/ESP32Time.git
