@@ -29,6 +29,8 @@
     #define IOT_MAX_ATTRIBUTES             8UL          // was 10 (adjust if needed)
     #define IOT_BUFFERING_SIZE             1024UL       // was 2048
     #define IOT_REQUEST_TIMEOUT_MICROSECONDS 3000000UL  // 3 seconds (was 3000 µs)
+    #define IOT_OTA_UPDATE_FAILURE_RETRY 12U
+    #define IOT_OTA_UPDATE_PACKET_SIZE 4096U
     #ifdef USE_IOT_SECURE
     #define IOT_STACKSIZE 9000UL
     #else

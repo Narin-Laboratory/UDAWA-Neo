@@ -84,6 +84,10 @@ void coreroutineSyncClientAttr(uint8_t direction);
     void coreroutineProcessTBProvResp(const JsonDocument &data);
     void coreroutineRunIoT();
     void coreroutineIoTProvRequestTimedOut();
+    bool iotSendAttr(JsonDocument &doc);
+    void iotUpdateStartingCallback();
+    void iotProgressCallback(const size_t & currentChunk, const size_t & totalChuncks);
+    void iotFinishedCallback(const bool & success);
 #endif
 
 #endif

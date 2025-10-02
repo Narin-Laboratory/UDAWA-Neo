@@ -27,11 +27,16 @@ WiFiClient tcpClient;
 #endif
 Arduino_MQTT_Client mqttClient(tcpClient);
 Provision<> IAPIProv;
+/*Server_Side_RPC<> IAPIRPC;
+Shared_Attribute_Update<> IAPISharedAttr;
+Attribute_Request<> IAPISharedAttrReq;
+Espressif_Updater<> IoTUpdater;
+OTA_Firmware_Update<> IAPIOta;*/
 ThingsBoardSized<UdawaThingsboardLogger> tb(
     mqttClient,
-    1024,    // receive_buffer_size
-    1024,    // send_buffer_size
-    1024    // max_stack_size
+    IOT_MAX_MESSAGE_RECEIVE_SIZE,    // receive_buffer_size
+    IOT_MAX_MESSAGE_SEND_SIZE,    // send_buffer_size
+    IOT_DEFAULT_MAX_STACK_SIZE    // max_stack_size
 );
 #endif
 
@@ -88,8 +93,10 @@ void coreroutineSetup(){
     #endif
 
     tb.Subscribe_API_Implementation(IAPIProv);
+    /*tb.Subscribe_API_Implementation(IAPIRPC);
+    tb.Subscribe_API_Implementation(IAPISharedAttr);
+    tb.Subscribe_API_Implementation(IAPISharedAttrReq);*/
     #endif
-
 }
 
 void coreroutineLoop(){
@@ -175,6 +182,16 @@ void coreroutineLoop(){
 
         wsBcast(doc);
       }
+    #endif
+
+    #ifdef USE_IOT
+      JsonDocument doc;
+
+      doc[PSTR("heap")] = ESP.getFreeHeap();
+      doc[PSTR("uptime")] = now;
+      doc[PSTR("datetime")] = RTC.getDateTime();
+      doc[PSTR("rssi")] = wiFiHelper.rssiToPercent(WiFi.RSSI());
+      iotSendAttr(doc);
     #endif
 }
 
@@ -1056,6 +1073,30 @@ void coreroutineIoTProvRequestTimedOut(){
   logger->verbose(PSTR(__func__), PSTR("Provisioning request timed out.\n"));
 }
 
+void iotFinishedCallback(const bool & success){
+  if(success){
+    logger->info(PSTR(__func__), PSTR("IoT OTA Update done!\n"));
+    reboot(10);
+  }
+  else{
+    logger->warn(PSTR(__func__), PSTR("IoT OTA Update failed!\n"));
+    reboot(10);
+  }
+}
+void iotProgressCallback(const size_t & currentChunk, const size_t & totalChuncks){
+   if( xSemaphoreTake( iotState.xSemaphoreThingsboard, ( TickType_t ) 5000 ) == pdTRUE ) {
+    logger->debug(PSTR(__func__), PSTR("IoT OTA Progress: %.2f%%\n"),  static_cast<float>(currentChunk * 100U) / totalChuncks);
+    xSemaphoreGive( iotState.xSemaphoreThingsboard );   
+  }
+}
+void iotUpdateStartingCallback(){
+  logger->info(PSTR(__func__), PSTR("IoT OTA Update starting...\n"));
+  // It's a good practice to stop services that might interfere with the update
+  // For example, web server or other network services.
+  // coreroutineStopServices(); // You might want to call this if needed.
+  //LittleFS.end(); // Unmount filesystem to be safe
+}
+
 void coreroutineRunIoT(){
   if(!config.state.provSent){
       if (tb.connect(config.state.tbAddr, PSTR("provision"), config.state.tbPort)) {
@@ -1144,9 +1185,10 @@ void coreroutineRunIoT(){
         }
       }
       else{
-        if(iotState.fIoTUpdateStarted){
-          /*_IAPIOta.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION) && _IAPIOta.Firmware_Send_State(PSTR("UPDATED"));
-          if (_IAPIOta.Subscribe_Firmware_Update(_iotUpdaterOTACallback) && _IAPIOta.Start_Firmware_Update(_iotUpdaterOTACallback)) {
+        /*if(iotState.fIoTUpdateStarted){
+          const OTA_Update_Callback coreroutineIoTUpdaterOTACallback(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION, &IoTUpdater, &iotFinishedCallback, &iotProgressCallback, &iotUpdateStartingCallback, IOT_OTA_UPDATE_FAILURE_RETRY, IOT_OTA_UPDATE_PACKET_SIZE);
+          IAPIOta.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION) && IAPIOta.Firmware_Send_State(PSTR("UPDATED"));
+          if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback) && IAPIOta.Start_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
               logger->debug(PSTR(__func__), PSTR("Firmware update started.\n"));
               // Firmware update started successfully
               // Continue with the update process
@@ -1154,11 +1196,28 @@ void coreroutineRunIoT(){
               logger->error(PSTR(__func__), PSTR("Firmware update failed to start.\n"));
               // Handle the update failure
           }
-          iotState.fIoTUpdateStarted = false;*/
-        }
+          iotState.fIoTUpdateStarted = false;
+        }*/
       }
     }
 
     tb.loop();
+}
+
+
+bool iotSendAttr(JsonDocument &doc){
+  bool res = false;
+  if( iotState.xSemaphoreThingsboard != NULL && WiFi.isConnected() && config.state.provSent && tb.connected() && config.state.accTkn != NULL){
+    if( xSemaphoreTake( iotState.xSemaphoreThingsboard, ( TickType_t ) 10000 ) == pdTRUE )
+    {
+      res = tb.Send_Attribute_Json(doc);
+      xSemaphoreGive( iotState.xSemaphoreThingsboard );
+    }
+    else
+    {
+      logger->verbose(PSTR(__func__), PSTR("No semaphore available.\n"));
+    }
+  }
+  return res;
 }
 #endif

@@ -44,6 +44,14 @@
 #include <Arduino_MQTT_Client.h>
 #include <ThingsBoard.h>
 #include <Provision.h>
+#include <Attribute_Request.h>
+#include <Shared_Attribute_Callback.h>
+#include <Shared_Attribute_Update.h>
+#include <OTA_Update_Callback.h>
+#include <RPC_Callback.h>
+#include <Server_Side_RPC.h>
+#include <OTA_Firmware_Update.h>
+#include <Espressif_Updater.h>
 #ifdef USE_IOT_SECURE
 #include <WiFiClientSecure.h>
 #else
