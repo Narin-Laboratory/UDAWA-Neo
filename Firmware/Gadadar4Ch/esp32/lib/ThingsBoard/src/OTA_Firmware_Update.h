@@ -69,11 +69,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
       , m_fw_callback()
       , m_previous_buffer_size(0U)
       , m_changed_buffer_size(false)
-#if THINGSBOARD_ENABLE_STL
       , m_ota(std::bind(&OTA_Firmware_Update::Publish_Chunk_Request, this, std::placeholders::_1, std::placeholders::_2), std::bind(&OTA_Firmware_Update::Firmware_Send_State, this, std::placeholders::_1, std::placeholders::_2), std::bind(&OTA_Firmware_Update::Firmware_OTA_Unsubscribe, this))
-#else
-      , m_ota(OTA_Firmware_Update::staticPublishChunk, OTA_Firmware_Update::staticFirmwareSend, OTA_Firmware_Update::staticUnsubscribe)
-#endif // THINGSBOARD_ENABLE_STL
       , m_response_topic()
       , m_fw_attribute_update()
       , m_fw_attribute_request()
@@ -82,9 +78,6 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         // It just has to be set to an actual value that is not an empty string, because that would make the internal callback receive all other responses from the server as well,
         // even if they are not meant for this class and we are not currently updating the device
         (void)snprintf(m_response_topic, sizeof(m_response_topic), FIRMWARE_RESPONSE_TOPIC_TEMPLATE, 0U);
-#if !THINGSBOARD_ENABLE_STL
-        m_subscribedInstance = nullptr;
-#endif // !THINGSBOARD_ENABLE_STL
     }
 
     ~OTA_Firmware_Update() override = default;
@@ -115,11 +108,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
             Logger::printfln(" - %s", array[i]);
         }
 
-#if THINGSBOARD_ENABLE_STL
         Request_Callback_Value const fw_request_callback(std::bind(&OTA_Firmware_Update::Firmware_Shared_Attribute_Received, this, std::placeholders::_1), request_timeout.Get_Timeout(), std::bind(&OTA_Firmware_Update::Request_Timeout, this), array + 0U, array + OTA_ATTRIBUTE_KEYS_AMOUNT);
-#else
-        Request_Callback_Value const fw_request_callback(OTA_Firmware_Update::onStaticFirmwareReceived, request_timeout.Get_Timeout(), OTA_Firmware_Update::onStaticRequestTimeout, array + 0U, array + OTA_ATTRIBUTE_KEYS_AMOUNT);
-#endif // THINGSBOARD_ENABLE_STL
         return m_fw_attribute_request.Shared_Attributes_Request(fw_request_callback);
     }
 
@@ -149,11 +138,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         }
 
         char const * array[OTA_ATTRIBUTE_KEYS_AMOUNT] = {FW_CHKS_KEY, FW_CHKS_ALGO_KEY, FW_SIZE_KEY, FW_TITLE_KEY, FW_VER_KEY};
-#if THINGSBOARD_ENABLE_STL
         Update_Callback_Value const fw_update_callback(std::bind(&OTA_Firmware_Update::Firmware_Shared_Attribute_Received, this, std::placeholders::_1), array + 0U, array + OTA_ATTRIBUTE_KEYS_AMOUNT);
-#else
-        Update_Callback_Value const fw_update_callback(OTA_Firmware_Update::onStaticFirmwareReceived, array + 0U, array + OTA_ATTRIBUTE_KEYS_AMOUNT);
-#endif // THINGSBOARD_ENABLE_STL
         return m_fw_attribute_update.Shared_Attributes_Subscribe(fw_update_callback);
     }
 
@@ -411,44 +396,6 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         m_ota.Start_Firmware_Update(m_fw_callback, fw_size, fw_checksum, fw_checksum_algorithm);
     }
 
-#if !THINGSBOARD_ENABLE_STL
-    static void onStaticFirmwareReceived(JsonVariantConst data) {
-        if (m_subscribedInstance == nullptr) {
-            return;
-        }
-        m_subscribedInstance->Firmware_Shared_Attribute_Received(data);
-    }
-
-    static void onStaticRequestTimeout() {
-        if (m_subscribedInstance == nullptr) {
-            return;
-        }
-        m_subscribedInstance->Request_Timeout();
-    }
-
-    static bool staticPublishChunk(size_t const & request_id, size_t const & request_chunck) {
-        if (m_subscribedInstance == nullptr) {
-            return false;
-        }
-        return m_subscribedInstance->Publish_Chunk_Request(request_id, request_chunck);
-    }
-
-    static bool staticFirmwareSend(char const * current_fw_state, char const * fw_error = nullptr) {
-        if (m_subscribedInstance == nullptr) {
-            return false;
-        }
-        return m_subscribedInstance->Firmware_Send_State(current_fw_state, fw_error);
-    }
-
-    static bool staticUnsubscribe() {
-        if (m_subscribedInstance == nullptr) {
-            return false;
-        }
-        return m_subscribedInstance->Firmware_OTA_Unsubscribe();
-    }
-
-    static OTA_Firmware_Update                                               *m_subscribedInstance;
-#endif // !THINGSBOARD_ENABLE_STL
 
     Callback<void, IAPI_Implementation &>                    m_subscribe_api_callback = {};            // Subscribe additional api callback
     Callback<bool, char const * const, JsonDocument const &, Deserialization_Options> m_send_json_callback = {};                // Send json document callback
@@ -468,10 +415,5 @@ class OTA_Firmware_Update : public IAPI_Implementation {
     Update_Callback_Container                                m_fw_attribute_update = {};               // API implementation to be informed if needed fw attributes have been updated
     Request_Callback_Container                               m_fw_attribute_request = {};              // API implementation to request the needed fw attributes to start updating
 };
-
-#if !THINGSBOARD_ENABLE_STL
-template <typename Logger>
-OTA_Firmware_Update<Logger> *OTA_Firmware_Update<Logger>::m_subscribedInstance = nullptr;
-#endif
 
 #endif // OTA_Firmware_Update_h

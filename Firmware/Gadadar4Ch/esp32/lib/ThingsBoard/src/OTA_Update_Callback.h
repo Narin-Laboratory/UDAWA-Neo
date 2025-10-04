@@ -10,7 +10,7 @@
 // OTA default values.
 uint8_t constexpr CHUNK_RETRIES = 12U;
 uint16_t constexpr CHUNK_SIZE = (4U * 1024U);
-uint64_t constexpr REQUEST_TIMEOUT_MS = (5U * 1000U * 1000U);
+uint64_t constexpr REQUEST_TIMEOUT_MS = (15U * 1000U * 1000U);
 
 
 /// @brief Over the air firmware update callback wrapper
