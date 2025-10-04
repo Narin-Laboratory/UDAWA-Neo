@@ -69,11 +69,11 @@ char constexpr CURR_FW_TITLE_KEY[] = "current_fw_title";
 char constexpr CURR_FW_VER_KEY[] = "current_fw_version";
 char constexpr FW_ERROR_KEY[] = "fw_error";
 char constexpr FW_STATE_KEY[] = "fw_state";
-char constexpr FW_CHKS_KEY[] = "checksum";
-char constexpr FW_CHKS_ALGO_KEY[] = "checksum_algorithm";
-char constexpr FW_SIZE_KEY[] = "size";
-char constexpr FW_TITLE_KEY[] = "title";
-char constexpr FW_VER_KEY[] = "version";
+char constexpr FW_CHKS_KEY[] = "fw_checksum";
+char constexpr FW_CHKS_ALGO_KEY[] = "fw_checksum_algorithm";
+char constexpr FW_SIZE_KEY[] = "fw_size";
+char constexpr FW_TITLE_KEY[] = "fw_title";
+char constexpr FW_VER_KEY[] = "fw_version";
 // Firmware states.
 char constexpr FW_STATE_DOWNLOADING[] = "DOWNLOADING";
 char constexpr FW_STATE_DOWNLOADED[] = "DOWNLOADED";
