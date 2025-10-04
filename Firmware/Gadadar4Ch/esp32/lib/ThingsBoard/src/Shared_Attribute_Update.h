@@ -106,7 +106,7 @@ class Shared_Attribute_Update : public IAPI_Implementation {
 
     void Process_Json_Response(char const * topic, JsonDocument const & data) override {
         JsonObjectConst object = data.template as<JsonObjectConst>();
-        if (object.containsKey(SHARED_RESPONSE_KEY)) {
+        if (!object[SHARED_RESPONSE_KEY].isNull()) {
             object = object[SHARED_RESPONSE_KEY];
         }
 
@@ -118,7 +118,7 @@ class Shared_Attribute_Update : public IAPI_Implementation {
         std::copy_if(m_shared_attribute_update_callbacks.begin(), m_shared_attribute_update_callbacks.end(), std::back_inserter(filtered_shared_attribute_update_callbacks), [&object](Callback_Value const & shared_attribute) {
 #endif // THINGSBOARD_ENABLE_CXX20
             return (shared_attribute.Get_Attributes().empty() || std::find_if(shared_attribute.Get_Attributes().begin(), shared_attribute.Get_Attributes().end(), [&object](const char * att) {
-                return object.containsKey(att);
+                return !object[att].isNull();
             }) != shared_attribute.Get_Attributes().end());
         });
 
@@ -139,7 +139,7 @@ class Shared_Attribute_Update : public IAPI_Implementation {
                 }
                 // Check if the shared attribute update contains any of our subscribed keys and break early if they do,
                 // because we want to receive every update that chagned atleast one of our subscribed keys
-                if (object.containsKey(att)) {
+                if (!object[att].isNull()) {
                     requested_att = att;
                     break;
                 }
@@ -181,7 +181,7 @@ class Shared_Attribute_Update : public IAPI_Implementation {
         // Nothing to do
     }
 
-    void Set_Client_Callbacks(Callback<void, IAPI_Implementation &>::function subscribe_api_callback, Callback<bool, char const * const, JsonDocument const &>::function send_json_callback, Callback<bool, char const * const, char const * const>::function send_json_string_callback, Callback<bool, char const * const>::function subscribe_topic_callback, Callback<bool, char const * const>::function unsubscribe_topic_callback, Callback<uint16_t>::function get_receive_size_callback, Callback<uint16_t>::function get_send_size_callback, Callback<bool, uint16_t, uint16_t>::function set_buffer_size_callback, Callback<size_t *>::function get_request_id_callback) override {
+    void Set_Client_Callbacks(Callback<void, IAPI_Implementation &>::function subscribe_api_callback, Callback<bool, char const * const, JsonDocument const &, Deserialization_Options>::function send_json_callback, Callback<bool, char const * const, char const * const>::function send_json_string_callback, Callback<bool, char const * const>::function subscribe_topic_callback, Callback<bool, char const * const>::function unsubscribe_topic_callback, Callback<uint16_t>::function get_receive_size_callback, Callback<uint16_t>::function get_send_size_callback, Callback<bool, uint16_t, uint16_t>::function set_buffer_size_callback, Callback<size_t *>::function get_request_id_callback) override {
         m_subscribe_topic_callback.Set_Callback(subscribe_topic_callback);
         m_unsubscribe_topic_callback.Set_Callback(unsubscribe_topic_callback);
     }

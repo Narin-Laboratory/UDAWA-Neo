@@ -88,9 +88,10 @@ void coreroutineSetup(){
     #endif
 
     tb.Subscribe_API_Implementation(IAPIProv);
-    /*tb.Subscribe_API_Implementation(IAPIRPC);
+    tb.Subscribe_API_Implementation(IAPIRPC);
     tb.Subscribe_API_Implementation(IAPISharedAttr);
-    tb.Subscribe_API_Implementation(IAPISharedAttrReq);*/
+    tb.Subscribe_API_Implementation(IAPISharedAttrReq);
+    tb.Subscribe_API_Implementation(IAPIOta);
     #endif
 }
 
@@ -1180,7 +1181,7 @@ void coreroutineRunIoT(){
         }
       }
       else{
-        /*if(iotState.fIoTUpdateStarted){
+        if(iotState.fIoTUpdateStarted){
           const OTA_Update_Callback coreroutineIoTUpdaterOTACallback(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION, &IoTUpdater, &iotFinishedCallback, &iotProgressCallback, &iotUpdateStartingCallback, IOT_OTA_UPDATE_FAILURE_RETRY, IOT_OTA_UPDATE_PACKET_SIZE);
           IAPIOta.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION) && IAPIOta.Firmware_Send_State(PSTR("UPDATED"));
           if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback) && IAPIOta.Start_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
@@ -1192,7 +1193,7 @@ void coreroutineRunIoT(){
               // Handle the update failure
           }
           iotState.fIoTUpdateStarted = false;
-        }*/
+        }
       }
     }
 
