@@ -14,8 +14,12 @@
 // Library includes.
 #include <string.h>
 
+// Forward declaration
+#include "mbedtls/md.h"
+
 
 // Log messages.
+char constexpr HASH_ALGORITHM[] = "Checksum algorithm is (%s)";
 char constexpr OTA_CB_IS_NULL[] = "OTA update callback is NULL, has it been deleted";
 char constexpr UNABLE_TO_REQUEST_CHUNCKS[] = "Unable to request firmware chunk";
 char constexpr RECEIVED_UNEXPECTED_CHUNK[] = "Received chunk (%u), not the same as requested chunk (%u)";
@@ -73,9 +77,12 @@ class OTA_Handler {
     void Start_Firmware_Update(OTA_Update_Callback & fw_callback, size_t const & fw_size, char const * fw_checksum, mbedtls_md_type_t const & fw_checksum_algorithm) {
         m_fw_callback = &fw_callback;
         m_fw_size = fw_size;
-        m_total_chunks = (m_fw_size + m_fw_callback->Get_Chunk_Size() - 1) / m_fw_callback->Get_Chunk_Size();
+        m_total_chunks = (m_fw_size / m_fw_callback->Get_Chunk_Size()) + 1U;
         (void)strncpy(m_fw_checksum, fw_checksum, sizeof(m_fw_checksum));
         m_fw_checksum_algorithm = fw_checksum_algorithm;
+#if THINGSBOARD_ENABLE_DEBUG
+        Logger::printfln(HASH_ALGORITHM, mbedtls_md_get_name(mbedtls_md_info_from_type(m_fw_checksum_algorithm)));
+#endif // THINGSBOARD_ENABLE_DEBUG
         auto & request_timeout = m_fw_callback->Get_Request_Timeout();
 #if THINGSBOARD_ENABLE_STL
         request_timeout.Set_Timeout_Callback(std::bind(&OTA_Handler::Handle_Request_Timeout, this));
@@ -107,14 +114,7 @@ class OTA_Handler {
     /// Does not need to be kept alive, because the formatting message is only used for the scope of the method itself
     /// @param total_bytes Amount of bytes in the current firmware packet data
     void Process_Firmware_Packet(size_t const & current_chunk, uint8_t * payload, size_t const & total_bytes)  {
-        if (current_chunk < m_requested_chunks) {
-            Logger::printfln(RECEIVED_UNEXPECTED_CHUNK, current_chunk, m_requested_chunks);
-            // Re-request the chunk we are actually waiting for,
-            // because the server probably did not receive our previous request.
-            Request_Next_Firmware_Packet();
-            return;
-        }
-        if (current_chunk > m_requested_chunks) {
+        if (current_chunk != m_requested_chunks) {
             Logger::printfln(RECEIVED_UNEXPECTED_CHUNK, current_chunk, m_requested_chunks);
             return;
         }
