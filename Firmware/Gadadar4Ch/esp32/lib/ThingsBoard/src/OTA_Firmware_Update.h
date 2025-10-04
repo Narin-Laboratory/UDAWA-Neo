@@ -149,7 +149,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
 
     void Process_Response(char const * topic, uint8_t * payload, uint32_t length) override {
         auto const & request_id = m_fw_callback.Get_Request_ID();
-        auto const chunk = Helper::Split_Topic_Into_Request_ID(topic, Helper::Calculate_Print_Size(FIRMWARE_RESPONSE_TOPIC_TEMPLATE, request_id));
+        auto const chunk = Helper::Split_Topic_Into_Request_ID(topic, Helper::Calculate_Print_Size(FIRMWARE_RESPONSE_TOPIC_TEMPLATE, request_id) - 1);
         m_ota.Process_Firmware_Packet(chunk, payload, length);
     }
 
