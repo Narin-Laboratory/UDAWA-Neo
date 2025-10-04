@@ -88,9 +88,10 @@ void coreroutineSetup(){
     #endif
 
     tb.Subscribe_API_Implementation(IAPIProv);
-    /*tb.Subscribe_API_Implementation(IAPIRPC);
+    tb.Subscribe_API_Implementation(IAPIRPC);
     tb.Subscribe_API_Implementation(IAPISharedAttr);
-    tb.Subscribe_API_Implementation(IAPISharedAttrReq);*/
+    tb.Subscribe_API_Implementation(IAPISharedAttrReq);
+    tb.Subscribe_API_Implementation(IAPIOta);
     #endif
 }
 
@@ -1137,8 +1138,15 @@ void coreroutineRunIoT(){
         }
 
         if(tb.connected()){
-          /*if(!iotState.fSharedAttributesSubscribed){
-            iotState.fSharedAttributesSubscribed = _IAPISharedAttr.Shared_Attributes_Subscribe(_thingsboardSharedAttributesUpdateCallback);
+          if(!iotState.fSharedAttributesSubscribed){
+            Shared_Attribute_Callback coreroutineThingsboardSharedAttributesUpdateCallback(
+                [](const JsonVariantConst& data) {
+                    String jsonData;
+                    serializeJson(data, jsonData);
+                    logger->verbose(PSTR(__func__), PSTR("Received shared attribute update: %s\n"), jsonData.c_str());
+                }
+            );
+            iotState.fSharedAttributesSubscribed = IAPISharedAttr.Shared_Attributes_Subscribe(coreroutineThingsboardSharedAttributesUpdateCallback);
             if (iotState.fSharedAttributesSubscribed){
               logger->verbose(PSTR(__func__), PSTR("Thingsboard shared attributes update subscribed successfuly.\n"));
             }
@@ -1148,8 +1156,15 @@ void coreroutineRunIoT(){
           }
 
           if(!iotState.fRebootRPCSubscribed){
-            RPC_Callback rebootCallback("reboot", _thingsboardRPCRebootHandler);
-            iotState.fRebootRPCSubscribed = _IAPIRPC.RPC_Subscribe(rebootCallback); // Pass the callback directly
+            RPC_Callback rebootCallback("reboot", [](const JsonVariantConst& params, JsonDocument& result) {
+                int countdown = 0;
+                if (params.is<int>()) {
+                    countdown = params.as<int>();
+                }
+                reboot(countdown);
+                result["status"] = "rebooting";
+            });
+            iotState.fRebootRPCSubscribed = IAPIRPC.RPC_Subscribe(rebootCallback); // Pass the callback directly
             if(iotState.fRebootRPCSubscribed){
               logger->verbose(PSTR(__func__), PSTR("reboot RPC subscribed successfuly.\n"));
             }
@@ -1159,8 +1174,11 @@ void coreroutineRunIoT(){
           }
 
           if(!iotState.fConfigSaveRPCSubscribed){
-            RPC_Callback configSaveCallback("configSave", _thingsboardRPCConfigSaveHandler);
-            iotState.fConfigSaveRPCSubscribed = _IAPIRPC.RPC_Subscribe(configSaveCallback); // Pass the callback directly
+            RPC_Callback configSaveCallback("configSave", [](const JsonVariantConst& params, JsonDocument& result) {
+                config.save();
+                result["status"] = "config saved";
+            });
+            iotState.fConfigSaveRPCSubscribed = IAPIRPC.RPC_Subscribe(configSaveCallback); // Pass the callback directly
             if(iotState.fConfigSaveRPCSubscribed){
               logger->verbose(PSTR(__func__), PSTR("configSave RPC subscribed successfuly.\n"));
             }
@@ -1170,17 +1188,28 @@ void coreroutineRunIoT(){
           }
 
           #ifdef USE_IOT_OTA
-          iotState.fIoTCurrentFWSent = _IAPIOta.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION) && _IAPIOta.Firmware_Send_State(PSTR("UPDATED"));
-          if(iotState.fIoTCurrentFWSent){
-          //if(true){
-            _IAPISharedAttrReq.Shared_Attributes_Request(_iotUpdaterFirmwareCheckCallback);
+          const OTA_Update_Callback coreroutineIoTUpdaterOTACallback(
+              CURRENT_FIRMWARE_TITLE,
+              CURRENT_FIRMWARE_VERSION,
+              &IoTUpdater,
+              &iotFinishedCallback,
+              &iotProgressCallback,
+              &iotUpdateStartingCallback,
+              IOT_OTA_UPDATE_FAILURE_RETRY,
+              IOT_OTA_UPDATE_PACKET_SIZE
+          );
+
+          if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
+              logger->debug(PSTR(__func__), PSTR("Firmware update subscribed.\n"));
+          } else {
+              logger->error(PSTR(__func__), PSTR("Firmware update failed to subscribe.\n"));
           }
-          #endif*/
+          #endif
           logger->info(PSTR(__func__),PSTR("IoT Connected!\n"));
         }
       }
       else{
-        /*if(iotState.fIoTUpdateStarted){
+        if(iotState.fIoTUpdateStarted){
           const OTA_Update_Callback coreroutineIoTUpdaterOTACallback(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION, &IoTUpdater, &iotFinishedCallback, &iotProgressCallback, &iotUpdateStartingCallback, IOT_OTA_UPDATE_FAILURE_RETRY, IOT_OTA_UPDATE_PACKET_SIZE);
           IAPIOta.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION) && IAPIOta.Firmware_Send_State(PSTR("UPDATED"));
           if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback) && IAPIOta.Start_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
@@ -1192,7 +1221,7 @@ void coreroutineRunIoT(){
               // Handle the update failure
           }
           iotState.fIoTUpdateStarted = false;
-        }*/
+        }
       }
     }
 

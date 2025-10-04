@@ -8,6 +8,13 @@
 #include "IAPI_Implementation.h"
 
 
+#define CHECKSUM_AGORITM_MD5 "MD5"
+#define CHECKSUM_AGORITM_SHA256 "SHA256"
+#define CHECKSUM_AGORITM_SHA384 "SHA384"
+#define CHECKSUM_AGORITM_SHA512 "SHA512"
+#define FIRMWARE_REQUEST_TOPIC "v2/fw/request/%u/chunk/%u"
+
+
 uint8_t constexpr MAX_FW_TOPIC_SIZE = 33U;
 uint8_t constexpr OTA_ATTRIBUTE_KEYS_AMOUNT = 5U;
 char constexpr NO_FW_REQUEST_RESPONSE[] = "Did not receive requested shared attribute firmware keys. Ensure keys exist and device is connected";
@@ -194,7 +201,6 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         m_get_request_id_callback.Set_Callback(get_request_id_callback);
     }
 
-  private:
     /// @brief Sends the given firmware title and firmware version to the cloud.
     /// See https://thingsboard.io/docs/user-guide/ota-updates/ for more information
     /// @param current_fw_title Current device firmware title
@@ -220,6 +226,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         return m_send_json_callback.Call_Callback(TELEMETRY_TOPIC, current_firmware_state, Deserialization_Options::NONE);
     }
 
+  private:
     /// @brief Checks the included information in the callback,
     /// and attempts to send the current device firmware information to the cloud and configures the internal request ID to receive chunks from
     /// @param callback Callback method that will be called
