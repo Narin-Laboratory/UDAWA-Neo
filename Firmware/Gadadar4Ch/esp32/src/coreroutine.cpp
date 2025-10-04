@@ -1,4 +1,5 @@
 #include "coreroutine.h"
+#include <array>
 
 ESP32Time RTC(0);
 #ifdef USE_HW_RTC
@@ -1185,6 +1186,26 @@ void coreroutineRunIoT(){
             else{
               logger->warn(PSTR(__func__), PSTR("Failed to subscribe configSave RPC.\n"));
             }
+          }
+
+          // TEST: Request a single shared attribute to debug the request mechanism
+          std::array<const char*, 1U> test_keys = {FW_VER_KEY};
+          Attribute_Request_Callback const test_fw_version_callback(
+              [](const JsonVariantConst& data) {
+                  String jsonData;
+                  serializeJson(data, jsonData);
+                  logger->debug(PSTR("TEST"), PSTR("Received fw_version attribute response: %s\n"), jsonData.c_str());
+              },
+              0U,
+              nullptr,
+              test_keys.begin(),
+              test_keys.end()
+          );
+
+          if (IAPISharedAttrReq.Shared_Attributes_Request(test_fw_version_callback)) {
+              logger->debug(PSTR("TEST"), PSTR("fw_version attribute request sent.\n"));
+          } else {
+              logger->error(PSTR("TEST"), PSTR("Failed to send fw_version attribute request.\n"));
           }
 
           #ifdef USE_IOT_OTA
