@@ -118,31 +118,35 @@ void UdawaWiFiHelper::getAvailableWiFi(JsonDocument &doc){
 }
 
 void UdawaWiFiHelper::run(){
-    delay(1000);
-    if(_fInit && WiFi.getMode() == WIFI_MODE_AP){
-        if(millis() - _state.softAPClientAvailCheckstartTime > _state.softAPClientAvailCheckTimeout * 1000){
-            uint8_t connectedWiFiClientNum = WiFi.softAPgetStationNum();
-            _logger->debug(PSTR(__func__), PSTR("Checking any connected WiFi client, found %d connected.\n"), connectedWiFiClientNum);
-            if(connectedWiFiClientNum > 0){
+    unsigned long now = millis();
+    if(now - _lastRun > 1000){
+        if(_fInit && WiFi.getMode() == WIFI_MODE_AP){
+            if(millis() - _state.softAPClientAvailCheckstartTime > _state.softAPClientAvailCheckTimeout * 1000){
+                uint8_t connectedWiFiClientNum = WiFi.softAPgetStationNum();
+                _logger->debug(PSTR(__func__), PSTR("Checking any connected WiFi client, found %d connected.\n"), connectedWiFiClientNum);
+                if(connectedWiFiClientNum > 0){
+                    _state.softAPstartTime = millis();
+                }
+
+                _state.softAPClientAvailCheckstartTime = millis();
+            }
+            
+
+            if (millis() - _state.softAPstartTime > _state.softAPTimeout * 1000) {
+                _logger->warn(PSTR(__func__), PSTR("SoftAP timedout. Switch back to STA mode.\n"));
+                modeSTA();
                 _state.softAPstartTime = millis();
             }
-
-            _state.softAPClientAvailCheckstartTime = millis();
         }
-        
 
-        if (millis() - _state.softAPstartTime > _state.softAPTimeout * 1000) {
-            _logger->warn(PSTR(__func__), PSTR("SoftAP timedout. Switch back to STA mode.\n"));
-            modeSTA();
-            _state.softAPstartTime = millis();
-        }
-    }
+        if(_state.STADisconnectCounter >= _state.STAMaximumDisconnectCount && WiFi.getMode() == WIFI_MODE_STA){
+            _logger->warn(PSTR(__func__), PSTR("STA unable to connect %d times. Switch back to AP mode.\n"), _state.STADisconnectCounter);
+            _state.STADisconnectCounter = 0;
+            modeAP(false);
+        }  
 
-    if(_state.STADisconnectCounter >= _state.STAMaximumDisconnectCount && WiFi.getMode() == WIFI_MODE_STA){
-        _logger->warn(PSTR(__func__), PSTR("STA unable to connect %d times. Switch back to AP mode.\n"), _state.STADisconnectCounter);
-        _state.STADisconnectCounter = 0;
-        modeAP(false);
-    }    
+        _lastRun = now;
+    }  
 }
 
 void UdawaWiFiHelper::onWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {

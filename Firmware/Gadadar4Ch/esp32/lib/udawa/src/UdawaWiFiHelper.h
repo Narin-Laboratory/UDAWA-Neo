@@ -59,6 +59,7 @@ class UdawaWiFiHelper{
         std::vector<WiFiAPStartCallback> _onAPStartCallbacks;
         void modeSTA();
         void modeAP(bool open = false);
+        unsigned long _lastRun;
 };
 
 #endif
