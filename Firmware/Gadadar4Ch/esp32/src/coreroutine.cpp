@@ -1204,6 +1204,11 @@ void coreroutineRunIoT(){
           } else {
               logger->error(PSTR(__func__), PSTR("Firmware update failed to subscribe.\n"));
           }
+          if (IAPIOta.Start_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
+              logger->debug(PSTR(__func__), PSTR("Firmware update check requested.\n"));
+          } else {
+              logger->error(PSTR(__func__), PSTR("Firmware update check request failed.\n"));
+          }
           #endif
           logger->info(PSTR(__func__),PSTR("IoT Connected!\n"));
         }
