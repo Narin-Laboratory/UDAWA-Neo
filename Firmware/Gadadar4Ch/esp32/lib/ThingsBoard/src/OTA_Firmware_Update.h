@@ -300,7 +300,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
     /// to ensure we have a firmware assigned and can start the update over MQTT
     void Firmware_Shared_Attribute_Received(JsonVariantConst data) {
         // Check if firmware is available for our device
-        if (!data.containsKey(FW_VER_KEY) || !data.containsKey(FW_TITLE_KEY) || !data.containsKey(FW_CHKS_KEY) || !data.containsKey(FW_CHKS_ALGO_KEY) || !data.containsKey(FW_SIZE_KEY)) {
+        if (data[FW_VER_KEY].isNull() || data[FW_TITLE_KEY].isNull() || data[FW_CHKS_KEY].isNull() || data[FW_CHKS_ALGO_KEY].isNull() || data[FW_SIZE_KEY].isNull()) {
             Logger::printfln(NO_FW);
             Firmware_Send_State(FW_STATE_FAILED, NO_FW);
             return;
