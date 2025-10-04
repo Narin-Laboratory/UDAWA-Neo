@@ -30,3 +30,4 @@
 *.exe
 *.out
 *.app
+Firmware/Gadadar4Ch/esp32/src/set.cpp
