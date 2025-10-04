@@ -308,6 +308,11 @@ class OTA_Firmware_Update : public IAPI_Implementation {
     /// @param data Json data containing key-value pairs for the needed firmware information,
     /// to ensure we have a firmware assigned and can start the update over MQTT
     void Firmware_Shared_Attribute_Received(JsonVariantConst data) {
+        // Check if the keys are nested under a "shared" key
+        if (data.is<JsonObjectConst>() && data.as<JsonObjectConst>().containsKey("shared")) {
+            data = data["shared"];
+        }
+
         // Check if firmware is available for our device
         if (data[FW_VER_KEY].isNull() || data[FW_TITLE_KEY].isNull() || data[FW_CHKS_KEY].isNull() || data[FW_CHKS_ALGO_KEY].isNull() || data[FW_SIZE_KEY].isNull()) {
             Logger::printfln(NO_FW);
