@@ -23,7 +23,6 @@ char constexpr FIRMWARE_RESPONSE_TOPIC_TEMPLATE[] = "v2/fw/response/%u/chunk/";
 char constexpr FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC[] = "v2/fw/response/+";
 char constexpr FIRMWARE_REQUEST_TOPIC_TEMPLATE[] = "v2/fw/request/%u/chunk/%u";
 // Log messages.
-char constexpr SUBSCRIBE_TOPIC_FAILED[] = "Subscribing to topic (%s) failed";
 char constexpr NUMBER_PRINTF[] = "%u";
 char constexpr NO_FW[] = "Missing shared attribute firmware keys. Ensure you assigned an OTA update with binary";
 char constexpr EMPTY_FW[] = "Received shared attribute firmware keys were NULL";
