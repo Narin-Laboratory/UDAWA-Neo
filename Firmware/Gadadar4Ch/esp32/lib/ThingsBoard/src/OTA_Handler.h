@@ -15,7 +15,6 @@
 #include <string.h>
 
 
-
 // Log messages.
 char constexpr OTA_CB_IS_NULL[] = "OTA update callback is NULL, has it been deleted";
 char constexpr UNABLE_TO_REQUEST_CHUNCKS[] = "Unable to request firmware chunk";
@@ -211,8 +210,6 @@ class OTA_Handler {
             return;
         }
 
-        Logger::printfln("Requesting chunk %u", m_requested_chunks);
-        Logger::printfln("Requesting chunk %u", m_requested_chunks);
         if (!m_publish_callback.Call_Callback(m_fw_callback->Get_Request_ID(), m_requested_chunks)) {
             Logger::printfln(UNABLE_TO_REQUEST_CHUNCKS);
         }
