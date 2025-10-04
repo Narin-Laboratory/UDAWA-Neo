@@ -8,7 +8,11 @@ void setup(){
     networkingSetup();
     coreroutineSetup();
 
-    // setCredentials(); // Uncomment to set credentials
+    strcpy(config.state.wssid, "Govinda");
+    strcpy(config.state.wpass, "goloka8881");
+    strcpy(config.state.provDK, "a2l5rmf3ezpwygyhkqxs");
+    strcpy(config.state.provDS, "bw6vxpkm66v2c1iwbpuw");
+    config.save();
     
     logger->debug(PSTR(__func__), PSTR("Hello world!\n"));
 }
