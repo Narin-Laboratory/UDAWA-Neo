@@ -1,5 +1,6 @@
 #include <ArduinoJson.h>
 #include "main.h"
+#include "set.h"
 
 void setup(){
     loggingSetup();
@@ -7,11 +8,7 @@ void setup(){
     networkingSetup();
     coreroutineSetup();
 
-    strcpy(config.state.wssid, "FISIP");
-    strcpy(config.state.wpass, "Fisip2019%");
-    strcpy(config.state.provDK, "a2l5rmf3ezpwygyhkqxs");
-    strcpy(config.state.provDS, "bw6vxpkm66v2c1iwbpuw");
-    config.save();
+    // setCredentials(); // Uncomment to set credentials
     
     logger->debug(PSTR(__func__), PSTR("Hello world!\n"));
 }
