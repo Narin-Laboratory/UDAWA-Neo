@@ -1204,6 +1204,13 @@ void coreroutineRunIoT(){
           } else {
               logger->error(PSTR(__func__), PSTR("Firmware update failed to subscribe.\n"));
           }
+
+          if (IAPIOta.Firmware_Send_State(FW_STATE_UPDATED)) {
+              logger->debug(PSTR(__func__), PSTR("Firmware state 'UPDATED' sent.\n"));
+          } else {
+              logger->error(PSTR(__func__), PSTR("Failed to send firmware state.\n"));
+          }
+
           if (IAPIOta.Start_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
               logger->debug(PSTR(__func__), PSTR("Firmware update check requested.\n"));
           } else {
