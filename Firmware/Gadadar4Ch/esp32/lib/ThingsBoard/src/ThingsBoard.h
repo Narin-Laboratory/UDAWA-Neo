@@ -68,22 +68,12 @@ class ThingsBoard {
                     if (api == nullptr) {
                             continue;
                     }
-#if THINGSBOARD_ENABLE_STL
                     api->Set_Client_Callbacks(std::bind(&ThingsBoard::Subscribe_API_Implementation, this, std::placeholders::_1), [this](char const * topic, JsonDocument const & doc, Deserialization_Options opt) { return this->Send_Json(topic, doc, opt); }, std::bind(&ThingsBoard::Send_Json_String, this, std::placeholders::_1, std::placeholders::_2), std::bind(&ThingsBoard::Subscribe_Topic, this, std::placeholders::_1), std::bind(&ThingsBoard::Unsubscribe_Topic, this, std::placeholders::_1), std::bind(&ThingsBoard::Get_Receive_Buffer_Size, this), std::bind(&ThingsBoard::Get_Send_Buffer_Size, this), std::bind(&ThingsBoard::Set_Buffer_Size, this, std::placeholders::_1, std::placeholders::_2), std::bind(&ThingsBoard::Get_Last_Request_ID, this));
-#else
-                    api->Set_Client_Callbacks(ThingsBoard::Static_Subscribe_Implementation, ThingsBoard::Static_Send_Json, ThingsBoard::Static_Send_Json_String, ThingsBoard::Static_Subscribe_Topic, ThingsBoard::Static_Unsubscribe_Topic, ThingsBoard::Static_Get_Receive_Buffer_Size, ThingsBoard::Static_Get_Send_Buffer_Size, ThingsBoard::Static_Set_Buffer_Size, ThingsBoard::Static_Get_Last_Request_ID);
-#endif // THINGSBOARD_ENABLE_STL
                     api->Initialize();
             }
             // Initialize callback.
-#if THINGSBOARD_ENABLE_STL
             m_client.set_data_callback(std::bind(&ThingsBoard::On_MQTT_Message, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
             m_client.set_connect_callback(std::bind(&ThingsBoard::Resubscribe_Permanent_Subscriptions, this));
-#else
-            m_client.set_data_callback(ThingsBoard::On_Static_MQTT_Message);
-            m_client.set_connect_callback(ThingsBoard::Static_MQTT_Connect);
-            m_subscribedInstance = this;
-#endif // THINGSBOARD_ENABLE_STL
     }
 
     /// @brief Gets the registered underlying MQTT Client implementation
@@ -342,11 +332,7 @@ class ThingsBoard {
     /// but a non owning pointer to the value is inserted into the local container member variable instead
     /// @param api Additional API that should be connected to ThingsBoard and therefore be able to send and receive data over MQTT
     void Subscribe_API_Implementation(IAPI_Implementation & api) {
-#if THINGSBOARD_ENABLE_STL
             api.Set_Client_Callbacks(std::bind(&ThingsBoard::Subscribe_API_Implementation, this, std::placeholders::_1), [this](char const * topic, JsonDocument const & doc, Deserialization_Options opt) { return this->Send_Json(topic, doc, opt); }, std::bind(&ThingsBoard::Send_Json_String, this, std::placeholders::_1, std::placeholders::_2), std::bind(&ThingsBoard::Subscribe_Topic, this, std::placeholders::_1), std::bind(&ThingsBoard::Unsubscribe_Topic, this, std::placeholders::_1), std::bind(&ThingsBoard::Get_Receive_Buffer_Size, this), std::bind(&ThingsBoard::Get_Send_Buffer_Size, this), std::bind(&ThingsBoard::Set_Buffer_Size, this, std::placeholders::_1, std::placeholders::_2), std::bind(&ThingsBoard::Get_Last_Request_ID, this));
-#else
-            api.Set_Client_Callbacks(ThingsBoard::Static_Subscribe_Implementation, ThingsBoard::Static_Send_Json, ThingsBoard::Static_Send_Json_String, ThingsBoard::Static_Subscribe_Topic, ThingsBoard::Static_Unsubscribe_Topic, ThingsBoard::Static_Get_Receive_Buffer_Size, ThingsBoard::Static_Get_Send_Buffer_Size, ThingsBoard::Static_Set_Buffer_Size, ThingsBoard::Static_Get_Last_Request_ID);
-#endif // THINGSBOARD_ENABLE_STL
             api.Initialize();
             m_api_implementations.push_back(&api);
     }
@@ -367,11 +353,7 @@ class ThingsBoard {
                     if (api == nullptr) {
                             continue;
                     }
-#if THINGSBOARD_ENABLE_STL
                     api->Set_Client_Callbacks(std::bind(&ThingsBoard::Subscribe_API_Implementation, this, std::placeholders::_1), [this](char const * topic, JsonDocument const & doc, Deserialization_Options opt) { return this->Send_Json(topic, doc, opt); }, std::bind(&ThingsBoard::Send_Json_String, this, std::placeholders::_1, std::placeholders::_2), std::bind(&ThingsBoard::Subscribe_Topic, this, std::placeholders::_1), std::bind(&ThingsBoard::Unsubscribe_Topic, this, std::placeholders::_1), std::bind(&ThingsBoard::Get_Receive_Buffer_Size, this), std::bind(&ThingsBoard::Get_Send_Buffer_Size, this), std::bind(&ThingsBoard::Set_Buffer_Size, this, std::placeholders::_1, std::placeholders::_2), std::bind(&ThingsBoard::Get_Last_Request_ID, this));
-#else
-                    api->Set_Client_Callbacks(ThingsBoard::Static_Subscribe_Implementation, ThingsBoard::Static_Send_Json, ThingsBoard::Static_Send_Json_String, ThingsBoard::Static_Subscribe_Topic, ThingsBoard::Static_Unsubscribe_Topic, ThingsBoard::Static_Get_Receive_Buffer_Size, ThingsBoard::Static_Get_Send_Buffer_Size, ThingsBoard::Static_Set_Buffer_Size, ThingsBoard::Static_Get_Last_Request_ID);
-#endif // THINGSBOARD_ENABLE_STL
                     api->Initialize();
             }
             m_api_implementations.insert(m_api_implementations.end(), first, last);
@@ -610,20 +592,10 @@ class ThingsBoard {
     bool Send_Data_Array(InputIterator const & first, InputIterator const & last, bool telemetry) {
             JsonDocument json_buffer;
 
-#if THINGSBOARD_ENABLE_STL
             if (std::any_of(first, last, [&json_buffer](Telemetry const & data) { return !data.SerializeKeyValue(json_buffer); })) {
                     DefaultLogger::printfln(UNABLE_TO_SERIALIZE);
                     return false;
             }
-#else
-            for (auto it = first; it != last; ++it) {
-                    auto const & data = *it;
-                    if (!data.SerializeKeyValue(json_buffer)) {
-                            DefaultLogger::printfln(UNABLE_TO_SERIALIZE);
-                            return false;
-                    }
-            }
-#endif // THINGSBOARD_ENABLE_STL
             return telemetry ? Send_Telemetry_Json(json_buffer) : Send_Attribute_Json(json_buffer);
     }
 
@@ -644,7 +616,6 @@ class ThingsBoard {
             DefaultLogger::printfln(RECEIVE_MESSAGE, length, topic);
 #endif // THINGSBOARD_ENABLE_DEBUG
 
-#if THINGSBOARD_ENABLE_STL
 #if THINGSBOARD_ENABLE_CXX20
             auto filtered_raw_api_implementations = m_api_implementations | std::views::filter([&topic](IAPI_Implementation const * api) {
 #else
@@ -664,20 +635,6 @@ class ThingsBoard {
             if (!filtered_raw_api_implementations.empty()) {
                     return;
             }
-#else
-            bool processed_response_as_raw = false;
-            for (auto & api : m_api_implementations) {
-                    if (api == nullptr || api->Get_Process_Type() != API_Process_Type::RAW || !api->Is_Response_Topic_Matching(topic)) {
-                            continue;
-                    }
-                    api->Process_Response(topic, payload, length);
-                    processed_response_as_raw = true;
-            }
-
-            if (processed_response_as_raw) {
-                    return;
-            }
-#endif // THINGSBOARD_ENABLE_STL
 
             JsonDocument json_buffer;
 
@@ -690,7 +647,6 @@ class ThingsBoard {
                     return;
             }
 
-#if THINGSBOARD_ENABLE_STL
 #if THINGSBOARD_ENABLE_CXX20
             auto filtered_json_api_implementations = m_api_implementations | std::views::filter([&topic](IAPI_Implementation const * api) {
 #else
@@ -703,96 +659,8 @@ class ThingsBoard {
             for (auto & api : filtered_json_api_implementations) {
                     api->Process_Json_Response(topic, json_buffer);
             }
-#else
-            for (auto & api : m_api_implementations) {
-                    if (api == nullptr || api->Get_Process_Type() != API_Process_Type::JSON || !api->Is_Response_Topic_Matching(topic)) {
-                            continue;
-                    }
-                    api->Process_Json_Response(topic, json_buffer);
-            }
-#endif // THINGSBOARD_ENABLE_STL
     }
 
-#if !THINGSBOARD_ENABLE_STL
-    static void On_Static_MQTT_Message(char * topic, uint8_t * payload, unsigned int length) {
-            if (m_subscribedInstance == nullptr) {
-                    return;
-            }
-            m_subscribedInstance->On_MQTT_Message(topic, payload, length);
-    }
-
-    static void Static_MQTT_Connect() {
-            if (m_subscribedInstance == nullptr) {
-                    return;
-            }
-            m_subscribedInstance->Resubscribe_Permanent_Subscriptions();
-    }
-
-    static void Static_Subscribe_Implementation(IAPI_Implementation & api) {
-            if (m_subscribedInstance == nullptr) {
-                    return;
-            }
-            m_subscribedInstance->Subscribe_API_Implementation(api);
-    }
-
-    static bool Static_Send_Json(char const * topic, JsonDocument const & source, Deserialization_Options deserialize_option) {
-            if (m_subscribedInstance == nullptr) {
-                    return false;
-            }
-            return m_subscribedInstance->Send_Json(topic, source, deserialize_option);
-    }
-
-    static bool Static_Send_Json_String(char const * topic, char const * json) {
-            if (m_subscribedInstance == nullptr) {
-                    return false;
-            }
-            return m_subscribedInstance->Send_Json_String(topic, json);
-    }
-
-    static bool Static_Subscribe_Topic(char const * topic) {
-            if (m_subscribedInstance == nullptr) {
-                    return false;
-            }
-            return m_subscribedInstance->Subscribe_Topic(topic);
-    }
-
-    static bool Static_Unsubscribe_Topic(char const * topic) {
-            if (m_subscribedInstance == nullptr) {
-                    return false;
-            }
-            return m_subscribedInstance->Unsubscribe_Topic(topic);
-    }
-
-    static size_t * Static_Get_Last_Request_ID() {
-            if (m_subscribedInstance == nullptr) {
-                    return nullptr;
-            }
-            return m_subscribedInstance->Get_Last_Request_ID();
-    }
-
-    static uint16_t Static_Get_Receive_Buffer_Size() {
-            if (m_subscribedInstance == nullptr) {
-                    return 0U;
-            }
-            return m_subscribedInstance->Get_Receive_Buffer_Size();
-    }
-
-    static uint16_t Static_Get_Send_Buffer_Size() {
-            if (m_subscribedInstance == nullptr) {
-                    return 0U;
-            }
-            return m_subscribedInstance->Get_Send_Buffer_Size();
-    }
-
-    static bool Static_Set_Buffer_Size(uint16_t receive_buffer_size, uint16_t send_buffer_size) {
-            if (m_subscribedInstance == nullptr) {
-                    return false;
-            }
-            return m_subscribedInstance->Set_Buffer_Size(receive_buffer_size, send_buffer_size);
-    }
-
-    static ThingsBoard *m_subscribedInstance;
-#endif // !THINGSBOARD_ENABLE_STL
 
     IMQTT_Client&  m_client;              // MQTT client instance.
     size_t         m_max_stack;           // Maximum stack size we allocate at once.
@@ -803,9 +671,5 @@ class ThingsBoard {
     size_t         m_max_response_size;   // Maximum size allocated on the heap to hold the Json data structure for received cloud response payload, prevents possible malicious payload allocaitng a lot of memory
     IAPI_Container m_api_implementations; // Can hold a pointer to all  possible API implementations (Server side RPC, Client side RPC, Shared attribute update, Client-side or shared attribute request, Provision)
 };
-
-#if !THINGSBOARD_ENABLE_STL
-ThingsBoard *ThingsBoard::m_subscribedInstance = nullptr;
-#endif // !THINGSBOARD_ENABLE_STL
 
 #endif // ThingsBoard_h

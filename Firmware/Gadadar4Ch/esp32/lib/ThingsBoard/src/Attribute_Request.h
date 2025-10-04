@@ -95,20 +95,11 @@ class Attribute_Request : public IAPI_Implementation {
         JsonObjectConst object = data.as<JsonObjectConst>();
 
         Timeoutable_Request * request_callback = nullptr;
-#if THINGSBOARD_ENABLE_STL
         auto it = std::find_if(m_attribute_request_callbacks.begin(), m_attribute_request_callbacks.end(), [&request_id](Callback_Value & attribute_request) {
             return attribute_request.Get_Request_ID() == request_id;
         });
         if (it != m_attribute_request_callbacks.end()) {
             auto & attribute_request = *it;
-#else
-        for (auto it = m_attribute_request_callbacks.begin(); it != m_attribute_request_callbacks.end(); ++it) {
-            auto & attribute_request = *it;
-
-            if (attribute_request.Get_Request_ID() != request_id) {
-                continue;
-            }
-#endif // THINGSBOARD_ENABLE_STL
             char const * attribute_response_key = attribute_request.Get_Attribute_Key();
             if (attribute_response_key == nullptr) {
 #if THINGSBOARD_ENABLE_DEBUG
@@ -128,9 +119,6 @@ class Attribute_Request : public IAPI_Implementation {
             delete_callback:
             // Delete callback because the changes have been requested and the callback is no longer needed
             m_attribute_request_callbacks.erase(it);
-#if !THINGSBOARD_ENABLE_STL
-            break;
-#endif // !THINGSBOARD_ENABLE_STL
         }
 
         // Unsubscribe from the shared attribute request topic,
