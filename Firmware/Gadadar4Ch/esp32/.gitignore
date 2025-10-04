@@ -9,3 +9,4 @@ platformio.ini
 *.log
 **/*.log
 **/config.json
+src/set.cpp

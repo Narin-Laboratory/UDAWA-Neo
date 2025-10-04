@@ -109,6 +109,12 @@ class OTA_Firmware_Update : public IAPI_Implementation {
 
         auto & request_timeout = m_fw_callback.Get_Request_Timeout();
         constexpr char const * array[OTA_ATTRIBUTE_KEYS_AMOUNT] = {FW_CHKS_KEY, FW_CHKS_ALGO_KEY, FW_SIZE_KEY, FW_TITLE_KEY, FW_VER_KEY};
+
+        Logger::printfln("OTA: Requesting shared attributes:");
+        for (size_t i = 0; i < OTA_ATTRIBUTE_KEYS_AMOUNT; ++i) {
+            Logger::printfln(" - %s", array[i]);
+        }
+
 #if THINGSBOARD_ENABLE_STL
         Request_Callback_Value const fw_request_callback(std::bind(&OTA_Firmware_Update::Firmware_Shared_Attribute_Received, this, std::placeholders::_1), request_timeout.Get_Timeout(), std::bind(&OTA_Firmware_Update::Request_Timeout, this), array + 0U, array + OTA_ATTRIBUTE_KEYS_AMOUNT);
 #else
@@ -318,6 +324,9 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         char const * curr_fw_title = m_fw_callback.Get_Firmware_Title();
         char const * curr_fw_version = m_fw_callback.Get_Firmware_Version();
 
+        Logger::printfln("OTA: Received firmware: %s v%s", fw_title, fw_version);
+        Logger::printfln("OTA: Current firmware: %s v%s", curr_fw_title, curr_fw_version);
+
         if (fw_title == nullptr || fw_version == nullptr || curr_fw_title == nullptr || curr_fw_version == nullptr || fw_algorithm == nullptr || fw_checksum == nullptr) {
             Logger::printfln(EMPTY_FW);
             Firmware_Send_State(FW_STATE_FAILED, EMPTY_FW);
@@ -326,6 +335,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         // If firmware version and title is the same, we do not initiate an update, because we expect the type of binary to be the same one we are currently using
         // and therefore updating would be useless as we have already updated previously
         else if (strncmp(curr_fw_title, fw_title, strlen(curr_fw_title)) == 0U && strncmp(curr_fw_version, fw_version, strlen(curr_fw_version)) == 0U) {
+            Logger::printfln("OTA: Firmware is up to date.");
             Firmware_Send_State(FW_STATE_UPDATED);
             return;
         }
@@ -338,6 +348,8 @@ class OTA_Firmware_Update : public IAPI_Implementation {
             Firmware_Send_State(FW_STATE_FAILED, message);
             return;
         }
+
+        Logger::printfln("OTA: New firmware available, proceeding with update.");
 
         mbedtls_md_type_t fw_checksum_algorithm = mbedtls_md_type_t{};
 
