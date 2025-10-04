@@ -18,6 +18,9 @@
 uint8_t constexpr MAX_FW_TOPIC_SIZE = 33U;
 uint8_t constexpr OTA_ATTRIBUTE_KEYS_AMOUNT = 5U;
 char constexpr NO_FW_REQUEST_RESPONSE[] = "Did not receive requested shared attribute firmware keys. Ensure keys exist and device is connected";
+// Firmware topics.
+char constexpr FIRMWARE_RESPONSE_TOPIC_TEMPLATE[] = "v2/fw/response/%u/chunk/";
+char constexpr FIRMWARE_REQUEST_TOPIC_TEMPLATE[] = "v2/fw/request/%u/chunk/%u";
 // Log messages.
 char constexpr NUMBER_PRINTF[] = "%u";
 char constexpr NO_FW[] = "Missing shared attribute firmware keys. Ensure you assigned an OTA update with binary";
@@ -78,7 +81,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         // Can be ignored, because the topic is set correctly once we start an update anyway, therefore we simply insert 0 as the request id for now.
         // It just has to be set to an actual value that is not an empty string, because that would make the internal callback receive all other responses from the server as well,
         // even if they are not meant for this class and we are not currently updating the device
-        (void)snprintf(m_response_topic, sizeof(m_response_topic), FIRMWARE_RESPONSE_TOPIC, 0U);
+        (void)snprintf(m_response_topic, sizeof(m_response_topic), FIRMWARE_RESPONSE_TOPIC_TEMPLATE, 0U);
 #if !THINGSBOARD_ENABLE_STL
         m_subscribedInstance = nullptr;
 #endif // !THINGSBOARD_ENABLE_STL
@@ -154,7 +157,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
 
     void Process_Response(char const * topic, uint8_t * payload, uint32_t length) override {
         auto const & request_id = m_fw_callback.Get_Request_ID();
-        auto const chunk = Helper::Split_Topic_Into_Request_ID(topic, Helper::Calculate_Print_Size(FIRMWARE_RESPONSE_TOPIC, request_id));
+        auto const chunk = Helper::Split_Topic_Into_Request_ID(topic, Helper::Calculate_Print_Size(FIRMWARE_RESPONSE_TOPIC_TEMPLATE, request_id));
         m_ota.Process_Firmware_Packet(chunk, payload, length);
     }
 
@@ -283,8 +286,8 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         char size[Helper::Calculate_Print_Size(NUMBER_PRINTF, chunk_size)] = {};
         (void)snprintf(size, sizeof(size), NUMBER_PRINTF, chunk_size);
 
-        char topic[Helper::Calculate_Print_Size(FIRMWARE_REQUEST_TOPIC, request_id, request_chunck)] = {};
-        (void)snprintf(topic, sizeof(topic), FIRMWARE_REQUEST_TOPIC, request_id, request_chunck);
+        char topic[Helper::Calculate_Print_Size(FIRMWARE_REQUEST_TOPIC_TEMPLATE, request_id, request_chunck)] = {};
+        (void)snprintf(topic, sizeof(topic), FIRMWARE_REQUEST_TOPIC_TEMPLATE, request_id, request_chunck);
         return m_send_json_string_callback.Call_Callback(topic, size);
     }
 
@@ -338,16 +341,16 @@ class OTA_Firmware_Update : public IAPI_Implementation {
 
         mbedtls_md_type_t fw_checksum_algorithm = mbedtls_md_type_t{};
 
-        if (strncmp(CHECKSUM_AGORITM_MD5, fw_algorithm, strlen(CHECKSUM_AGORITM_MD5)) == 0U) {
+        if (strncmp(MD5, fw_algorithm, strlen(MD5)) == 0U) {
             fw_checksum_algorithm = mbedtls_md_type_t::MBEDTLS_MD_MD5;
         }
-        else if (strncmp(CHECKSUM_AGORITM_SHA256, fw_algorithm, strlen(CHECKSUM_AGORITM_SHA256)) == 0U) {
+        else if (strncmp(SHA256, fw_algorithm, strlen(SHA256)) == 0U) {
             fw_checksum_algorithm = mbedtls_md_type_t::MBEDTLS_MD_SHA256;
         }
-        else if (strncmp(CHECKSUM_AGORITM_SHA384, fw_algorithm, strlen(CHECKSUM_AGORITM_SHA384)) == 0U) {
+        else if (strncmp(SHA384, fw_algorithm, strlen(SHA384)) == 0U) {
             fw_checksum_algorithm = mbedtls_md_type_t::MBEDTLS_MD_SHA384;
         }
-        else if (strncmp(CHECKSUM_AGORITM_SHA512, fw_algorithm, strlen(CHECKSUM_AGORITM_SHA512)) == 0U) {
+        else if (strncmp(SHA512, fw_algorithm, strlen(SHA512)) == 0U) {
             fw_checksum_algorithm = mbedtls_md_type_t::MBEDTLS_MD_SHA512;
         }
         else {
