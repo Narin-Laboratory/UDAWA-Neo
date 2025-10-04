@@ -1,5 +1,4 @@
 #include "coreroutine.h"
-#include <array>
 
 ESP32Time RTC(0);
 #ifdef USE_HW_RTC
@@ -1080,12 +1079,14 @@ void iotFinishedCallback(const bool & success){
     reboot(10);
   }
 }
+
 void iotProgressCallback(const size_t & currentChunk, const size_t & totalChuncks){
    if( xSemaphoreTake( iotState.xSemaphoreThingsboard, ( TickType_t ) 5000 ) == pdTRUE ) {
     logger->debug(PSTR(__func__), PSTR("IoT OTA Progress: %.2f%%\n"),  static_cast<float>(currentChunk * 100U) / totalChuncks);
     xSemaphoreGive( iotState.xSemaphoreThingsboard );   
   }
 }
+
 void iotUpdateStartingCallback(){
   logger->info(PSTR(__func__), PSTR("IoT OTA Update starting...\n"));
   // It's a good practice to stop services that might interfere with the update
@@ -1188,72 +1189,20 @@ void coreroutineRunIoT(){
             }
           }
 
-          // TEST: Request a single shared attribute to debug the request mechanism
-          std::array<const char*, 1U> test_keys = {FW_VER_KEY};
-          Attribute_Request_Callback const test_fw_version_callback(
-              [](const JsonVariantConst& data) {
-                  String jsonData;
-                  serializeJson(data, jsonData);
-                  logger->debug(PSTR("TEST"), PSTR("Received fw_version attribute response: %s\n"), jsonData.c_str());
-              },
-              0U,
-              nullptr,
-              test_keys.begin(),
-              test_keys.end()
-          );
-
-          if (IAPISharedAttrReq.Shared_Attributes_Request(test_fw_version_callback)) {
-              logger->debug(PSTR("TEST"), PSTR("fw_version attribute request sent.\n"));
-          } else {
-              logger->error(PSTR("TEST"), PSTR("Failed to send fw_version attribute request.\n"));
-          }
-
           #ifdef USE_IOT_OTA
-          const OTA_Update_Callback coreroutineIoTUpdaterOTACallback(
-              CURRENT_FIRMWARE_TITLE,
-              CURRENT_FIRMWARE_VERSION,
-              &IoTUpdater,
-              &iotFinishedCallback,
-              &iotProgressCallback,
-              &iotUpdateStartingCallback,
-              IOT_OTA_UPDATE_FAILURE_RETRY,
-              IOT_OTA_UPDATE_PACKET_SIZE
-          );
-
-          if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
-              logger->debug(PSTR(__func__), PSTR("Firmware update subscribed.\n"));
-          } else {
-              logger->error(PSTR(__func__), PSTR("Firmware update failed to subscribe.\n"));
-          }
-
-          if (IAPIOta.Firmware_Send_State(FW_STATE_UPDATED)) {
-              logger->debug(PSTR(__func__), PSTR("Firmware state 'UPDATED' sent.\n"));
-          } else {
-              logger->error(PSTR(__func__), PSTR("Failed to send firmware state.\n"));
-          }
-
+          const OTA_Update_Callback coreroutineIoTUpdaterOTACallback(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION, &IoTUpdater, &iotFinishedCallback, &iotProgressCallback, &iotUpdateStartingCallback, IOT_OTA_UPDATE_FAILURE_RETRY, IOT_OTA_UPDATE_PACKET_SIZE);
           if (IAPIOta.Start_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
-              logger->debug(PSTR(__func__), PSTR("Firmware update check requested.\n"));
+              logger->debug(PSTR(__func__), PSTR("Initial firmware update check started.\n"));
           } else {
-              logger->error(PSTR(__func__), PSTR("Firmware update check request failed.\n"));
+              logger->error(PSTR(__func__), PSTR("Initial firmware update check failed to start.\n"));
+          }
+          if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
+              logger->debug(PSTR(__func__), PSTR("Subscribed to firmware updates.\n"));
+          } else {
+              logger->error(PSTR(__func__), PSTR("Failed to subscribe to firmware updates.\n"));
           }
           #endif
           logger->info(PSTR(__func__),PSTR("IoT Connected!\n"));
-        }
-      }
-      else{
-        if(iotState.fIoTUpdateStarted){
-          const OTA_Update_Callback coreroutineIoTUpdaterOTACallback(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION, &IoTUpdater, &iotFinishedCallback, &iotProgressCallback, &iotUpdateStartingCallback, IOT_OTA_UPDATE_FAILURE_RETRY, IOT_OTA_UPDATE_PACKET_SIZE);
-          IAPIOta.Firmware_Send_Info(CURRENT_FIRMWARE_TITLE, CURRENT_FIRMWARE_VERSION) && IAPIOta.Firmware_Send_State(PSTR("UPDATED"));
-          if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback) && IAPIOta.Start_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
-              logger->debug(PSTR(__func__), PSTR("Firmware update started.\n"));
-              // Firmware update started successfully
-              // Continue with the update process
-          } else {
-              logger->error(PSTR(__func__), PSTR("Firmware update failed to start.\n"));
-              // Handle the update failure
-          }
-          iotState.fIoTUpdateStarted = false;
         }
       }
     }
