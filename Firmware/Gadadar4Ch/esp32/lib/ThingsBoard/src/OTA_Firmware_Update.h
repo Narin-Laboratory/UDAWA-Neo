@@ -8,26 +8,16 @@
 #include "IAPI_Implementation.h"
 
 
+#define CHECKSUM_AGORITM_MD5 "MD5"
+#define CHECKSUM_AGORITM_SHA256 "SHA256"
+#define CHECKSUM_AGORITM_SHA384 "SHA384"
+#define CHECKSUM_AGORITM_SHA512 "SHA512"
+#define FIRMWARE_REQUEST_TOPIC "v2/fw/request/%u/chunk/%u"
+
+
 uint8_t constexpr MAX_FW_TOPIC_SIZE = 33U;
 uint8_t constexpr OTA_ATTRIBUTE_KEYS_AMOUNT = 5U;
 char constexpr NO_FW_REQUEST_RESPONSE[] = "Did not receive requested shared attribute firmware keys. Ensure keys exist and device is connected";
-// Firmware topics.
-char constexpr FIRMWARE_RESPONSE_TOPIC[] = "v2/fw/response/%u/chunk/";
-char constexpr FIRMWARE_REQUEST_TOPIC[] = "v2/fw/request/%u/chunk/%u";
-// Firmware data keys.
-char constexpr CURR_FW_TITLE_KEY[] = "current_fw_title";
-char constexpr CURR_FW_VER_KEY[] = "current_fw_version";
-char constexpr FW_ERROR_KEY[] = "fw_error";
-char constexpr FW_STATE_KEY[] = "fw_state";
-char constexpr FW_VER_KEY[] = "fw_version";
-char constexpr FW_TITLE_KEY[] = "fw_title";
-char constexpr FW_CHKS_KEY[] = "fw_checksum";
-char constexpr FW_CHKS_ALGO_KEY[] = "fw_checksum_algorithm";
-char constexpr FW_SIZE_KEY[] = "fw_size";
-char constexpr CHECKSUM_AGORITM_MD5[] = "MD5";
-char constexpr CHECKSUM_AGORITM_SHA256[] = "SHA256";
-char constexpr CHECKSUM_AGORITM_SHA384[] = "SHA384";
-char constexpr CHECKSUM_AGORITM_SHA512[] = "SHA512";
 // Log messages.
 char constexpr NUMBER_PRINTF[] = "%u";
 char constexpr NO_FW[] = "Missing shared attribute firmware keys. Ensure you assigned an OTA update with binary";
@@ -168,7 +158,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         m_ota.Process_Firmware_Packet(chunk, payload, length);
     }
 
-    void Process_Json_Response(char const * topic, JsonVariantConst data) override {
+    void Process_Json_Response(char const * topic, JsonDocument const & data) override {
         // Nothing to do
     }
 
@@ -196,7 +186,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         m_subscribe_api_callback.Call_Callback(m_fw_attribute_request);
     }
 
-    void Set_Client_Callbacks(Callback<void, IAPI_Implementation &>::function subscribe_api_callback, Callback<bool, char const * const, JsonDocument const &>::function send_json_callback, Callback<bool, char const * const, char const * const>::function send_json_string_callback, Callback<bool, char const * const>::function subscribe_topic_callback, Callback<bool, char const * const>::function unsubscribe_topic_callback, Callback<uint16_t>::function get_receive_size_callback, Callback<uint16_t>::function get_send_size_callback, Callback<bool, uint16_t, uint16_t>::function set_buffer_size_callback, Callback<size_t *>::function get_request_id_callback) override {
+    void Set_Client_Callbacks(Callback<void, IAPI_Implementation &>::function subscribe_api_callback, Callback<bool, char const * const, JsonDocument const &, Deserialization_Options>::function send_json_callback, Callback<bool, char const * const, char const * const>::function send_json_string_callback, Callback<bool, char const * const>::function subscribe_topic_callback, Callback<bool, char const * const>::function unsubscribe_topic_callback, Callback<uint16_t>::function get_receive_size_callback, Callback<uint16_t>::function get_send_size_callback, Callback<bool, uint16_t, uint16_t>::function set_buffer_size_callback, Callback<size_t *>::function get_request_id_callback) override {
         m_subscribe_api_callback.Set_Callback(subscribe_api_callback);
         m_send_json_callback.Set_Callback(send_json_callback);
         m_send_json_string_callback.Set_Callback(send_json_string_callback);
@@ -208,7 +198,6 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         m_get_request_id_callback.Set_Callback(get_request_id_callback);
     }
 
-  private:
     /// @brief Sends the given firmware title and firmware version to the cloud.
     /// See https://thingsboard.io/docs/user-guide/ota-updates/ for more information
     /// @param current_fw_title Current device firmware title
@@ -218,7 +207,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         JsonDocument current_firmware_info;
         current_firmware_info[CURR_FW_TITLE_KEY] = current_fw_title;
         current_firmware_info[CURR_FW_VER_KEY] = current_fw_version;
-        return m_send_json_callback.Call_Callback(TELEMETRY_TOPIC, current_firmware_info);
+        return m_send_json_callback.Call_Callback(TELEMETRY_TOPIC, current_firmware_info, Deserialization_Options::NONE);
     }
 
     /// @brief Sends the given firmware state to the cloud.
@@ -231,9 +220,10 @@ class OTA_Firmware_Update : public IAPI_Implementation {
         JsonDocument current_firmware_state;
         current_firmware_state[FW_ERROR_KEY] = fw_error;
         current_firmware_state[FW_STATE_KEY] = current_fw_state;
-        return m_send_json_callback.Call_Callback(TELEMETRY_TOPIC, current_firmware_state);
+        return m_send_json_callback.Call_Callback(TELEMETRY_TOPIC, current_firmware_state, Deserialization_Options::NONE);
     }
 
+  private:
     /// @brief Checks the included information in the callback,
     /// and attempts to send the current device firmware information to the cloud and configures the internal request ID to receive chunks from
     /// @param callback Callback method that will be called
@@ -441,7 +431,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
 #endif // !THINGSBOARD_ENABLE_STL
 
     Callback<void, IAPI_Implementation &>                    m_subscribe_api_callback = {};            // Subscribe additional api callback
-    Callback<bool, char const * const, JsonDocument const &> m_send_json_callback = {};                // Send json document callback
+    Callback<bool, char const * const, JsonDocument const &, Deserialization_Options> m_send_json_callback = {};                // Send json document callback
     Callback<bool, char const * const, char const * const>   m_send_json_string_callback = {};         // Send json string callback
     Callback<bool, char const * const>                       m_subscribe_topic_callback = {};          // Subscribe mqtt topic client callback
     Callback<bool, char const * const>                       m_unsubscribe_topic_callback = {};        // Unubscribe mqtt topic client callback

@@ -7,7 +7,6 @@
 
 
 // server-side RPC topics.
-char constexpr RPC_SUBSCRIBE_TOPIC[] = "v1/devices/me/rpc/request/+";
 char constexpr RPC_REQUEST_TOPIC[] = "v1/devices/me/rpc/request/";
 char constexpr RPC_SEND_RESPONSE_TOPIC[] = "v1/devices/me/rpc/response/%u";
 // Log messages.
@@ -84,7 +83,7 @@ class Server_Side_RPC : public IAPI_Implementation {
     }
 
     void Process_Json_Response(char const * topic, JsonDocument const & data) override {
-        if (!data.containsKey(RPC_METHOD_KEY)) {
+        if (data[RPC_METHOD_KEY].isNull()) {
 #if THINGSBOARD_ENABLE_DEBUG
             Logger::printfln(SERVER_RPC_METHOD_NULL);
 #endif // THINGSBOARD_ENABLE_DEBUG
@@ -107,7 +106,7 @@ class Server_Side_RPC : public IAPI_Implementation {
             }
 #endif // THINGSBOARD_ENABLE_STL
 #if THINGSBOARD_ENABLE_DEBUG
-            if (!data.containsKey(RPC_PARAMS_KEY)) {
+            if (data[RPC_PARAMS_KEY].isNull()) {
                 Logger::printfln(NO_RPC_PARAMS_PASSED);
             }
 #endif // THINGSBOARD_ENABLE_DEBUG
@@ -130,7 +129,7 @@ class Server_Side_RPC : public IAPI_Implementation {
             auto const request_id = Helper::Split_Topic_Into_Request_ID(topic, strlen(RPC_REQUEST_TOPIC));
             char responseTopic[Helper::Calculate_Print_Size(RPC_SEND_RESPONSE_TOPIC, request_id)] = {};
             (void)snprintf(responseTopic, sizeof(responseTopic), RPC_SEND_RESPONSE_TOPIC, request_id);
-            (void)m_send_json_callback.Call_Callback(responseTopic, json_buffer);
+            (void)m_send_json_callback.Call_Callback(responseTopic, json_buffer, Deserialization_Options::NONE);
             return;
         }
     }
@@ -161,7 +160,7 @@ class Server_Side_RPC : public IAPI_Implementation {
         // Nothing to do
     }
 
-    void Set_Client_Callbacks(Callback<void, IAPI_Implementation &>::function subscribe_api_callback, Callback<bool, char const * const, JsonDocument const &>::function send_json_callback, Callback<bool, char const * const, char const * const>::function send_json_string_callback, Callback<bool, char const * const>::function subscribe_topic_callback, Callback<bool, char const * const>::function unsubscribe_topic_callback, Callback<uint16_t>::function get_receive_size_callback, Callback<uint16_t>::function get_send_size_callback, Callback<bool, uint16_t, uint16_t>::function set_buffer_size_callback, Callback<size_t *>::function get_request_id_callback) override {
+    void Set_Client_Callbacks(Callback<void, IAPI_Implementation &>::function subscribe_api_callback, Callback<bool, char const * const, JsonDocument const &, Deserialization_Options>::function send_json_callback, Callback<bool, char const * const, char const * const>::function send_json_string_callback, Callback<bool, char const * const>::function subscribe_topic_callback, Callback<bool, char const * const>::function unsubscribe_topic_callback, Callback<uint16_t>::function get_receive_size_callback, Callback<uint16_t>::function get_send_size_callback, Callback<bool, uint16_t, uint16_t>::function set_buffer_size_callback, Callback<size_t *>::function get_request_id_callback) override {
         m_send_json_callback.Set_Callback(send_json_callback);
         m_subscribe_topic_callback.Set_Callback(subscribe_topic_callback);
         m_unsubscribe_topic_callback.Set_Callback(unsubscribe_topic_callback);
@@ -170,7 +169,7 @@ class Server_Side_RPC : public IAPI_Implementation {
   private:
     using Callback_Container = Container<RPC_Callback>;
 
-    Callback<bool, char const * const, JsonDocument const &> m_send_json_callback = {};         // Send json document callback
+    Callback<bool, char const * const, JsonDocument const &, Deserialization_Options> m_send_json_callback = {};         // Send json document callback
     Callback<bool, char const * const>                       m_subscribe_topic_callback = {};   // Subscribe mqtt topic client callback
     Callback<bool, char const * const>                       m_unsubscribe_topic_callback = {}; // Unubscribe mqtt topic client callback
     Callback_Container                                       m_rpc_callbacks = {};              // server-side RPC callbacks array
