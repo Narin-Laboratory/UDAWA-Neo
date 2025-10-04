@@ -20,6 +20,7 @@ uint8_t constexpr OTA_ATTRIBUTE_KEYS_AMOUNT = 5U;
 char constexpr NO_FW_REQUEST_RESPONSE[] = "Did not receive requested shared attribute firmware keys. Ensure keys exist and device is connected";
 // Firmware topics.
 char constexpr FIRMWARE_RESPONSE_TOPIC_TEMPLATE[] = "v2/fw/response/%u/chunk/";
+char constexpr FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC[] = "v2/fw/response/+";
 char constexpr FIRMWARE_REQUEST_TOPIC_TEMPLATE[] = "v2/fw/request/%u/chunk/%u";
 // Log messages.
 char constexpr NUMBER_PRINTF[] = "%u";
@@ -148,7 +149,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
 
     void Process_Response(char const * topic, uint8_t * payload, uint32_t length) override {
         auto const & request_id = m_fw_callback.Get_Request_ID();
-        auto const chunk = Helper::Split_Topic_Into_Request_ID(topic, Helper::Calculate_Print_Size(FIRMWARE_RESPONSE_TOPIC_TEMPLATE, request_id));
+        auto const chunk = Helper::Split_Topic_Into_Request_ID(topic, Helper::Calculate_Print_Size(FIRMWARE_RESPONSE_TOPIC_TEMPLATE, request_id) - 1);
         m_ota.Process_Firmware_Packet(chunk, payload, length);
     }
 
@@ -249,6 +250,13 @@ class OTA_Firmware_Update : public IAPI_Implementation {
     /// @brief Subscribes to the firmware response topic
     /// @return Whether subscribing to the firmware response topic was successful or not
     bool Firmware_OTA_Subscribe() {
+        if (!m_subscribe_topic_callback.Call_Callback(FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC)) {
+            char message[strlen(SUBSCRIBE_TOPIC_FAILED) + strlen(FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC) + 2] = {};
+            (void)snprintf(message, sizeof(message), SUBSCRIBE_TOPIC_FAILED, FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC);
+            Logger::printfln(message);
+            Firmware_Send_State(FW_STATE_FAILED, message);
+            return false;
+        }
         return true;
     }
 

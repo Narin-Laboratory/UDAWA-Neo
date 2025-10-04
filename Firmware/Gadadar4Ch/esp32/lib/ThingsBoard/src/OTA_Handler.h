@@ -14,8 +14,12 @@
 // Library includes.
 #include <string.h>
 
+// Forward declaration
+#include "mbedtls/md.h"
+
 
 // Log messages.
+char constexpr HASH_ALGORITHM[] = "Checksum algorithm is (%s)";
 char constexpr OTA_CB_IS_NULL[] = "OTA update callback is NULL, has it been deleted";
 char constexpr UNABLE_TO_REQUEST_CHUNCKS[] = "Unable to request firmware chunk";
 char constexpr RECEIVED_UNEXPECTED_CHUNK[] = "Received chunk (%u), not the same as requested chunk (%u)";
@@ -76,6 +80,7 @@ class OTA_Handler {
         m_total_chunks = (m_fw_size + m_fw_callback->Get_Chunk_Size() - 1) / m_fw_callback->Get_Chunk_Size();
         (void)strncpy(m_fw_checksum, fw_checksum, sizeof(m_fw_checksum));
         m_fw_checksum_algorithm = fw_checksum_algorithm;
+        Logger::printfln(HASH_ALGORITHM, mbedtls_md_get_name(mbedtls_md_info_from_type(m_fw_checksum_algorithm)));
         auto & request_timeout = m_fw_callback->Get_Request_Timeout();
 #if THINGSBOARD_ENABLE_STL
         request_timeout.Set_Timeout_Callback(std::bind(&OTA_Handler::Handle_Request_Timeout, this));
