@@ -8,7 +8,9 @@
 
 
 // Attribute request API topics.
+char constexpr ATTRIBUTE_REQUEST_TOPIC_TEMPLATE[] = "v1/devices/me/attributes/request/%u";
 char constexpr ATTRIBUTE_RESPONSE_SUBSCRIBE_TOPIC[] = "v1/devices/me/attributes/response/+";
+char constexpr ATTRIBUTE_RESPONSE_TOPIC_BASE[] = "v1/devices/me/attributes/response/";
 // Client side attribute request keys.
 char constexpr CLIENT_REQUEST_KEYS[] = "clientKeys";
 char constexpr CLIENT_RESPONSE_KEY[] = "client";
@@ -89,7 +91,7 @@ class Attribute_Request : public IAPI_Implementation {
     }
 
     void Process_Json_Response(char const * topic, JsonDocument const & data) override {
-        auto const request_id = Helper::Split_Topic_Into_Request_ID(topic, strlen(ATTRIBUTE_RESPONSE_TOPIC));
+        auto const request_id = Helper::Split_Topic_Into_Request_ID(topic, strlen(ATTRIBUTE_RESPONSE_TOPIC_BASE));
         JsonObjectConst object = data.as<JsonObjectConst>();
 
         Timeoutable_Request * request_callback = nullptr;
@@ -115,7 +117,7 @@ class Attribute_Request : public IAPI_Implementation {
                 goto delete_callback;
             }
 
-            if (!object[attribute_response_key].isNull()) {
+            if (object[attribute_response_key].is<JsonVariant>()) {
                 object = object[attribute_response_key];
             }
 
@@ -140,7 +142,7 @@ class Attribute_Request : public IAPI_Implementation {
     }
 
     bool Is_Response_Topic_Matching(char const * topic) const override {
-        return strncmp(ATTRIBUTE_RESPONSE_TOPIC, topic, strlen(ATTRIBUTE_RESPONSE_TOPIC)) == 0;
+        return strncmp(ATTRIBUTE_RESPONSE_TOPIC_BASE, topic, strlen(ATTRIBUTE_RESPONSE_TOPIC_BASE)) == 0;
     }
 
     bool Unsubscribe() override {
@@ -253,8 +255,8 @@ class Attribute_Request : public IAPI_Implementation {
         auto & request_callback = registered_callback->Get_Request_Timeout();
         request_callback.Start_Timeout_Timer();
 
-        char topic[Helper::Calculate_Print_Size(ATTRIBUTE_REQUEST_TOPIC, request_id)] = {};
-        (void)snprintf(topic, sizeof(topic), ATTRIBUTE_REQUEST_TOPIC, request_id);
+        char topic[Helper::Calculate_Print_Size(ATTRIBUTE_REQUEST_TOPIC_TEMPLATE, request_id)] = {};
+        (void)snprintf(topic, sizeof(topic), ATTRIBUTE_REQUEST_TOPIC_TEMPLATE, request_id);
         return m_send_json_callback.Call_Callback(topic, request_buffer, Deserialization_Options::NONE);
     }
 
