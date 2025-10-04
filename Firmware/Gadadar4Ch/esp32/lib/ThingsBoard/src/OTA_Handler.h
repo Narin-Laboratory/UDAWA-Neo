@@ -74,7 +74,7 @@ class OTA_Handler {
     void Start_Firmware_Update(OTA_Update_Callback & fw_callback, size_t const & fw_size, char const * fw_checksum, mbedtls_md_type_t const & fw_checksum_algorithm) {
         m_fw_callback = &fw_callback;
         m_fw_size = fw_size;
-        m_total_chunks = (m_fw_size / m_fw_callback->Get_Chunk_Size()) + 1U;
+        m_total_chunks = (m_fw_size + m_fw_callback->Get_Chunk_Size() - 1) / m_fw_callback->Get_Chunk_Size();
         (void)strncpy(m_fw_checksum, fw_checksum, sizeof(m_fw_checksum));
         m_fw_checksum_algorithm = fw_checksum_algorithm;
         auto & request_timeout = m_fw_callback->Get_Request_Timeout();
@@ -181,8 +181,9 @@ class OTA_Handler {
         bool const is_last_chunk = m_requested_chunks + 1 >= m_total_chunks;
         if (is_last_chunk) {
             auto const last_chunk_expected_size = m_fw_size % m_fw_callback->Get_Chunk_Size();
-            expected_chunk_size = last_chunk_expected_size;
-            return received_chunk_size == last_chunk_expected_size;
+            // If the size is perfectly divisible, the last chunk is of CHUNK_SIZE, not 0
+            expected_chunk_size = (last_chunk_expected_size == 0) ? m_fw_callback->Get_Chunk_Size() : last_chunk_expected_size;
+            return received_chunk_size == expected_chunk_size;
         }
         expected_chunk_size = m_fw_callback->Get_Chunk_Size();
         return received_chunk_size == m_fw_callback->Get_Chunk_Size();
@@ -210,6 +211,8 @@ class OTA_Handler {
             return;
         }
 
+        Logger::printfln("Requesting chunk %u", m_requested_chunks);
+        Logger::printfln("Requesting chunk %u", m_requested_chunks);
         if (!m_publish_callback.Call_Callback(m_fw_callback->Get_Request_ID(), m_requested_chunks)) {
             Logger::printfln(UNABLE_TO_REQUEST_CHUNCKS);
         }

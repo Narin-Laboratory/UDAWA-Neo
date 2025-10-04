@@ -294,7 +294,7 @@ class OTA_Firmware_Update : public IAPI_Implementation {
     /// to ensure we have a firmware assigned and can start the update over MQTT
     void Firmware_Shared_Attribute_Received(JsonVariantConst data) {
         // Check if the keys are nested under a "shared" key
-        if (data.is<JsonObjectConst>() && data.as<JsonObjectConst>().containsKey("shared")) {
+        if (data.is<JsonObjectConst>() && !data["shared"].isNull()) {
             data = data["shared"];
         }
 
