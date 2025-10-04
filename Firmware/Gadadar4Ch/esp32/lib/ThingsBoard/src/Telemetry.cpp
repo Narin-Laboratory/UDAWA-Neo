@@ -49,5 +49,5 @@ bool Telemetry::SerializeKeyValue(JsonDocument & source) const {
         default:
             return false;
     }
-    return source.containsKey(m_key);
+    return !source[m_key].isNull();
 }
