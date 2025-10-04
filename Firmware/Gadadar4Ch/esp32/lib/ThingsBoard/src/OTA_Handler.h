@@ -107,7 +107,14 @@ class OTA_Handler {
     /// Does not need to be kept alive, because the formatting message is only used for the scope of the method itself
     /// @param total_bytes Amount of bytes in the current firmware packet data
     void Process_Firmware_Packet(size_t const & current_chunk, uint8_t * payload, size_t const & total_bytes)  {
-        if (current_chunk != m_requested_chunks) {
+        if (current_chunk < m_requested_chunks) {
+            Logger::printfln(RECEIVED_UNEXPECTED_CHUNK, current_chunk, m_requested_chunks);
+            // Re-request the chunk we are actually waiting for,
+            // because the server probably did not receive our previous request.
+            Request_Next_Firmware_Packet();
+            return;
+        }
+        if (current_chunk > m_requested_chunks) {
             Logger::printfln(RECEIVED_UNEXPECTED_CHUNK, current_chunk, m_requested_chunks);
             return;
         }
