@@ -1199,10 +1199,10 @@ void coreroutineRunIoT(){
               IOT_OTA_UPDATE_PACKET_SIZE
           );
 
-          if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback) && IAPIOta.Start_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
-              logger->debug(PSTR(__func__), PSTR("Firmware update subscribed and started.\n"));
+          if (IAPIOta.Subscribe_Firmware_Update(coreroutineIoTUpdaterOTACallback)) {
+              logger->debug(PSTR(__func__), PSTR("Firmware update subscribed.\n"));
           } else {
-              logger->error(PSTR(__func__), PSTR("Firmware update failed to subscribe or start.\n"));
+              logger->error(PSTR(__func__), PSTR("Firmware update failed to subscribe.\n"));
           }
           #endif
           logger->info(PSTR(__func__),PSTR("IoT Connected!\n"));

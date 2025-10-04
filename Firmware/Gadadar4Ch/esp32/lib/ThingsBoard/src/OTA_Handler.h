@@ -15,6 +15,7 @@
 #include <string.h>
 
 
+
 // Log messages.
 char constexpr OTA_CB_IS_NULL[] = "OTA update callback is NULL, has it been deleted";
 char constexpr UNABLE_TO_REQUEST_CHUNCKS[] = "Unable to request firmware chunk";
