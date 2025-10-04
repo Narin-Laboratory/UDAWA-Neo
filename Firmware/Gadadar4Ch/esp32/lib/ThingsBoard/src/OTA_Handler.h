@@ -77,12 +77,10 @@ class OTA_Handler {
     void Start_Firmware_Update(OTA_Update_Callback & fw_callback, size_t const & fw_size, char const * fw_checksum, mbedtls_md_type_t const & fw_checksum_algorithm) {
         m_fw_callback = &fw_callback;
         m_fw_size = fw_size;
-        m_total_chunks = (m_fw_size / m_fw_callback->Get_Chunk_Size()) + 1U;
+        m_total_chunks = (m_fw_size + m_fw_callback->Get_Chunk_Size() - 1) / m_fw_callback->Get_Chunk_Size();
         (void)strncpy(m_fw_checksum, fw_checksum, sizeof(m_fw_checksum));
         m_fw_checksum_algorithm = fw_checksum_algorithm;
-#if THINGSBOARD_ENABLE_DEBUG
         Logger::printfln(HASH_ALGORITHM, mbedtls_md_get_name(mbedtls_md_info_from_type(m_fw_checksum_algorithm)));
-#endif // THINGSBOARD_ENABLE_DEBUG
         auto & request_timeout = m_fw_callback->Get_Request_Timeout();
 #if THINGSBOARD_ENABLE_STL
         request_timeout.Set_Timeout_Callback(std::bind(&OTA_Handler::Handle_Request_Timeout, this));

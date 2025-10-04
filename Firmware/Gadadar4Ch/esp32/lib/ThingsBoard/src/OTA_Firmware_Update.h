@@ -249,6 +249,13 @@ class OTA_Firmware_Update : public IAPI_Implementation {
     /// @brief Subscribes to the firmware response topic
     /// @return Whether subscribing to the firmware response topic was successful or not
     bool Firmware_OTA_Subscribe() {
+        if (!m_subscribe_topic_callback.Call_Callback(FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC)) {
+            char message[strlen(SUBSCRIBE_TOPIC_FAILED) + strlen(FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC) + 2] = {};
+            (void)snprintf(message, sizeof(message), SUBSCRIBE_TOPIC_FAILED, FIRMWARE_RESPONSE_SUBSCRIBE_TOPIC);
+            Logger::printfln(message);
+            Firmware_Send_State(FW_STATE_FAILED, message);
+            return false;
+        }
         return true;
     }
 
