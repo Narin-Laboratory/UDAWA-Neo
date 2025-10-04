@@ -109,6 +109,12 @@ class OTA_Firmware_Update : public IAPI_Implementation {
 
         auto & request_timeout = m_fw_callback.Get_Request_Timeout();
         constexpr char const * array[OTA_ATTRIBUTE_KEYS_AMOUNT] = {FW_CHKS_KEY, FW_CHKS_ALGO_KEY, FW_SIZE_KEY, FW_TITLE_KEY, FW_VER_KEY};
+
+        Logger::printfln("OTA: Requesting shared attributes:");
+        for (size_t i = 0; i < OTA_ATTRIBUTE_KEYS_AMOUNT; ++i) {
+            Logger::printfln(" - %s", array[i]);
+        }
+
 #if THINGSBOARD_ENABLE_STL
         Request_Callback_Value const fw_request_callback(std::bind(&OTA_Firmware_Update::Firmware_Shared_Attribute_Received, this, std::placeholders::_1), request_timeout.Get_Timeout(), std::bind(&OTA_Firmware_Update::Request_Timeout, this), array + 0U, array + OTA_ATTRIBUTE_KEYS_AMOUNT);
 #else
