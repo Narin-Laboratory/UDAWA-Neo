@@ -206,27 +206,25 @@ void coreroutineLoop(){
         logger->debug(PSTR(__func__), PSTR("Saved app state.\n"));
     }
 
-    static bool panic_action_taken = false;
     if (appState.fPanic) {
-        if (!panic_action_taken) {
+        if (!appState.panic_action_taken) {
             logger->warn(PSTR(__func__), PSTR("Panic mode is activated.\n"));
             for(uint8_t i = 0; i < 4; i++){
                 logger->warn(PSTR(__func__), PSTR("Relay %d is turned off and changed to manual.\n"), i+1);
                 relays[i].mode = 0;
                 coreroutineSetRelay(i, false);
             }
-            panic_action_taken = true;
+            appState.panic_action_taken = true;
         }
     } else {
-        if (panic_action_taken) {
+        if (appState.panic_action_taken) {
             logger->info(PSTR(__func__), PSTR("Panic mode deactivated.\n"));
-            panic_action_taken = false; // Reset if panic is turned off
+            appState.panic_action_taken = false; // Reset if panic is turned off
         }
     }
 
-    static unsigned long lastWebBcast = 0;
     #ifdef USE_LOCAL_WEB_INTERFACE
-      if(ws.count() > 0 && (now - lastWebBcast > (appConfig.intvWeb * 1000))){
+      if(ws.count() > 0 && (now - appState.lastWebBcast > (appConfig.intvWeb * 1000))){
         JsonDocument doc;
         JsonObject sysInfo = doc[PSTR("sysInfo")].to<JsonObject>();
 
@@ -236,13 +234,12 @@ void coreroutineLoop(){
         sysInfo[PSTR("rssi")] = wiFiHelper.rssiToPercent(WiFi.RSSI());
 
         wsBcast(doc);
-        lastWebBcast = now;
+        appState.lastWebBcast = now;
       }
     #endif
 
-    static unsigned long lastTeleBcast = 0;
     #ifdef USE_IOT
-      if(now - lastTeleBcast > (appConfig.intvTele * 1000)){
+      if(now - appState.lastTeleBcast > (appConfig.intvTele * 1000)){
         JsonDocument doc;
 
         doc[PSTR("heap")] = ESP.getFreeHeap();
@@ -250,7 +247,7 @@ void coreroutineLoop(){
         doc[PSTR("datetime")] = RTC.getDateTime();
         doc[PSTR("rssi")] = wiFiHelper.rssiToPercent(WiFi.RSSI());
         iotSendAttr(doc);
-        lastTeleBcast = now;
+        appState.lastTeleBcast = now;
       }
     #endif
 }

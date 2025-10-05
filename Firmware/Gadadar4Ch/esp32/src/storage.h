@@ -98,6 +98,11 @@ struct AppState {
     bool fsaveAppRelay = false;
     bool fSaveAppState = false;
     bool fsyncClientAttributes = false;
+
+    // Transient state variables, moved from coreroutineLoop
+    bool panic_action_taken = false;
+    unsigned long lastWebBcast = 0;
+    unsigned long lastTeleBcast = 0;
 };
 
 extern UdawaConfig config;
