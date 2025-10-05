@@ -1015,6 +1015,7 @@ void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client
                 }
             }
             appState.fsaveAppRelay = true;
+            appState.fsyncClientAttributes = true;
         }
         else if(doc[PSTR("fPanic")].is<bool>()){
             appState.fPanic = doc[PSTR("fPanic")].as<bool>();
