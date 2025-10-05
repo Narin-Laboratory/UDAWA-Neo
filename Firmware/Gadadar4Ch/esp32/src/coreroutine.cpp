@@ -1040,7 +1040,7 @@ void wsBcast(JsonDocument &doc){
         String buffer;
         serializeJson(doc, buffer);
         ws.textAll(buffer);
-        //logger->verbose(PSTR(__func__), PSTR("Broadcasting message: %s\n"), buffer.c_str());
+        logger->verbose(PSTR(__func__), PSTR("Broadcasting message: %s\n"), buffer.c_str());
         xSemaphoreGive( xSemaphoreWSBroadcast );
       }
       else
@@ -1059,45 +1059,42 @@ void coreroutineSyncClientAttr(uint8_t direction){
   if(direction == 1 || direction == 3){ // Send to client
     #ifdef USE_LOCAL_WEB_INTERFACE
     // Send original attr and cfg objects for UI compatibility
-    {
-      JsonDocument attr_doc;
-      JsonObject attr = attr_doc.to<JsonObject>();
-      attr[PSTR("ipad")] = ip.c_str();
-      attr[PSTR("compdate")] = COMPILED;
-      attr[PSTR("fmTitle")] = CURRENT_FIRMWARE_TITLE;
-      attr[PSTR("fmVersion")] = CURRENT_FIRMWARE_VERSION;
-      attr[PSTR("stamac")] = WiFi.macAddress();
-      attr[PSTR("apmac")] = WiFi.softAPmacAddress();
-      attr[PSTR("flFree")] = ESP.getFreeSketchSpace();
-      attr[PSTR("fwSize")] = ESP.getSketchSize();
-      attr[PSTR("flSize")] = ESP.getFlashChipSize();
-      attr[PSTR("dSize")] = LittleFS.totalBytes();
-      attr[PSTR("dUsed")] = LittleFS.usedBytes();
-      attr[PSTR("sdkVer")] = ESP.getSdkVersion();
+    doc.clear();
+    JsonObject attr = doc[PSTR("attr")].to<JsonObject>();
+    attr[PSTR("ipad")] = ip.c_str();
+    attr[PSTR("compdate")] = COMPILED;
+    attr[PSTR("fmTitle")] = CURRENT_FIRMWARE_TITLE;
+    attr[PSTR("fmVersion")] = CURRENT_FIRMWARE_VERSION;
+    attr[PSTR("stamac")] = WiFi.macAddress();
+    attr[PSTR("apmac")] = WiFi.softAPmacAddress();
+    attr[PSTR("flFree")] = ESP.getFreeSketchSpace();
+    attr[PSTR("fwSize")] = ESP.getSketchSize();
+    attr[PSTR("flSize")] = ESP.getFlashChipSize();
+    attr[PSTR("dSize")] = LittleFS.totalBytes();
+    attr[PSTR("dUsed")] = LittleFS.usedBytes();
+    attr[PSTR("sdkVer")] = ESP.getSdkVersion();
+    wsBcast(doc);
 
-      JsonDocument wrapperDoc;
-      wrapperDoc[PSTR("attr")] = attr_doc;
-      wsBcast(wrapperDoc);
+    doc.clear();
+    JsonObject cfg = doc[PSTR("cfg")].to<JsonObject>();
+    cfg[PSTR("name")] = config.state.name;
+    cfg[PSTR("model")] = config.state.model;
+    cfg[PSTR("group")] = config.state.group;
+    cfg[PSTR("gmtOff")] = config.state.gmtOff;
+    cfg[PSTR("hname")] = config.state.hname;
+    cfg[PSTR("htP")] = config.state.htP;
+    cfg[PSTR("wssid")] = config.state.wssid;
+    cfg[PSTR("wpass")] = config.state.wpass;
+    cfg[PSTR("fInit")] = config.state.fInit;
+    cfg[PSTR("binURL")] = config.state.binURL;
+    wsBcast(doc);
+
+    doc.clear();
+    JsonArray availableRelayModes = doc[F("availableRelayMode")].to<JsonArray>();
+    for (uint8_t i = 0; i < countof(availableRelayMode); i++) {
+      availableRelayModes.add(availableRelayMode[i]);
     }
-
-    {
-      JsonDocument cfg_doc;
-      JsonObject cfg = cfg_doc.to<JsonObject>();
-      cfg[PSTR("name")] = config.state.name;
-      cfg[PSTR("model")] = config.state.model;
-      cfg[PSTR("group")] = config.state.group;
-      cfg[PSTR("gmtOff")] = config.state.gmtOff;
-      cfg[PSTR("hname")] = config.state.hname;
-      cfg[PSTR("htP")] = config.state.htP;
-      cfg[PSTR("wssid")] = config.state.wssid;
-      cfg[PSTR("wpass")] = config.state.wpass;
-      cfg[PSTR("fInit")] = config.state.fInit;
-      cfg[PSTR("binURL")] = config.state.binURL;
-
-      JsonDocument wrapperDoc;
-      wrapperDoc[PSTR("cfg")] = cfg_doc;
-      wsBcast(wrapperDoc);
-    }
+    wsBcast(doc);
 
     // Send new app-specific configs
     doc.clear();

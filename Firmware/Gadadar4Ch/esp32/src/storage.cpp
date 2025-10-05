@@ -71,7 +71,7 @@ void storageConvertAppRelay(JsonDocument &doc, bool direction, bool load_default
     if(direction){ // from doc to relays
         if (!doc["relays"].isNull()) {
             JsonArrayConst relays_arr = doc["relays"].as<JsonArrayConst>();
-            for(uint8_t i = 0; i < 4; i++){
+            for(uint8_t i = 0; i < countof(relays); i++){
                 if (i < relays_arr.size() && !relays_arr[i].isNull()) {
                     JsonObjectConst relay_obj = relays_arr[i].as<JsonObjectConst>();
                     if(!relay_obj["pin"].isNull()) relays[i].pin = relay_obj["pin"].as<uint8_t>(); else if(load_defaults) relays[i].pin = i;
@@ -109,12 +109,12 @@ void storageConvertAppRelay(JsonDocument &doc, bool direction, bool load_default
                 }
             }
         } else if (load_defaults) {
-            for(uint8_t i = 0; i < 4; i++) relays[i] = Relay();
+            for(uint8_t i = 0; i < countof(relays); i++) relays[i] = Relay();
         }
     }
     else{ // from relays to doc
     JsonArray _relays = doc[PSTR("relays")].to<JsonArray>();
-        for(uint8_t i = 0; i < 4; i++){
+        for(uint8_t i = 0; i < countof(relays); i++){
       JsonObject relay = _relays.add<JsonObject>();
         relay[PSTR("pin")] = relays[i].pin;
         relay[PSTR("mode")] = relays[i].mode;
