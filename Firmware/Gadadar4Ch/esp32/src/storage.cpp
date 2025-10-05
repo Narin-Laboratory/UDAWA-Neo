@@ -4,58 +4,11 @@ UdawaConfig config(PSTR("/config.json"));
 CrashState crashState;
 GenericConfig crashStateConfig(PSTR("/crash.json"));
 
-// New definitions
-AppConfig appConfig;
-AppState appState;
-Relay relays[4] = {
-    Relay(0, 0, 0, 0, 0, 0, 0, 0, false, "No label", 3600, 0, 0),
-    Relay(1, 0, 0, 0, 0, 0, 0, 0, false, "No label", 3600, 0, 0),
-    Relay(2, 0, 0, 0, 0, 0, 0, 0, false, "No label", 3600, 0, 0),
-    Relay(3, 0, 0, 0, 0, 0, 0, 0, false, "No label", 3600, 0, 0)
-};
-
-GenericConfig appConfigGC(PSTR("/appConfig.json"));
-GenericConfig appStateGC(PSTR("/appState.json"));
-GenericConfig appRelaysGC(PSTR("/appRelays.json"));
-
-
 void storageSetup(){
     logger->debug(PSTR(__func__), PSTR("Initializing LittleFS: %d\n"), config.begin());
     config.load();
     
     logger->setLogLevel((LogLevel)config.state.logLev);
-
-    JsonDocument doc;
-    appConfigGC.load(doc);
-    storageConvertAppConfig(doc, true, true);
-    doc.clear();
-    appStateGC.load(doc);
-    storageConvertAppState(doc, true, true);
-    doc.clear();
-    appRelaysGC.load(doc);
-    storageConvertAppRelay(doc, true, true);
-    doc.clear();
-}
-
-void storageConvertAppConfig(JsonDocument &doc, bool direction, bool load_defaults){
-  if(direction){ // from doc to config
-    if(!doc["s1tx"].isNull()) appConfig.s1tx = doc["s1tx"].as<uint8_t>(); else if(load_defaults) appConfig.s1tx = s1tx;
-    if(!doc["s1rx"].isNull()) appConfig.s1rx = doc["s1rx"].as<uint8_t>(); else if(load_defaults) appConfig.s1rx = s1rx;
-    if(!doc["intvWeb"].isNull()) appConfig.intvWeb = doc["intvWeb"].as<unsigned long>(); else if(load_defaults) appConfig.intvWeb = intvWeb;
-    if(!doc["intvAttr"].isNull()) appConfig.intvAttr = doc["intvAttr"].as<unsigned long>(); else if(load_defaults) appConfig.intvAttr = intvAttr;
-    if(!doc["intvTele"].isNull()) appConfig.intvTele = doc["intvTele"].as<unsigned long>(); else if(load_defaults) appConfig.intvTele = intvTele;
-    if(!doc["maxWatt"].isNull()) appConfig.maxWatt = doc["maxWatt"].as<int>(); else if(load_defaults) appConfig.maxWatt = maxWatt;
-    if(!doc["relayON"].isNull()) appConfig.relayON = doc["relayON"].as<bool>(); else if(load_defaults) appConfig.relayON = relayON;
-  }
-  else{ // from config to doc
-    doc[PSTR("s1tx")] = appConfig.s1tx;
-    doc[PSTR("s1rx")] = appConfig.s1rx;
-    doc[PSTR("intvWeb")] = appConfig.intvWeb;
-    doc[PSTR("intvAttr")] = appConfig.intvAttr;
-    doc[PSTR("intvTele")] = appConfig.intvTele;
-    doc[PSTR("maxWatt")] = appConfig.maxWatt;
-    doc[PSTR("relayON")] = appConfig.relayON;
-  }
 }
 
 void storageConvertAppState(JsonDocument &doc, bool direction, bool load_defaults){
