@@ -90,4 +90,8 @@ void coreroutineSyncClientAttr(uint8_t direction);
     void iotFinishedCallback(const bool & success);
 #endif
 
+// Application-specific tasks
+void coreroutineRelayControlTaskRoutine(void *arg);
+void coreroutinePowerSensorTaskRoutine(void *arg);
+
 #endif
