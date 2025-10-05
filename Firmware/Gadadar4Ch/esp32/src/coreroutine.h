@@ -33,8 +33,6 @@ extern ErriezDS3231 hwRTC;
 extern TaskHandle_t xHandleAlarm;
 extern BaseType_t xReturnedAlarm;
 extern QueueHandle_t xQueueAlarm;
-extern TaskHandle_t xHandlePowerSensor;
-extern TaskHandle_t xHandleRelayControl;
 
 #ifdef USE_IOT
 extern IoTState iotState;
@@ -91,9 +89,5 @@ void coreroutineSyncClientAttr(uint8_t direction);
     void iotProgressCallback(const size_t & currentChunk, const size_t & totalChuncks);
     void iotFinishedCallback(const bool & success);
 #endif
-
-void coreroutinePowerSensorTaskRoutine(void *arg);
-void coreroutineRelayControlTaskRoutine(void *arg);
-void coreroutineSetRelay(uint8_t index, bool output);
 
 #endif

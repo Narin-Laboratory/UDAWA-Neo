@@ -1,8 +1,4 @@
 #include "coreroutine.h"
-#include <PZEM004Tv30.h>
-#include "PCF8575.h"
-
-PCF8575 IOExtender(0x20);
 
 ESP32Time RTC(0);
 #ifdef USE_HW_RTC
@@ -12,8 +8,6 @@ ErriezDS3231 hwRTC;
 TaskHandle_t xHandleAlarm = NULL;
 BaseType_t xReturnedAlarm;
 QueueHandle_t xQueueAlarm = xQueueCreate( 10, sizeof( struct AlarmMessage ) );
-TaskHandle_t xHandlePowerSensor = NULL;
-TaskHandle_t xHandleRelayControl = NULL;
 
 #ifdef USE_LOCAL_WEB_INTERFACE
 AsyncWebServer http(80);
@@ -78,18 +72,6 @@ void coreroutineSetup(){
           logger->warn(PSTR(__func__), PSTR("Task alarmTaskRoutine has been created.\n"));
         }
       }
-    if(xHandlePowerSensor == NULL){
-        appState.xReturnedPowerSensor = xTaskCreatePinnedToCore(coreroutinePowerSensorTaskRoutine, PSTR("powerSensor"), 4096, NULL, 1, &appState.xHandlePowerSensor, 1);
-        if(appState.xReturnedPowerSensor == pdPASS){
-            logger->warn(PSTR(__func__), PSTR("Task powerSensor has been created.\n"));
-        }
-    }
-    if(xHandleRelayControl == NULL){
-        appState.xReturnedRelayControl = xTaskCreatePinnedToCore(coreroutineRelayControlTaskRoutine, PSTR("relayControl"), 4096, NULL, 1, &appState.xHandleRelayControl, 1);
-        if(appState.xReturnedRelayControl == pdPASS){
-            logger->warn(PSTR(__func__), PSTR("Task relayControl has been created.\n"));
-        }
-    }
     }
     coreroutineSetAlarm(0, 0, 3, 50);
 
@@ -184,47 +166,8 @@ void coreroutineLoop(){
       coreroutineDoInit();
     }
 
-    if(appState.fsaveAppRelay){
-        JsonDocument doc;
-        storageConvertAppRelay(doc, false);
-        appRelaysGC.save(doc);
-        appState.fsaveAppRelay = false;
-        logger->debug(PSTR(__func__), PSTR("Saved app relay state.\n"));
-    }
-
-    if(appState.fsyncClientAttributes){
-        coreroutineSyncClientAttr(3); // 3 means both ws and iot
-        appState.fsyncClientAttributes = false;
-        logger->debug(PSTR(__func__), PSTR("Synced client attributes.\n"));
-    }
-
-    if(appState.fSaveAppState){
-        JsonDocument doc;
-        storageConvertAppState(doc, false);
-        appStateGC.save(doc);
-        appState.fSaveAppState = false;
-        logger->debug(PSTR(__func__), PSTR("Saved app state.\n"));
-    }
-
-    if (appState.fPanic) {
-        if (!appState.panic_action_taken) {
-            logger->warn(PSTR(__func__), PSTR("Panic mode is activated.\n"));
-            for(uint8_t i = 0; i < 4; i++){
-                logger->warn(PSTR(__func__), PSTR("Relay %d is turned off and changed to manual.\n"), i+1);
-                relays[i].mode = 0;
-                coreroutineSetRelay(i, false);
-            }
-            appState.panic_action_taken = true;
-        }
-    } else {
-        if (appState.panic_action_taken) {
-            logger->info(PSTR(__func__), PSTR("Panic mode deactivated.\n"));
-            appState.panic_action_taken = false; // Reset if panic is turned off
-        }
-    }
-
     #ifdef USE_LOCAL_WEB_INTERFACE
-      if(ws.count() > 0 && (now - appState.lastWebBcast > (appConfig.intvWeb * 1000))){
+      if(ws.count() > 0){
         JsonDocument doc;
         JsonObject sysInfo = doc[PSTR("sysInfo")].to<JsonObject>();
 
@@ -234,21 +177,17 @@ void coreroutineLoop(){
         sysInfo[PSTR("rssi")] = wiFiHelper.rssiToPercent(WiFi.RSSI());
 
         wsBcast(doc);
-        appState.lastWebBcast = now;
       }
     #endif
 
     #ifdef USE_IOT
-      if(now - appState.lastTeleBcast > (appConfig.intvTele * 1000)){
-        JsonDocument doc;
+      JsonDocument doc;
 
-        doc[PSTR("heap")] = ESP.getFreeHeap();
-        doc[PSTR("uptime")] = now;
-        doc[PSTR("datetime")] = RTC.getDateTime();
-        doc[PSTR("rssi")] = wiFiHelper.rssiToPercent(WiFi.RSSI());
-        iotSendAttr(doc);
-        appState.lastTeleBcast = now;
-      }
+      doc[PSTR("heap")] = ESP.getFreeHeap();
+      doc[PSTR("uptime")] = now;
+      doc[PSTR("datetime")] = RTC.getDateTime();
+      doc[PSTR("rssi")] = wiFiHelper.rssiToPercent(WiFi.RSSI());
+      iotSendAttr(doc);
     #endif
 }
 
@@ -983,42 +922,6 @@ void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client
         else if(doc[PSTR("FSUpdate")].is<bool>()){
           crashState.fFSDownloading = true;
         }
-
-        else if(doc[PSTR("setRelayState")].is<JsonObject>()){
-            if(doc[PSTR("setRelayState")][PSTR("pin")].is<uint8_t>() && doc[PSTR("setRelayState")][PSTR("state")].is<bool>()){
-                coreroutineSetRelay(doc[PSTR("setRelayState")][PSTR("pin")].as<uint8_t>(), doc[PSTR("setRelayState")][PSTR("state")].as<bool>());
-            }
-        }
-        else if(doc[PSTR("resetPowerSensor")].is<bool>()){
-            appState.fResetPowerSensor = true;
-        }
-        else if(doc[PSTR("setRelay")].is<JsonObject>() && doc[PSTR("setRelay")][PSTR("relay")].is<JsonObject>() && doc[PSTR("setRelay")][PSTR("index")].is<uint8_t>()){
-            uint8_t index = doc[PSTR("setRelay")][PSTR("index")].as<uint8_t>();
-            if(index < 4){
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")].is<uint8_t>()){relays[index].pin = doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")].as<uint8_t>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("mode")].is<uint8_t>()){relays[index].mode = doc[PSTR("setRelay")][PSTR("relay")][PSTR("mode")].as<uint8_t>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("wattage")].is<uint16_t>()){relays[index].wattage = doc[PSTR("setRelay")][PSTR("relay")][PSTR("wattage")].as<uint16_t>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyCycle")].is<uint8_t>()){relays[index].dutyCycle = doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyCycle")].as<uint8_t>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyRange")].is<unsigned long>()){relays[index].dutyRange = doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyRange")].as<unsigned long>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("autoOff")].is<unsigned long>()){relays[index].autoOff = doc[PSTR("setRelay")][PSTR("relay")][PSTR("autoOff")].as<unsigned long>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("label")].is<String>()){relays[index].label = doc[PSTR("setRelay")][PSTR("relay")][PSTR("label")].as<String>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("overrunInSec")].is<uint16_t>()){relays[index].overrunInSec = doc[PSTR("setRelay")][PSTR("relay")][PSTR("overrunInSec")].as<uint16_t>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("datetime")].is<unsigned long>()){relays[index].datetime = doc[PSTR("setRelay")][PSTR("relay")][PSTR("datetime")].as<unsigned long>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("duration")].is<unsigned long>()){relays[index].duration = doc[PSTR("setRelay")][PSTR("relay")][PSTR("duration")].as<unsigned long>();}
-                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")].is<JsonArray>()){
-                    for(uint8_t j = 0; j < maxTimers; j++){
-                        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("h")].is<uint8_t>()){relays[index].timers[j].hour = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("h")].as<uint8_t>();}
-                        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("i")].is<uint8_t>()){relays[index].timers[j].minute = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("i")].as<uint8_t>();}
-                        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("s")].is<uint8_t>()){relays[index].timers[j].second = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("s")].as<uint8_t>();}
-                        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("d")].is<unsigned long>()){relays[index].timers[j].duration = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("d")].as<unsigned long>();}
-                    }
-                }
-            }
-            appState.fsaveAppRelay = true;
-        }
-        else if(doc[PSTR("fPanic")].is<bool>()){
-            appState.fPanic = doc[PSTR("fPanic")].as<bool>();
-        }
       }
       doc.clear();
     }
@@ -1053,82 +956,51 @@ void wsBcast(JsonDocument &doc){
 #endif
 
 void coreroutineSyncClientAttr(uint8_t direction){
-  JsonDocument doc;
   String ip = WiFi.localIP().toString();
   
-  if(direction == 1 || direction == 3){ // Send to client
-    #ifdef USE_LOCAL_WEB_INTERFACE
-    // Send original attr and cfg objects for UI compatibility
-    doc.clear();
-    JsonObject attr = doc[PSTR("attr")].to<JsonObject>();
-    attr[PSTR("ipad")] = ip.c_str();
-    attr[PSTR("compdate")] = COMPILED;
-    attr[PSTR("fmTitle")] = CURRENT_FIRMWARE_TITLE;
-    attr[PSTR("fmVersion")] = CURRENT_FIRMWARE_VERSION;
-    attr[PSTR("stamac")] = WiFi.macAddress();
-    attr[PSTR("apmac")] = WiFi.softAPmacAddress();
-    attr[PSTR("flFree")] = ESP.getFreeSketchSpace();
-    attr[PSTR("fwSize")] = ESP.getSketchSize();
-    attr[PSTR("flSize")] = ESP.getFlashChipSize();
-    attr[PSTR("dSize")] = LittleFS.totalBytes();
-    attr[PSTR("dUsed")] = LittleFS.usedBytes();
-    attr[PSTR("sdkVer")] = ESP.getSdkVersion();
-    wsBcast(doc);
-
-    doc.clear();
-    JsonObject cfg = doc[PSTR("cfg")].to<JsonObject>();
-    cfg[PSTR("name")] = config.state.name;
-    cfg[PSTR("model")] = config.state.model;
-    cfg[PSTR("group")] = config.state.group;
-    cfg[PSTR("gmtOff")] = config.state.gmtOff;
-    cfg[PSTR("hname")] = config.state.hname;
-    cfg[PSTR("htP")] = config.state.htP;
-    cfg[PSTR("wssid")] = config.state.wssid;
-    cfg[PSTR("wpass")] = config.state.wpass;
-    cfg[PSTR("fInit")] = config.state.fInit;
-    cfg[PSTR("binURL")] = config.state.binURL;
-    wsBcast(doc);
-
-    doc.clear();
-    JsonArray availableRelayModes = doc[F("availableRelayMode")].to<JsonArray>();
-    for (uint8_t i = 0; i < countof(availableRelayMode); i++) {
-      availableRelayModes.add(availableRelayMode[i]);
+  #ifdef USE_LOCAL_WEB_INTERFACE
+  if((direction == 0 || direction == 1)){
+    {
+      JsonDocument doc;
+      JsonObject attr = doc.to<JsonObject>();
+      attr[PSTR("ipad")] = ip.c_str();
+      attr[PSTR("compdate")] = COMPILED;
+      attr[PSTR("fmTitle")] = CURRENT_FIRMWARE_TITLE;
+      attr[PSTR("fmVersion")] = CURRENT_FIRMWARE_VERSION;
+      attr[PSTR("stamac")] = WiFi.macAddress();
+      attr[PSTR("apmac")] = WiFi.softAPmacAddress();
+      attr[PSTR("flFree")] = ESP.getFreeSketchSpace();
+      attr[PSTR("fwSize")] = ESP.getSketchSize();
+      attr[PSTR("flSize")] = ESP.getFlashChipSize();
+      attr[PSTR("dSize")] = LittleFS.totalBytes(); 
+      attr[PSTR("dUsed")] = LittleFS.usedBytes();
+      attr[PSTR("sdkVer")] = ESP.getSdkVersion();
+      
+      JsonDocument wrapperDoc;
+      wrapperDoc[PSTR("attr")] = doc;
+      wsBcast(wrapperDoc);
     }
-    wsBcast(doc);
 
-    // Send new app-specific configs
-    doc.clear();
-    storageConvertAppConfig(doc, false);
-    wsBcast(doc);
+    {
+      JsonDocument doc;
+      JsonObject cfg = doc.to<JsonObject>();
+      cfg[PSTR("name")] = config.state.name;
+      cfg[PSTR("model")] = config.state.model;
+      cfg[PSTR("group")] = config.state.group;
+      cfg[PSTR("gmtOff")] = config.state.gmtOff;
+      cfg[PSTR("hname")] = config.state.hname;
+      cfg[PSTR("htP")] = config.state.htP;
+      cfg[PSTR("wssid")] = config.state.wssid;
+      cfg[PSTR("wpass")] = config.state.wpass;
+      cfg[PSTR("fInit")] = config.state.fInit;
+      cfg[PSTR("binURL")] = config.state.binURL;
 
-    doc.clear();
-    storageConvertAppState(doc, false);
-    wsBcast(doc);
-
-    doc.clear();
-    storageConvertAppRelay(doc, false);
-    wsBcast(doc);
-    #endif
+      JsonDocument wrapperDoc;
+      wrapperDoc[PSTR("cfg")] = doc;
+      wsBcast(wrapperDoc);
+    }
   }
-
-  if(direction == 2 || direction == 3){ // Send to IoT
-      #ifdef USE_IOT
-      // Send appConfig
-      doc.clear();
-      storageConvertAppConfig(doc, false);
-      iotSendAttr(doc);
-
-      // Send appState
-      doc.clear();
-      storageConvertAppState(doc, false);
-      iotSendAttr(doc);
-
-      // Send appRelays
-      doc.clear();
-      storageConvertAppRelay(doc, false);
-      iotSendAttr(doc);
-      #endif
-  }
+  #endif
 }
 
 void coreroutineSetFInit(bool fInit){
@@ -1144,309 +1016,6 @@ void coreroutineSetFInit(bool fInit){
   #endif
 }
 
-
-void coreroutinePowerSensorTaskRoutine(void *arg){
-  float volt; float amp; float watt; float freq; float pf; float ener;
-
-  unsigned long timerTelemetry = millis();
-  unsigned long timerAttribute = millis();
-  unsigned long timerWebIface = millis();
-  unsigned long timerAlarm = millis();
-
-  while (true)
-  {
-    HardwareSerial PZEMSerial(1);
-    PZEM004Tv30 PZEM(PZEMSerial, appConfig.s1rx, appConfig.s1tx);
-
-    appState.fPowerSensor = !isnan(PZEM.voltage());
-    if(!appState.fPowerSensor){
-      //logger->warn(PSTR(__func__), PSTR("Failed to initialize powerSensor!\n"));
-    }
-
-    bool fFailureReadings = false;
-    if(appState.fPowerSensor){
-      volt = PZEM.voltage();
-      amp = PZEM.current();
-      watt = PZEM.power();
-      freq = PZEM.frequency();
-      pf = PZEM.pf();
-      ener = PZEM.energy();
-    }
-
-    if(isnan(volt) || isnan(amp) || isnan(watt) || isnan(freq) || isnan(pf) ||
-    isnan(ener) || volt < 0.0 || volt > 1000.0 || amp < 0.0 || amp > 100.0 || watt < .0 ||
-    watt > 22000.0 || freq < 0.0 || freq > 100.0 || ener > 9999.0 ){
-      fFailureReadings = true;
-      //logger->debug(PSTR(__func__), PSTR("Power sensor abnormal reading: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n"), volt, amp, watt, freq, pf, ener);
-    }
-
-    unsigned long now = millis();
-    if(appState.fPowerSensor && !fFailureReadings)
-    {
-      JsonDocument doc;
-      String buffer;
-      JsonObject powerSensor = doc[PSTR("powerSensor")].to<JsonObject>();
-
-      #ifdef USE_LOCAL_WEB_INTERFACE
-      if( (now - timerWebIface) > (appConfig.intvWeb * 1000))
-      {
-        powerSensor[PSTR("volt")] = volt;
-        powerSensor[PSTR("amp")] = amp;
-        powerSensor[PSTR("watt")] = watt;
-        powerSensor[PSTR("freq")] = freq;
-        powerSensor[PSTR("pf")] = pf;
-        powerSensor[PSTR("ener")] = ener;
-        wsBcast(doc);
-        doc.clear();
-
-        timerWebIface = now;
-      }
-      #endif
-
-      #ifdef USE_IOT
-      if( (now - timerAttribute) > (appConfig.intvAttr * 1000))
-      {
-        doc[PSTR("_volt")] = volt;
-        doc[PSTR("_amp")] = amp;
-        doc[PSTR("_watt")] = watt;
-        doc[PSTR("_freq")] = freq;
-        doc[PSTR("_pf")] = pf;
-        doc[PSTR("_ener")] = ener;
-        iotSendAttr(doc);
-        doc.clear();
-
-        timerAttribute = now;
-      }
-
-      if( (now - timerTelemetry) > (appConfig.intvTele * 1000) )
-      {
-
-        doc[PSTR("volt")] = volt;
-        doc[PSTR("amp")] = amp;
-        doc[PSTR("watt")] = watt;
-        doc[PSTR("pf")] = pf;
-        doc[PSTR("freq")] = freq;
-        doc[PSTR("ener")] = ener;
-        #ifdef USE_DISK_LOG
-        writeCardLogger(doc);
-        #endif
-        //iotSendTelemetry(doc);
-        doc.clear();
-
-        timerTelemetry = now;
-      }
-      #endif
-
-    }
-
-    if( (now - timerAlarm) > 30000 )
-    {
-      if(!appState.fPowerSensor){coreroutineSetAlarm(140, 1, 5, 1000);}
-      else{
-        if(volt < 0 || volt > 1000){coreroutineSetAlarm(141, 1, 5, 1000);}
-        if(amp < 0 || amp > 100){coreroutineSetAlarm(142, 1, 5, 1000);}
-        if(watt < 0 || watt > appConfig.maxWatt){coreroutineSetAlarm(143, 1, 5, 1000);}
-        if(pf < 0 || pf > 100){coreroutineSetAlarm(144, 1, 5, 1000);}
-        if(freq < 0 || freq > 100){coreroutineSetAlarm(144, 1, 5, 1000);}
-        if(watt > appConfig.maxWatt || volt > 275){coreroutineSetAlarm(145, 1, 5, 1000);}
-
-        uint8_t activeRelayCounter = 0;
-        for(uint8_t i = 0; i < 4; i++){
-          if(relays[i].state == true &&
-          watt < 6.0){coreroutineSetAlarm(210+i, 1, 5, 1000);}
-
-          if(relays[i].state == true){activeRelayCounter++;}
-
-          if( relays[i].state == true &&
-            (millis() - relays[i].lastActive) > relays[i].overrunInSec * 1000 && relays[i].overrunInSec != 0){
-              coreroutineSetAlarm(215+i, 1, 5, 1000);
-            }
-        }
-
-        if(activeRelayCounter == 0 && watt > 6){coreroutineSetAlarm(214, 1, 5, 1000);}
-      }
-
-
-      timerAlarm = now;
-    }
-
-    if(appState.fResetPowerSensor){
-      appState.fResetPowerSensor = false;
-      logger->warn(PSTR(__func__), PSTR("Resetting power sensor.\n"));
-      PZEM.resetEnergy();
-    }
-
-    appState.powerSensorTaskRoutineLastActivity = millis();
-    vTaskDelay((const TickType_t) 1000 / portTICK_PERIOD_MS);
-  }
-}
-
-void coreroutineRelayControlTaskRoutine(void *arg){
-  for(uint8_t i = 0; i < 4; i++){
-    IOExtender.pinMode(relays[i].pin, OUTPUT);
-    logger->verbose(PSTR(__func__), PSTR("Relay %d initialized as output.\n"), relays[i].pin);
-  }
-
-  appState.fIOExtender =  IOExtender.begin();
-
-  if(!appState.fIOExtender){
-    //logger->error(PSTR(__func__), PSTR("Failed to initialize IOExtender!\n"));
-  }
-  else{
-    logger->verbose(PSTR(__func__), PSTR("IOExtender initialized.\n"));
-  }
-
-  for(uint8_t i = 0; i < 4; i++){
-    if(relays[i].mode == 0){
-      coreroutineSetRelay(i, relays[i].state);
-      logger->debug(PSTR(__func__), PSTR("Relay %d is initialized as %d.\n"), i+1, relays[i].state);
-    }
-  }
-
-  unsigned long timerAlarm = millis();
-  while (true)
-  {
-    if(!appState.fIOExtender){
-      for(uint8_t i = 0; i < 4; i++){
-        IOExtender.pinMode(relays[i].pin, OUTPUT);
-      }
-      appState.fIOExtender = IOExtender.begin();
-    }
-
-    vTaskDelay((const TickType_t) 1000 / portTICK_PERIOD_MS);
-    if(appState.fPanic){continue;}
-    unsigned long now = millis();
-
-    /* Start alarm section */
-    if(now - timerAlarm > 30000){
-      if(!appState.fIOExtender){
-        coreroutineSetAlarm(220, 1, 10, 500);
-      }
-
-      timerAlarm = now;
-    }
-    /* End alarm section */
-
-    for(uint8_t i = 0; i < 4; i++){
-      /* Start Manual Control Mode*/
-      if(relays[i].mode == 0 && relays[i].autoOff != 0){
-        if( (now - relays[i].lastActive) >= ( relays[i].autoOff * 1000 ) && relays[i].state == true){
-          coreroutineSetRelay(i, false);
-          logger->debug(PSTR(__func__), PSTR("Relay %d is turned off due to autoOff.\n"), i+1);
-        }
-      }
-      /* End Manual Control Mode*/
-      /* Start Duty Cycle Control Mode */
-      if(relays[i].dutyRange < 2){relays[i].dutyRange = 2;} //safenet
-      if(relays[i].dutyCycle != 0 && relays[i].mode == 1) {
-        if( relays[i].state == true )
-        {
-          if( relays[i].dutyCycle != 100 && (now - relays[i].lastChanged ) >= (float)(( ((float)relays[i].dutyCycle / 100) * (float)relays[i].dutyRange) * 1000))
-          {
-            coreroutineSetRelay(i, false);
-            relays[i].state = false;
-            relays[i].lastChanged = now;
-          }
-        }
-        else
-        {
-          if( relays[i].dutyCycle != 0 && (now - relays[i].lastChanged ) >= (float) ( ((100 - (float) relays[i].dutyCycle) / 100) * (float)relays[i].dutyRange) * 1000)
-          {
-            coreroutineSetRelay(i, true);
-            relays[i].state = true;
-            relays[i].lastChanged = now;
-          }
-        }
-      }
-      /* End Duty Cycle Control Mode */
-      /* Start Time Daily Control Mode */
-      if(relays[i].mode == 2){
-        bool flag_isInTimeWindow = false;
-        int activeTimeWindowCounter = 0;
-        for(uint8_t j = 0; j < maxTimers; j++)
-        {
-          int currHour = RTC.getHour(true);
-          int currHourToSec = currHour * 3600;
-          int currMinute = RTC.getMinute();
-          int currMinuteToSec = currMinute * 60;
-          int currSecond = RTC.getSecond();
-          String currDT = RTC.getDateTime();
-          int currentTimeInSec = currHourToSec + currMinuteToSec + currSecond;
-
-          int duration = relays[i].timers[j].duration;
-          int targetHour = relays[i].timers[j].hour;
-          int targetHourToSec = targetHour * 3600;
-          int targetMinute = relays[i].timers[j].minute;
-          int targetMinuteToSec =targetMinute * 60;
-          int targetSecond = relays[i].timers[j].second;
-          int targetTimeInSec = targetHourToSec + targetMinuteToSec + targetSecond;
-
-          int activationOffset = targetTimeInSec - currentTimeInSec;
-          int deactivationOffset = activationOffset + duration;
-          int activeTimeWindow = deactivationOffset - activationOffset;
-          flag_isInTimeWindow = ( activationOffset <= 0 && deactivationOffset >= 0 ) ? true : false;
-          const char * isInTimeWindow = flag_isInTimeWindow ? "TRUE" : "FALSE";
-
-          //logger->debug(PSTR(__func__), PSTR("Relay %d timer index %d hour %d minute %d second %d duration %d IsInTImeWindow %s activeTimeWindowCounter %d\n"), i+1, j, targetHour, targetMinute, targetSecond, duration, isInTimeWindow, activeTimeWindowCounter);
-          if(flag_isInTimeWindow){
-            activeTimeWindowCounter++;
-          }
-        }
-        if (relays[i].state == false && activeTimeWindowCounter > 0){
-          relays[i].state = true;
-          coreroutineSetRelay(i, true);
-        }else if(relays[i].state == true && activeTimeWindowCounter < 1) {
-          relays[i].state = false;
-          coreroutineSetRelay(i, false);
-        }
-      }
-      /* Stop Time Daily Control Mode */
-      /* Start Exact Datetime Control Mode */
-      if(relays[i].duration > 0 && relays[i].mode == 3){
-        if(relays[i].datetime <= (RTC.getEpoch()) && (relays[i].duration) >=
-          (RTC.getEpoch() - relays[i].datetime) && relays[i].state == false){
-            relays[i].state = true;
-            coreroutineSetRelay(i, true);
-        }
-        else if(relays[i].state == true && (relays[i].duration) <=
-          (RTC.getEpoch() - relays[i].datetime)){
-            relays[i].state = false;
-            coreroutineSetRelay(i, false);
-        }
-      }
-      /* Start Exact Datetime Control Mode */
-    }
-
-    appState.relayControlTaskRoutineLastActivity = millis();
-  }
-}
-
-void coreroutineSetRelay(uint8_t index, bool output){
-  if(index < 4){
-    if(output){
-      IOExtender.digitalWrite(relays[index].pin, appConfig.relayON);
-      relays[index].state = true;
-      relays[index].lastActive = millis();
-      relays[index].lastChanged = millis();
-      logger->debug(PSTR(__func__), PSTR("Relay %d is ON. %d was written to relay.\n"), index+1, appConfig.relayON);
-      appState.fsyncClientAttributes = true;
-      appState.fsaveAppRelay = true;
-    }
-    else{
-      IOExtender.digitalWrite(relays[index].pin, !appConfig.relayON);
-      relays[index].state = false;
-      relays[index].lastChanged = millis();
-      logger->debug(PSTR(__func__), PSTR("Relay %d is OFF. %d was written to relay.\n"), index+1, !appConfig.relayON);
-      appState.fsyncClientAttributes = true;
-      appState.fsaveAppRelay = true;
-    }
-
-    #ifdef USE_IOT
-    JsonDocument doc;
-    doc[(String("ch") + String(index+1)).c_str()] = relays[index].state;
-    #endif
-  }
-}
 
 #ifdef USE_IOT
 void coreroutineProcessTBProvResp(const JsonDocument &data){
@@ -1577,17 +1146,6 @@ void coreroutineRunIoT(){
                     String jsonData;
                     serializeJson(data, jsonData);
                     logger->verbose(PSTR(__func__), PSTR("Received shared attribute update: %s\n"), jsonData.c_str());
-
-                    JsonDocument doc;
-                    DeserializationError error = deserializeJson(doc, data.as<String>());
-                    if (error) {
-                        logger->error(PSTR(__func__), PSTR("Failed to parse shared attributes: %s\n"), error.c_str());
-                        return;
-                    }
-
-                    storageConvertAppConfig(doc, true);
-                    storageConvertAppState(doc, true);
-                    storageConvertAppRelay(doc, true);
                 }
             );
             iotState.fSharedAttributesSubscribed = IAPISharedAttr.Shared_Attributes_Subscribe(coreroutineThingsboardSharedAttributesUpdateCallback);
