@@ -922,6 +922,43 @@ void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client
         else if(doc[PSTR("FSUpdate")].is<bool>()){
           crashState.fFSDownloading = true;
         }
+
+        else if(doc[PSTR("setRelayState")].is<JsonObject>()){
+            if(doc[PSTR("setRelayState")][PSTR("pin")].is<uint8_t>() && doc[PSTR("setRelayState")][PSTR("state")].is<bool>()){
+                coreroutineSetRelay(doc[PSTR("setRelayState")][PSTR("pin")].as<uint8_t>(), doc[PSTR("setRelayState")][PSTR("state")].as<bool>());
+            }
+        }
+        else if(doc[PSTR("resetPowerSensor")].is<bool>()){
+            appState.fResetPowerSensor = true;
+        }
+        else if(doc[PSTR("setRelay")].is<JsonObject>() && doc[PSTR("setRelay")][PSTR("relay")].is<JsonObject>() && doc[PSTR("setRelay")][PSTR("index")].is<uint8_t>()){
+            uint8_t index = doc[PSTR("setRelay")][PSTR("index")].as<uint8_t>();
+            if(index < countof(relays)){
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")].is<uint8_t>()){relays[index].pin = doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")].as<uint8_t>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("mode")].is<uint8_t>()){relays[index].mode = doc[PSTR("setRelay")][PSTR("relay")][PSTR("mode")].as<uint8_t>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("wattage")].is<uint16_t>()){relays[index].wattage = doc[PSTR("setRelay")][PSTR("relay")][PSTR("wattage")].as<uint16_t>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyCycle")].is<uint8_t>()){relays[index].dutyCycle = doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyCycle")].as<uint8_t>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyRange")].is<unsigned long>()){relays[index].dutyRange = doc[PSTR("setRelay")][PSTR("relay")][PSTR("dutyRange")].as<unsigned long>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("autoOff")].is<unsigned long>()){relays[index].autoOff = doc[PSTR("setRelay")][PSTR("relay")][PSTR("autoOff")].as<unsigned long>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("label")].is<String>()){relays[index].label = doc[PSTR("setRelay")][PSTR("relay")][PSTR("label")].as<String>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("overrunInSec")].is<uint16_t>()){relays[index].overrunInSec = doc[PSTR("setRelay")][PSTR("relay")][PSTR("overrunInSec")].as<uint16_t>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("datetime")].is<unsigned long>()){relays[index].datetime = doc[PSTR("setRelay")][PSTR("relay")][PSTR("datetime")].as<unsigned long>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("duration")].is<unsigned long>()){relays[index].duration = doc[PSTR("setRelay")][PSTR("relay")][PSTR("duration")].as<unsigned long>();}
+                if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")].is<JsonArray>()){
+                    for(uint8_t j = 0; j < maxTimers; j++){
+                        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("h")].is<uint8_t>()){relays[index].timers[j].hour = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("h")].as<uint8_t>();}
+                        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("i")].is<uint8_t>()){relays[index].timers[j].minute = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("i")].as<uint8_t>();}
+                        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("s")].is<uint8_t>()){relays[index].timers[j].second = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("s")].as<uint8_t>();}
+                        if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("d")].is<unsigned long>()){relays[index].timers[j].duration = doc[PSTR("setRelay")][PSTR("relay")][PSTR("timers")][j][PSTR("d")].as<unsigned long>();}
+                    }
+                }
+            }
+            appState.fsaveAppRelay = true;
+            serializeJson(doc, Serial);
+        }
+        else if(doc[PSTR("fPanic")].is<bool>()){
+            appState.fPanic = doc[PSTR("fPanic")].as<bool>();
+        }
       }
       doc.clear();
     }
