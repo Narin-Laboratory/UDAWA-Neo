@@ -809,15 +809,7 @@ void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client
           doc.clear();
           client->text(message);
           break;
-      }
-      else{
-        doc.clear();
-        doc[PSTR("cfg")][PSTR("fInit")] = false;
-        String message;
-        serializeJson(doc, message);
-        doc.clear();
-        client->text(message);
-      }
+        }
       break;
     }
     case WS_EVT_DATA:
@@ -1065,22 +1057,61 @@ void coreroutineSyncClientAttr(uint8_t direction){
   String ip = WiFi.localIP().toString();
   
   if(direction == 1 || direction == 3){ // Send to client
-      #ifdef USE_LOCAL_WEB_INTERFACE
-      // Send appConfig
-      doc.clear();
-      storageConvertAppConfig(doc, false);
-      wsBcast(doc);
+    #ifdef USE_LOCAL_WEB_INTERFACE
+    // Send original attr and cfg objects for UI compatibility
+    {
+      JsonDocument attr_doc;
+      JsonObject attr = attr_doc.to<JsonObject>();
+      attr[PSTR("ipad")] = ip.c_str();
+      attr[PSTR("compdate")] = COMPILED;
+      attr[PSTR("fmTitle")] = CURRENT_FIRMWARE_TITLE;
+      attr[PSTR("fmVersion")] = CURRENT_FIRMWARE_VERSION;
+      attr[PSTR("stamac")] = WiFi.macAddress();
+      attr[PSTR("apmac")] = WiFi.softAPmacAddress();
+      attr[PSTR("flFree")] = ESP.getFreeSketchSpace();
+      attr[PSTR("fwSize")] = ESP.getSketchSize();
+      attr[PSTR("flSize")] = ESP.getFlashChipSize();
+      attr[PSTR("dSize")] = LittleFS.totalBytes();
+      attr[PSTR("dUsed")] = LittleFS.usedBytes();
+      attr[PSTR("sdkVer")] = ESP.getSdkVersion();
 
-      // Send appState
-      doc.clear();
-      storageConvertAppState(doc, false);
-      wsBcast(doc);
+      JsonDocument wrapperDoc;
+      wrapperDoc[PSTR("attr")] = attr_doc;
+      wsBcast(wrapperDoc);
+    }
 
-      // Send appRelays
-      doc.clear();
-      storageConvertAppRelay(doc, false);
-      wsBcast(doc);
-      #endif
+    {
+      JsonDocument cfg_doc;
+      JsonObject cfg = cfg_doc.to<JsonObject>();
+      cfg[PSTR("name")] = config.state.name;
+      cfg[PSTR("model")] = config.state.model;
+      cfg[PSTR("group")] = config.state.group;
+      cfg[PSTR("gmtOff")] = config.state.gmtOff;
+      cfg[PSTR("hname")] = config.state.hname;
+      cfg[PSTR("htP")] = config.state.htP;
+      cfg[PSTR("wssid")] = config.state.wssid;
+      cfg[PSTR("wpass")] = config.state.wpass;
+      cfg[PSTR("fInit")] = config.state.fInit;
+      cfg[PSTR("binURL")] = config.state.binURL;
+
+      JsonDocument wrapperDoc;
+      wrapperDoc[PSTR("cfg")] = cfg_doc;
+      wsBcast(wrapperDoc);
+    }
+
+    // Send new app-specific configs
+    doc.clear();
+    storageConvertAppConfig(doc, false);
+    wsBcast(doc);
+
+    doc.clear();
+    storageConvertAppState(doc, false);
+    wsBcast(doc);
+
+    doc.clear();
+    storageConvertAppRelay(doc, false);
+    wsBcast(doc);
+    #endif
   }
 
   if(direction == 2 || direction == 3){ // Send to IoT
@@ -1149,6 +1180,7 @@ void coreroutinePowerSensorTaskRoutine(void *arg){
     isnan(ener) || volt < 0.0 || volt > 1000.0 || amp < 0.0 || amp > 100.0 || watt < .0 ||
     watt > 22000.0 || freq < 0.0 || freq > 100.0 || ener > 9999.0 ){
       fFailureReadings = true;
+      logger->debug(PSTR(__func__), PSTR("Power sensor abnormal reading: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n"), volt, amp, watt, freq, pf, ener);
     }
 
     unsigned long now = millis();
