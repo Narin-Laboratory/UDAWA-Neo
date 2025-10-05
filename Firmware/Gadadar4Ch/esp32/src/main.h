@@ -62,6 +62,9 @@
 #endif
 #endif
 
+#include <PZEM004Tv30.h>
+#include "PCF8575.h"
+
 #include "storage.h"
 #include "logging.h"
 #include "networking.h"
