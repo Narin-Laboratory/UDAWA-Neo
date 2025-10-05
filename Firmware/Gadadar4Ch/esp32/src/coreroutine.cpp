@@ -984,7 +984,7 @@ void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client
           crashState.fFSDownloading = true;
         }
 
-        if(doc[PSTR("setRelayState")].is<JsonObject>()){
+        else if(doc[PSTR("setRelayState")].is<JsonObject>()){
             if(doc[PSTR("setRelayState")][PSTR("pin")].is<uint8_t>() && doc[PSTR("setRelayState")][PSTR("state")].is<bool>()){
                 coreroutineSetRelay(doc[PSTR("setRelayState")][PSTR("pin")].as<uint8_t>(), doc[PSTR("setRelayState")][PSTR("state")].as<bool>());
             }
