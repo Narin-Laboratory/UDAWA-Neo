@@ -1141,7 +1141,6 @@ void coreroutinePowerSensorTaskRoutine(void *arg){
     isnan(ener) || volt < 0.0 || volt > 1000.0 || amp < 0.0 || amp > 100.0 || watt < .0 ||
     watt > 22000.0 || freq < 0.0 || freq > 100.0 || ener > 9999.0 ){
       fFailureReadings = true;
-      logger->debug(PSTR(__func__), PSTR("Power sensor abnormal reading: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n"), volt, amp, watt, freq, pf, ener);
     }
 
     unsigned long now = millis();
