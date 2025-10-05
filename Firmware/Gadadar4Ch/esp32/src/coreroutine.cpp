@@ -809,7 +809,15 @@ void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client
           doc.clear();
           client->text(message);
           break;
-        }
+      }
+      else{
+        doc.clear();
+        doc[PSTR("cfg")][PSTR("fInit")] = false;
+        String message;
+        serializeJson(doc, message);
+        doc.clear();
+        client->text(message);
+      }
       break;
     }
     case WS_EVT_DATA:
