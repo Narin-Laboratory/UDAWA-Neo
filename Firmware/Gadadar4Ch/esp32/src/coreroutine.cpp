@@ -994,7 +994,7 @@ void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client
         }
         else if(doc[PSTR("setRelay")].is<JsonObject>() && doc[PSTR("setRelay")][PSTR("relay")].is<JsonObject>() && doc[PSTR("setRelay")][PSTR("index")].is<uint8_t>()){
             uint8_t index = doc[PSTR("setRelay")][PSTR("index")].as<uint8_t>();
-            if(index < 4){
+            if(index < countof(relays)){
                 if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")].is<uint8_t>()){relays[index].pin = doc[PSTR("setRelay")][PSTR("relay")][PSTR("pin")].as<uint8_t>();}
                 if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("mode")].is<uint8_t>()){relays[index].mode = doc[PSTR("setRelay")][PSTR("relay")][PSTR("mode")].as<uint8_t>();}
                 if(doc[PSTR("setRelay")][PSTR("relay")][PSTR("wattage")].is<uint16_t>()){relays[index].wattage = doc[PSTR("setRelay")][PSTR("relay")][PSTR("wattage")].as<uint16_t>();}
@@ -1015,6 +1015,7 @@ void coreroutineOnWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client
                 }
             }
             appState.fsaveAppRelay = true;
+            serializeJson(doc, Serial);
         }
         else if(doc[PSTR("fPanic")].is<bool>()){
             appState.fPanic = doc[PSTR("fPanic")].as<bool>();
