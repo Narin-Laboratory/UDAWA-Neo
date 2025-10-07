@@ -113,7 +113,4 @@ void UdawaSerialLogger::write(const char *tag, LogLevel level, const char *fmt, 
 
         xSemaphoreGive(xSemaphoreUdawaSerialLogger);
     }
-    else{
-        printf("Could not get semaphore\n");
-    }
 }
