@@ -1109,6 +1109,10 @@ void coreroutineSyncClientAttr(uint8_t direction){
     doc.clear();
     storageConvertAppRelay(doc, false);
     wsBcast(doc);
+
+    doc.clear();
+    storageConvertUdawaConfig(doc, false);
+    wsBcast(doc);
     #endif
   }
 
@@ -1127,6 +1131,11 @@ void coreroutineSyncClientAttr(uint8_t direction){
       // Send appRelays
       doc.clear();
       storageConvertAppRelay(doc, false);
+      iotSendAttr(doc);
+
+      // Send udawaConfig
+      doc.clear();
+      storageConvertUdawaConfig(doc, false);
       iotSendAttr(doc);
       #endif
   }

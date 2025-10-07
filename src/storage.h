@@ -122,5 +122,6 @@ void storageSetup();
 void storageConvertAppConfig(JsonDocument &doc, bool direction, bool load_defaults = false);
 void storageConvertAppState(JsonDocument &doc, bool direction, bool load_defaults = false);
 void storageConvertAppRelay(JsonDocument &doc, bool direction, bool load_defaults = false);
+void storageConvertUdawaConfig(JsonDocument &doc, bool direction, bool load_defaults = false);
 
 #endif
