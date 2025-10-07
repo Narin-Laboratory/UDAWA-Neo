@@ -78,7 +78,7 @@ class Shared_Attribute_Update : public IAPI_Implementation {
     void Process_Json_Response(char const * topic, JsonDocument const & data) override {
         String jsonData;
         serializeJson(data, jsonData);
-        Logger::printfln("SAU: Received shared attribute update: %s", jsonData.c_str());
+        //Logger::printfln("SAU: Received shared attribute update: %s", jsonData.c_str());
 
         JsonObjectConst object = data.template as<JsonObjectConst>();
         if (!object[SHARED_RESPONSE_KEY].isNull()) {

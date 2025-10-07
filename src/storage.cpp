@@ -133,3 +133,78 @@ void storageConvertAppRelay(JsonDocument &doc, bool direction, bool load_default
         }
     }
 }
+
+void storageConvertUdawaConfig(JsonDocument &doc, bool direction, bool load_defaults){
+  if(direction){ // from doc to config
+    if(!doc["fInit"].isNull()) config.state.fInit = doc["fInit"].as<bool>();
+    if(!doc["hwid"].isNull()) strlcpy(config.state.hwid, doc["hwid"].as<const char*>(), sizeof(config.state.hwid));
+    if(!doc["name"].isNull()) strlcpy(config.state.name, doc["name"].as<const char*>(), sizeof(config.state.name));
+    if(!doc["model"].isNull()) strlcpy(config.state.model, doc["model"].as<const char*>(), sizeof(config.state.model));
+    if(!doc["group"].isNull()) strlcpy(config.state.group, doc["group"].as<const char*>(), sizeof(config.state.group));
+    if(!doc["logLev"].isNull()) config.state.logLev = doc["logLev"].as<uint8_t>();
+    if(!doc["tbAddr"].isNull()) strlcpy(config.state.tbAddr, doc["tbAddr"].as<const char*>(), sizeof(config.state.tbAddr));
+    if(!doc["tbPort"].isNull()) config.state.tbPort = doc["tbPort"].as<uint16_t>();
+    if(!doc["wssid"].isNull()) strlcpy(config.state.wssid, doc["wssid"].as<const char*>(), sizeof(config.state.wssid));
+    if(!doc["wpass"].isNull()) strlcpy(config.state.wpass, doc["wpass"].as<const char*>(), sizeof(config.state.wpass));
+    if(!doc["dssid"].isNull()) strlcpy(config.state.dssid, doc["dssid"].as<const char*>(), sizeof(config.state.dssid));
+    if(!doc["dpass"].isNull()) strlcpy(config.state.dpass, doc["dpass"].as<const char*>(), sizeof(config.state.dpass));
+    if(!doc["upass"].isNull()) strlcpy(config.state.upass, doc["upass"].as<const char*>(), sizeof(config.state.upass));
+    #ifdef USE_IOT
+    if(!doc["fIoT"].isNull()) config.state.fIoT = doc["fIoT"].as<bool>();
+    if(!doc["accTkn"].isNull()) strlcpy(config.state.accTkn, doc["accTkn"].as<const char*>(), sizeof(config.state.accTkn));
+    if(!doc["provSent"].isNull()) config.state.provSent = doc["provSent"].as<bool>();
+    if(!doc["provDK"].isNull()) strlcpy(config.state.provDK, doc["provDK"].as<const char*>(), sizeof(config.state.provDK));
+    if(!doc["provDS"].isNull()) strlcpy(config.state.provDS, doc["provDS"].as<const char*>(), sizeof(config.state.provDS));
+    #endif
+    if(!doc["binURL"].isNull()) strlcpy(config.state.binURL, doc["binURL"].as<const char*>(), sizeof(config.state.binURL));
+    if(!doc["gmtOff"].isNull()) config.state.gmtOff = doc["gmtOff"].as<int>();
+    if(!doc["fWOTA"].isNull()) config.state.fWOTA = doc["fWOTA"].as<bool>();
+    if(!doc["fWeb"].isNull()) config.state.fWeb = doc["fWeb"].as<bool>();
+    if(!doc["hname"].isNull()) strlcpy(config.state.hname, doc["hname"].as<const char*>(), sizeof(config.state.hname));
+    if(!doc["htU"].isNull()) strlcpy(config.state.htU, doc["htU"].as<const char*>(), sizeof(config.state.htU));
+    if(!doc["htP"].isNull()) strlcpy(config.state.htP, doc["htP"].as<const char*>(), sizeof(config.state.htP));
+    if(!doc["logIP"].isNull()) strlcpy(config.state.logIP, doc["logIP"].as<const char*>(), sizeof(config.state.logIP));
+    if(!doc["logPort"].isNull()) config.state.logPort = doc["logPort"].as<uint16_t>();
+    if(!doc["LEDOn"].isNull()) config.state.LEDOn = doc["LEDOn"].as<bool>();
+    if(!doc["pinLEDR"].isNull()) config.state.pinLEDR = doc["pinLEDR"].as<uint8_t>();
+    if(!doc["pinLEDG"].isNull()) config.state.pinLEDG = doc["pinLEDG"].as<uint8_t>();
+    if(!doc["pinLEDB"].isNull()) config.state.pinLEDB = doc["pinLEDB"].as<uint8_t>();
+    if(!doc["pinBuzz"].isNull()) config.state.pinBuzz = doc["pinBuzz"].as<uint8_t>();
+  }
+  else{ // from config to doc
+    doc[PSTR("fInit")] = config.state.fInit;
+    doc[PSTR("hwid")] = config.state.hwid;
+    doc[PSTR("name")] = config.state.name;
+    doc[PSTR("model")] = config.state.model;
+    doc[PSTR("group")] = config.state.group;
+    doc[PSTR("logLev")] = config.state.logLev;
+    doc[PSTR("tbAddr")] = config.state.tbAddr;
+    doc[PSTR("tbPort")] = config.state.tbPort;
+    doc[PSTR("wssid")] = config.state.wssid;
+    doc[PSTR("wpass")] = config.state.wpass;
+    doc[PSTR("dssid")] = config.state.dssid;
+    doc[PSTR("dpass")] = config.state.dpass;
+    doc[PSTR("upass")] = config.state.upass;
+    #ifdef USE_IOT
+    doc[PSTR("fIoT")] = config.state.fIoT;
+    doc[PSTR("accTkn")] = config.state.accTkn;
+    doc[PSTR("provSent")] = config.state.provSent;
+    doc[PSTR("provDK")] = config.state.provDK;
+    doc[PSTR("provDS")] = config.state.provDS;
+    #endif
+    doc[PSTR("binURL")] = config.state.binURL;
+    doc[PSTR("gmtOff")] = config.state.gmtOff;
+    doc[PSTR("fWOTA")] = config.state.fWOTA;
+    doc[PSTR("fWeb")] = config.state.fWeb;
+    doc[PSTR("hname")] = config.state.hname;
+    doc[PSTR("htU")] = config.state.htU;
+    doc[PSTR("htP")] = config.state.htP;
+    doc[PSTR("logIP")] = config.state.logIP;
+    doc[PSTR("logPort")] = config.state.logPort;
+    doc[PSTR("LEDOn")] = config.state.LEDOn;
+    doc[PSTR("pinLEDR")] = config.state.pinLEDR;
+    doc[PSTR("pinLEDG")] = config.state.pinLEDG;
+    doc[PSTR("pinLEDB")] = config.state.pinLEDB;
+    doc[PSTR("pinBuzz")] = config.state.pinBuzz;
+  }
+}

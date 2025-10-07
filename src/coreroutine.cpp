@@ -100,6 +100,17 @@ void coreroutineSetup(){
     #endif
 
     #ifdef USE_IOT
+    tb.Set_Buffering_Size(IOT_BUFFERING_SIZE);
+    tb.Set_Maximum_Stack_Size(IOT_DEFAULT_MAX_STACK_SIZE);
+    tb.Set_Buffer_Size(IOT_RECEIVE_BUFFER_SIZE, IOT_SEND_BUFFER_SIZE);
+
+    logger->debug(PSTR(__func__), PSTR("ThingsBoard buffer size after: %u, stack: %u, resp: %u, send: %u, recv: %u\n"),
+      tb.Get_Buffering_Size(),
+      tb.Get_Maximum_Stack_Size(),
+      tb.Get_Max_Response_Size(),
+      tb.Get_Send_Buffer_Size(), 
+      tb.Get_Receive_Buffer_Size());
+
     if(iotState.xSemaphoreThingsboard == NULL){iotState.xSemaphoreThingsboard = xSemaphoreCreateMutex();}
     #ifdef USE_IOT_SECURE
     tcpClient.setCACert(CA_CERT);
@@ -1109,6 +1120,10 @@ void coreroutineSyncClientAttr(uint8_t direction){
     doc.clear();
     storageConvertAppRelay(doc, false);
     wsBcast(doc);
+
+    doc.clear();
+    storageConvertUdawaConfig(doc, false);
+    wsBcast(doc);
     #endif
   }
 
@@ -1127,6 +1142,11 @@ void coreroutineSyncClientAttr(uint8_t direction){
       // Send appRelays
       doc.clear();
       storageConvertAppRelay(doc, false);
+      iotSendAttr(doc);
+
+      // Send udawaConfig
+      doc.clear();
+      storageConvertUdawaConfig(doc, false);
       iotSendAttr(doc);
       #endif
   }
@@ -1577,7 +1597,7 @@ void coreroutineRunIoT(){
                 [](const JsonVariantConst& data) {
                     String jsonData;
                     serializeJson(data, jsonData);
-                    logger->verbose(PSTR(__func__), PSTR("Received shared attribute update: %s\n"), jsonData.c_str());
+                    logger->verbose(PSTR(__func__), PSTR("Received shared attribute update(s): %s\n"), jsonData.c_str());
 
                     JsonDocument doc;
                     DeserializationError error = deserializeJson(doc, data.as<String>());
@@ -1589,6 +1609,7 @@ void coreroutineRunIoT(){
                     storageConvertAppConfig(doc, true);
                     storageConvertAppState(doc, true);
                     storageConvertAppRelay(doc, true);
+                    storageConvertUdawaConfig(doc, true);
                 }
             );
             iotState.fSharedAttributesSubscribed = IAPISharedAttr.Shared_Attributes_Subscribe(coreroutineThingsboardSharedAttributesUpdateCallback);
@@ -1645,6 +1666,8 @@ void coreroutineRunIoT(){
               logger->error(PSTR(__func__), PSTR("Failed to subscribe to firmware updates.\n"));
           }
           #endif
+
+          coreroutineSyncClientAttr(2);          
           logger->info(PSTR(__func__),PSTR("IoT Connected!\n"));
         }
       }
