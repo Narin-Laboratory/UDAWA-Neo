@@ -17,6 +17,9 @@ struct WiFiHelperState {
     unsigned long softAPClientAvailCheckTimeout = 5;
     int STADisconnectCounter = 0;
     int STAMaximumDisconnectCount = 30;
+    bool fSTAGotIP = false;
+    int STADHCPFailedCounter = 0;
+    int STADHCPFailedTimedout = 10;
 };
 
 class UdawaWiFiHelper{

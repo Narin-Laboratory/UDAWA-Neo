@@ -145,6 +145,18 @@ void UdawaWiFiHelper::run(){
             modeAP(false);
         }  
 
+        if(_fInit && WiFi.getMode() == WIFI_MODE_STA && !_state.fSTAGotIP && _state.STADHCPFailedCounter > _state.STADHCPFailedTimedout){
+            _state.STADHCPFailedCounter = 0;
+            _logger->error(PSTR(__func__), PSTR("DHCP timedout! Trying to reconnect... \n"));
+            WiFi.disconnect(true, true);
+            modeSTA();
+        }
+
+        if(_fInit && WiFi.getMode() == WIFI_MODE_STA && !_state.fSTAGotIP){
+            _state.STADHCPFailedCounter++;
+            _logger->warn(PSTR(__func__), PSTR("Waiting for DHCP... %d/%d\n"), _state.STADHCPFailedCounter, _state.STADHCPFailedTimedout);
+        }
+
         _lastRun = now;
     }  
 }
@@ -154,6 +166,7 @@ void UdawaWiFiHelper::onWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
   // For example, you can print event details
   if(event == ARDUINO_EVENT_WIFI_STA_DISCONNECTED){
     if(WiFi.getMode() == WIFI_MODE_STA){
+        _state.fSTAGotIP = false;
         _state.STADisconnectCounter++;
         _logger->debug(PSTR(__func__), PSTR("WiFi network %s disconnected %d/%d times!\n"), info.wifi_sta_connected.ssid, 
             _state.STADisconnectCounter, _state.STAMaximumDisconnectCount);
@@ -170,6 +183,7 @@ void UdawaWiFiHelper::onWiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
     }
   }
   else if(event == ARDUINO_EVENT_WIFI_STA_GOT_IP){
+    _state.fSTAGotIP = true;
     _logger->debug(PSTR(__func__), PSTR("WiFi network got IP: %s.\n"), WiFi.localIP().toString().c_str());
     for (auto callback : _onGotIPCallbacks) { 
         callback(); // Call each callback
