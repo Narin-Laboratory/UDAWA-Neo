@@ -1598,6 +1598,7 @@ void coreroutineRunIoT(){
                     storageConvertAppConfig(doc, true);
                     storageConvertAppState(doc, true);
                     storageConvertAppRelay(doc, true);
+                    storageConvertUdawaConfig(doc, true);
                 }
             );
             iotState.fSharedAttributesSubscribed = IAPISharedAttr.Shared_Attributes_Subscribe(coreroutineThingsboardSharedAttributesUpdateCallback);
