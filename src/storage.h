@@ -102,7 +102,7 @@ struct AppState {
     // Transient state variables, moved from coreroutineLoop
     bool panic_action_taken = false;
     unsigned long lastWebBcast = 0;
-    unsigned long lastTeleBcast = 0;
+    unsigned long lastAttrBcast = 0;
 };
 
 extern UdawaConfig config;
