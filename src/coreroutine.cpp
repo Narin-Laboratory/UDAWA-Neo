@@ -1624,19 +1624,21 @@ void coreroutineRunIoT(){
 
           if(!iotState.fSetRelayRPCSubscribed){
             RPC_Callback setRelayCallback("setRelay", [](const JsonVariantConst& params, JsonDocument& result) {
-                if (params.is<JsonObject>()) {
-                    if (params[PSTR("pin")].is<uint8_t>() && params[PSTR("state")].is<bool>()) {
-                        uint8_t pin = params[PSTR("pin")].as<uint8_t>();
-                        bool state = params[PSTR("state")].as<bool>();
-                        coreroutineSetRelay(pin, state);
-                        result["status"] = "success";
-                    } else {
-                        result["status"] = "error";
-                        result["error"] = "Invalid parameters";
-                    }
-                } else {
+              serializeJsonPretty(params, Serial);
+                if (params.is<JsonObjectConst>()) {
+                  JsonObjectConst paramObj = params.as<JsonObjectConst>();
+                  if (paramObj[PSTR("pin")].is<uint8_t>() && paramObj[PSTR("state")].is<bool>()) {
+                    uint8_t pin = paramObj[PSTR("pin")].as<uint8_t>();
+                    bool state = paramObj[PSTR("state")].as<bool>();
+                    coreroutineSetRelay(pin, state);
+                    result["status"] = "success";
+                  } else {
                     result["status"] = "error";
-                    result["error"] = "Invalid request format";
+                    result["error"] = "Invalid parameters";
+                  }
+                } else {
+                  result["status"] = "error";
+                  result["error"] = "Invalid request format";
                 }
             });
             iotState.fSetRelayRPCSubscribed = IAPIRPC.RPC_Subscribe(setRelayCallback);
