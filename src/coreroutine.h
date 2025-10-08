@@ -20,6 +20,7 @@ struct IoTState{
     bool fSharedAttributesSubscribed = false;
     bool fRebootRPCSubscribed = false;
     bool fConfigSaveRPCSubscribed = false;
+    bool fSetRelayRPCSubscribed = false;
     bool fIoTCurrentFWSent = false;
     bool fIoTUpdateRequestSent = false;
     bool fIoTUpdateStarted = false;
@@ -87,6 +88,7 @@ void coreroutineSyncClientAttr(uint8_t direction);
     void coreroutineRunIoT();
     void coreroutineIoTProvRequestTimedOut();
     bool iotSendAttr(JsonDocument &doc);
+    bool iotSendTele(JsonDocument &doc);
     void iotUpdateStartingCallback();
     void iotProgressCallback(const size_t & currentChunk, const size_t & totalChuncks);
     void iotFinishedCallback(const bool & success);

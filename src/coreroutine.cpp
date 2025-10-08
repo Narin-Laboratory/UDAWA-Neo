@@ -250,7 +250,7 @@ void coreroutineLoop(){
     #endif
 
     #ifdef USE_IOT
-      if(now - appState.lastTeleBcast > (appConfig.intvTele * 1000)){
+      if(now - appState.lastAttrBcast > (appConfig.intvAttr * 1000)){
         JsonDocument doc;
 
         doc[PSTR("heap")] = ESP.getFreeHeap();
@@ -258,7 +258,7 @@ void coreroutineLoop(){
         doc[PSTR("datetime")] = RTC.getDateTime();
         doc[PSTR("rssi")] = wiFiHelper.rssiToPercent(WiFi.RSSI());
         iotSendAttr(doc);
-        appState.lastTeleBcast = now;
+        appState.lastAttrBcast = now;
       }
     #endif
 }
@@ -1465,6 +1465,7 @@ void coreroutineSetRelay(uint8_t index, bool output){
     #ifdef USE_IOT
     JsonDocument doc;
     doc[(String("ch") + String(index+1)).c_str()] = relays[index].state;
+    iotSendTele(doc);
     #endif
   }
 }
@@ -1621,6 +1622,33 @@ void coreroutineRunIoT(){
             }
           }
 
+          if(!iotState.fSetRelayRPCSubscribed){
+            RPC_Callback setRelayCallback("setRelay", [](const JsonVariantConst& params, JsonDocument& result) {
+              serializeJsonPretty(params, Serial);
+                if (params.is<JsonObjectConst>()) {
+                  JsonObjectConst paramObj = params.as<JsonObjectConst>();
+                  if (paramObj[PSTR("pin")].is<uint8_t>() && paramObj[PSTR("state")].is<bool>()) {
+                    uint8_t pin = paramObj[PSTR("pin")].as<uint8_t>();
+                    bool state = paramObj[PSTR("state")].as<bool>();
+                    coreroutineSetRelay(pin, state);
+                    result["status"] = "success";
+                  } else {
+                    result["status"] = "error";
+                    result["error"] = "Invalid parameters";
+                  }
+                } else {
+                  result["status"] = "error";
+                  result["error"] = "Invalid request format";
+                }
+            });
+            iotState.fSetRelayRPCSubscribed = IAPIRPC.RPC_Subscribe(setRelayCallback);
+            if(iotState.fSetRelayRPCSubscribed){
+              logger->verbose(PSTR(__func__), PSTR("setRelay RPC subscribed successfuly.\n"));
+            }
+            else{
+              logger->warn(PSTR(__func__), PSTR("Failed to subscribe setRelay RPC.\n"));
+            }
+          }
           if(!iotState.fRebootRPCSubscribed){
             RPC_Callback rebootCallback("reboot", [](const JsonVariantConst& params, JsonDocument& result) {
                 int countdown = 0;
@@ -1683,6 +1711,22 @@ bool iotSendAttr(JsonDocument &doc){
     if( xSemaphoreTake( iotState.xSemaphoreThingsboard, ( TickType_t ) 10000 ) == pdTRUE )
     {
       res = tb.Send_Attribute_Json(doc);
+      xSemaphoreGive( iotState.xSemaphoreThingsboard );
+    }
+    else
+    {
+      logger->verbose(PSTR(__func__), PSTR("No semaphore available.\n"));
+    }
+  }
+  return res;
+}
+
+bool iotSendTele(JsonDocument &doc){
+  bool res = false;
+  if( iotState.xSemaphoreThingsboard != NULL && WiFi.isConnected() && config.state.provSent && tb.connected() && config.state.accTkn != NULL){
+    if( xSemaphoreTake( iotState.xSemaphoreThingsboard, ( TickType_t ) 10000 ) == pdTRUE )
+    {
+      res = tb.Send_Telemetry_Json(doc);
       xSemaphoreGive( iotState.xSemaphoreThingsboard );
     }
     else
