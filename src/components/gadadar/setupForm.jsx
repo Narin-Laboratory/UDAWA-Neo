@@ -1,8 +1,10 @@
 import { h } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
+import { useTranslation } from 'react-i18next';
 import { useAppState } from '../../AppStateContext';
 
 const SetupForm = () => {
+  const { t } = useTranslation();
   const { cfg, setCfg, WiFiList, scanning, setScanning, sendWsMessage, 
     setShowSetupForm, energyPrice, setEnergyPrice } = useAppState();
 
@@ -79,7 +81,7 @@ const SetupForm = () => {
       <form onSubmit={handleSubmit}>
         <fieldset>
           <label>
-            Agent Name
+            {t('agent_name_label')}
             <input
               type="text"
               name="name"
@@ -87,11 +89,11 @@ const SetupForm = () => {
               placeholder={cfg.name}
             />
             <small id="hname-helper">
-              Agent name to easily identify the agent
+              {t('agent_name_helper')}
             </small>
           </label>
           <label>
-            Agent Group
+            {t('agent_group_label')}
             <input 
               type="text" 
               name="group"  
@@ -99,11 +101,11 @@ const SetupForm = () => {
               placeholder={cfg.group}
             />
             <small id="hname-helper">
-              Agent group where it belongs to. e.g. "Greenhouse 1" for Greenhouse 1 group
+              {t('agent_group_helper')}
             </small>
           </label>
           <label>
-            Agent Web Name
+            {t('agent_web_name_label')}
             <input
               type="text"
               name="hname"
@@ -111,27 +113,27 @@ const SetupForm = () => {
               placeholder={cfg.hname}
             />
             <small id="hname-helper">
-              Agent hostname to access the web interface, e.g. gadadar8 will be accessible from gadadar8.local
+              {t('agent_web_name_helper')}
             </small>
           </label>
           <label>
-            Agent Secret
+            {t('agent_secret_label')}
             <input
               type="password"
               name="htP"
               onChange={handleChange}
-              placeholder="Enter agent secret"
+              placeholder={t('agent_secret_placeholder')}
               aria-invalid={htPInvalid}
             />
             <input
               type="password"
               name="htP2"
               onChange={handleChange}
-              placeholder="Enter again to verify"
+              placeholder={t('agent_secret_verify_placeholder')}
               aria-invalid={htPInvalid}
             />
             <small id="htP-helper">
-              {htPInvalid ? "Check again both agent secret are the same." : "Agent secret to access everything related to agent (access the built-in web interface, connect to other agents, and to connect to the offline mode WiFi.)"}
+              {htPInvalid ? t('agent_secret_mismatch') : t('agent_secret_helper')}
             </small>
           </label>
           <fieldset role="group">
@@ -139,10 +141,10 @@ const SetupForm = () => {
                 name="wssid"
                 value={cfg.wssid}
                 onChange={handleChange}
-                aria-label="Select WiFi name..."
+                aria-label={t('select_wifi_placeholder')}
                 required
               >
-                <option value={cfg.wssid != '' ? cfg.wssid : "Select WiFi"} disabled>{cfg.wssid != '' ? cfg.wssid : "Select WiFi"}</option>
+                <option value={cfg.wssid != '' ? cfg.wssid : "Select WiFi"} disabled>{cfg.wssid != '' ? cfg.wssid : t('select_wifi_placeholder')}</option>
                 {Array.isArray(WiFiList) && WiFiList.map((network, index) => (
                   <option key={network.ssid+index} value={network.ssid}>
                     {network.ssid} ({network.rssi}%)
@@ -155,27 +157,27 @@ const SetupForm = () => {
               disabled={scanning}
               aria-busy={scanning ? true : false}
             >
-              {scanning ? 'Scanning…' : 'Scan'}
+              {scanning ? t('scanning_wifi_button') : t('scan_wifi_button')}
             </button>
           </fieldset>
           <label>
-            WiFi Password
+            {t('wifi_password_label')}
             <input
               type="password"
               name="wpass"
               onChange={handleChange}
-              placeholder="Enter WiFi password"
+              placeholder={t('wifi_password_placeholder')}
               aria-invalid={wifiPassInvalid}
             />
             <input
               type="password"
               name="wpass2"
               onChange={handleChange}
-              placeholder="Enter again WiFi password to verify"
+              placeholder={t('wifi_password_verify_placeholder')}
               aria-invalid={wifiPassInvalid}
             />
             <small id="wpass-helper">
-              {wifiPassInvalid ? "Check again both WiFi password are the same." : "WiFi password to connect with (in online mode)."}
+              {wifiPassInvalid ? t('wifi_password_mismatch') : t('wifi_password_helper')}
             </small>
           </label>
         </fieldset>
@@ -187,13 +189,13 @@ const SetupForm = () => {
             checked={showAdvanced}
             onChange={() => setShowAdvanced(!showAdvanced)}
           />
-          Show advanced options
+          {t('show_advanced_options')}
         </label>
         {showAdvanced && (
           <fieldset>
             {/* Add advanced options here */}
             <label>
-              GMT Offset
+              {t('gmt_offset_label')}
               <input
                 type="number"
                 name="gmtOff"
@@ -201,7 +203,7 @@ const SetupForm = () => {
                 placeholder={cfg.gmtOff}
               />
               <small id="gmtOff">
-                Enter GMT Offset in seconds, e.g 28880 for GMT+8 (WITA)
+                {t('gmt_offset_helper')}
               </small>
             </label>
             <label>
@@ -211,10 +213,10 @@ const SetupForm = () => {
                 checked={syncDatetime}
                 onChange={() => setSyncDatetime(!syncDatetime)}
               />
-              Sync agents date and time.
+              {t('sync_datetime_label')}
             </label>
             <label>
-              Energy Price
+              {t('energy_price_label')}
               <input
                 type="number"
                 name="energyPriceValue"
@@ -223,11 +225,11 @@ const SetupForm = () => {
                 placeholder={energyPrice.value}
               />
               <small id="energyPriceValue">
-                Enter the energy price per KwH
+                {t('energy_price_helper')}
               </small>
             </label>
             <label>
-              Energy Price Currency
+              {t('energy_price_currency_label')}
               <input
                 type="text"
                 name="energyPriceCurrency"
@@ -236,7 +238,7 @@ const SetupForm = () => {
                 placeholder={energyPrice.currency}
               />
               <small id="energyPriceCurrency">
-                Enter the energy price currency
+                {t('energy_price_currency_helper')}
               </small>
             </label>
             <hr/>
@@ -250,10 +252,10 @@ const SetupForm = () => {
                   setDisableSubmitButton(false);
                 }}
               />
-              Enable IoT mode
+              {t('enable_iot_mode_label')}
             </label>
             <label>
-              Tier 2 Agent Address
+              {t('tier_2_agent_address_label')}
               <input
                 type="text"
                 name="tbAddr"
@@ -261,11 +263,11 @@ const SetupForm = () => {
                 placeholder={cfg.tbAddr}
               />
               <small id="tbAddr">
-                Enter the URL of the Tier 2 agent. E.g. udawa.local
+                {t('tier_2_agent_address_helper')}
               </small>
             </label>
             <label>
-              Tier 2 Agent Port
+              {t('tier_2_agent_port_label')}
               <input
                 type="text"
                 name="tbPort"
@@ -273,11 +275,11 @@ const SetupForm = () => {
                 placeholder={cfg.tbPort}
               />
               <small id="tbAddr">
-                Enter the port of the Tier 2 agent. E.g. 1883
+                {t('tier_2_agent_port_helper')}
               </small>
             </label>
             <label>
-              Binary Update URL
+              {t('binary_update_url_label')}
               <input
                 type="text"
                 name="binURL"
@@ -285,11 +287,11 @@ const SetupForm = () => {
                 placeholder={cfg.binURL}
               />
               <small id="binURL">
-                Enter the URL of the binary file of the interface. E.g. http://udawa.local/cdn/firmware/gadadar4ch.bin
+                {t('binary_update_url_helper')}
               </small>
             </label>
             <label>
-              Device Provisioning Key
+              {t('device_provisioning_key_label')}
               <input
                 type="text"
                 name="provDK"
@@ -297,11 +299,11 @@ const SetupForm = () => {
                 placeholder=""
               />
               <small id="provDK">
-                Enter the device provisioning key. You can get the key from Thingsboard Tier 2 agent.
+                {t('device_provisioning_key_helper')}
               </small>
             </label>
             <label>
-              Device Provisioning Secret
+              {t('device_provisioning_secret_label')}
               <input
                 type="text"
                 name="provDS"
@@ -309,26 +311,26 @@ const SetupForm = () => {
                 placeholder=""
               />
               <small id="provDS">
-                Enter the device provisioning secret. You can get the secret from Thingsboard Tier 2 agent.
+                {t('device_provisioning_secret_helper')}
               </small>
             </label>
           </fieldset>
         )}
-          <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? "Saved!" : "Save"} />
+          <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? t('saved_button') : t('save_button')} />
           { cfg.fInit && (
-            <input type="button" onClick={() => setShowSetupForm(false)} value="Close" class="outline primary" />
+            <input type="button" onClick={() => setShowSetupForm(false)} value={t('close_button')} class="outline primary" />
           )}
           <input 
               type="button" 
               onClick={() => sendWsMessage({reboot: 3})}
-              value="Reboot" 
+              value={t('reboot_button')}
               class="outline secondary" 
             />
           { cfg.fInit && (
             <input 
             type="button" 
             onClick={() => sendWsMessage({FSUpdate: true})}
-            value="Update Web Interface" 
+            value={t('update_web_interface_button')}
             class="outline secondary" 
           />
           )}
@@ -336,7 +338,7 @@ const SetupForm = () => {
             <input 
               type="button" 
               onClick={() => setShowResetModal(!showResetModal)} 
-              value="Reset Agent State" 
+              value={t('reset_agent_state_button')}
               class="outline secondary" 
             />
         )}
@@ -344,16 +346,16 @@ const SetupForm = () => {
       <fieldset>
         <dialog open={showResetModal}>
           <article>
-            <h2>Confirm Agent State Reset</h2>
+            <h2>{t('confirm_agent_reset_title')}</h2>
             <p>
-              Are you sure to reset the agent state to uninitialized? This will reboot the agent to factory mode.
+              {t('confirm_agent_reset_body')}
             </p>
-            <p>After clicking confirm you will lose network access to the agent. Please wait about one minute, the agent will reboot in AP mode. You must connect to the agent default AP to be able to make a new setup.</p>
+            <p>{t('confirm_agent_reset_warning')}</p>
             <footer>
               <button class="secondary" onClick={() => handleAgentReset(false)}>
-                Cancel
+                {t('cancel_button')}
               </button>
-              <button onClick={() => handleAgentReset(true)}>Confirm</button>
+              <button onClick={() => handleAgentReset(true)}>{t('confirm_button')}</button>
             </footer>
           </article>
         </dialog>

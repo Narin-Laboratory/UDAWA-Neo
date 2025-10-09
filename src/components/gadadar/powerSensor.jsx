@@ -1,9 +1,10 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { useAppState } from "../../AppStateContext";
 
 const PowerSensor = ({ powerSensor }) => {
-
+  const { t } = useTranslation();
   const { energyPrice } = useAppState();
 
   useEffect(() => {
@@ -12,15 +13,15 @@ const PowerSensor = ({ powerSensor }) => {
   return (
     <div class="grid">
       <article class="text-center">
-        <header>⚡ Power Usage</header>
+        <header>{t('power_usage_header')}</header>
         <div class="parent-3c">
           <hgroup>
             <h4>{powerSensor.watt}</h4>
-            <p>Watt</p>
+            <p>{t('watt_unit')}</p>
           </hgroup>
           <hgroup>
             <h4>{powerSensor.ener}</h4>
-            <p>kWh</p>
+            <p>{t('kwh_unit')}</p>
           </hgroup>
           <hgroup>
             <h4>{(powerSensor.ener * energyPrice.value).toFixed(2)}</h4>

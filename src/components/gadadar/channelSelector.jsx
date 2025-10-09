@@ -1,9 +1,11 @@
 import { h } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
+import { useTranslation } from 'react-i18next';
 import { useAppState } from '../../AppStateContext';
 import SlidersIcon from '../../assets/sliders.svg';
 
 const RelaySelector = () => {
+  const { t } = useTranslation();
   const { ws, sendWsMessage, cfg } = useAppState();
   const [relays, setRelays] = useState([
     {
@@ -133,23 +135,23 @@ const RelaySelector = () => {
           <div key={index}>
             <div className={relay.state ? 'relay-number text-center relay-on' : 'relay-number text-center relay-off'}>
               <div>{`${index + 1}`}</div>
-              <div className={"super-small"}><strong>{`${relay.state ? "ON" : "OFF"}`}</strong></div>
+              <div className={"super-small"}><strong>{t(relay.state ? 'relay_state_on' : 'relay_state_off')}</strong></div>
             </div>
-            <div class="text-center">{relay.mode == 0 ? "Manual" : "Auto"}</div>
+            <div class="text-center">{relay.mode === 0 ? t('relay_mode_manual') : t('relay_mode_auto')}</div>
           </div>
         ))}
       </div>
       <hr/>
       <fieldset role="group">
-        <select id="Relay-select" value={selectedRelayIndex !== null ? selectedRelayIndex : ''} onChange={handleSelectedRelayIndexChange} aria-label="Select Relay to control">
+        <select id="Relay-select" value={selectedRelayIndex !== null ? selectedRelayIndex : ''} onChange={handleSelectedRelayIndexChange} aria-label={t('select_relay_to_control')}>
           {relays.map((relay, index) => (
             <option key={relay.pin} value={index}>
-              {`Relay ${relay.pin + 1} - ${relay.label}`}
+              {`Relay ${relay.pin + 1} - ${relay.label === 'No label' ? t('relay_label_no_label') : relay.label}`}
             </option>
           ))}
         </select>
         <button class="outline secondary" onClick={toggleRelayAdjustModalVisibility}>
-          <img src={SlidersIcon} alt="Adjust" />
+          <img src={SlidersIcon} alt={t('relay_adjust_button')} />
         </button>
       </fieldset>
       <hr/>
@@ -157,26 +159,26 @@ const RelaySelector = () => {
       <fieldset>
         <label>
           <input type="checkbox" role="switch" checked={relays[selectedRelayIndex].state} onChange={handleToggleSwitchChange} disabled={relays[selectedRelayIndex].mode == 0 ? false : true}/>
-          Status: {relays[selectedRelayIndex].state ? 'ON' : 'OFF'}
+          {t('relay_status', { status: relays[selectedRelayIndex].state ? t('relay_state_on') : t('relay_state_off') })}
         </label>
         <div>
           <br/>
-          <p>This relay is operated by <strong>{availableRelayMode[relays[selectedRelayIndex].mode]}</strong> mode.</p>
+          <p dangerouslySetInnerHTML={{ __html: t('relay_operated_by', { mode: availableRelayMode[relays[selectedRelayIndex].mode] }) }} />
           {relays[selectedRelayIndex].mode == 0 && relays[selectedRelayIndex].autoOff > 0 && (
-            <p> Auto Off: <strong>{relays[selectedRelayIndex].autoOff} seconds</strong>.</p>
+            <p dangerouslySetInnerHTML={{ __html: t('relay_auto_off', { seconds: relays[selectedRelayIndex].autoOff }) }} />
           )}
           {relays[selectedRelayIndex].mode == 1 && (
-            <p> Duty Cycle: <strong>{relays[selectedRelayIndex].dutyCycle}%</strong> for <strong>{relays[selectedRelayIndex].dutyRange} seconds</strong>.</p>
+            <p dangerouslySetInnerHTML={{ __html: t('relay_duty_cycle', { dutyCycle: relays[selectedRelayIndex].dutyCycle, seconds: relays[selectedRelayIndex].dutyRange }) }} />
           )}
           {relays[selectedRelayIndex].mode == 2 && (
             relays[selectedRelayIndex].timers.map((timer, index) => (
               timer.d > 0 && (
-                <p key={index}> Timer operation ({index+1}): <strong>{timer.h}:{timer.i}:{timer.s}</strong> for <strong>{timer.d} seconds</strong>.</p>
+                <p key={index} dangerouslySetInnerHTML={{ __html: t('relay_timer_operation', { index: index + 1, h: timer.h, i: timer.i, s: timer.s, d: timer.d }) }} />
               )
             ))
           )}
           {relays[selectedRelayIndex].mode == 3 && (
-            <p> Specific datetime: <strong>{relays[selectedRelayIndex].datetime ? new Date(relays[selectedRelayIndex].datetime * 1000).toISOString().slice(0, 16) : ''}</strong> for <strong>{relays[selectedRelayIndex].duration} seconds</strong>.</p>
+            <p dangerouslySetInnerHTML={{ __html: t('relay_specific_datetime', { datetime: relays[selectedRelayIndex].datetime ? new Date(relays[selectedRelayIndex].datetime * 1000).toISOString().slice(0, 16) : '', duration: relays[selectedRelayIndex].duration }) }} />
           )}
         </div>
       </fieldset>
@@ -187,13 +189,13 @@ const RelaySelector = () => {
           <header>
             <button aria-label="Close" rel="prev" onClick={toggleRelayAdjustModalVisibility}></button>
             <p>
-              <strong>Adjust Relay {selectedRelayIndex+1} ({relays[selectedRelayIndex].label})</strong>
+              <strong>{t('adjust_relay_title', { index: selectedRelayIndex + 1, label: relays[selectedRelayIndex].label })}</strong>
             </p>
           </header>
           <form key={"relayAdjustForm"+selectedRelayIndex} onSubmit={handleRelayAdjustFormSubmit}>
             <fieldset>
               <label>
-                Relay Label
+                {t('relay_label_label')}
                 <input
                   type="text"
                   name="label"
@@ -201,11 +203,11 @@ const RelaySelector = () => {
                   placeholder={relays[selectedRelayIndex].label}
                 />
                 <small id="hname-helper">
-                  Label for relay number {selectedRelayIndex+1}.
+                  {t('relay_label_helper', { index: selectedRelayIndex + 1 })}
                 </small>
               </label>
               <label>
-                Overrun Threshold
+                {t('overrun_threshold_label')}
                 <input
                   type="number"
                   name="overrunInSec"
@@ -213,11 +215,11 @@ const RelaySelector = () => {
                   placeholder={relays[selectedRelayIndex].overrunInSec.toString()}
                 />
                 <small id="overrunInSec-helper">
-                  Maximum seconds the relay is ON before marked as overrun.
+                  {t('overrun_threshold_helper')}
                 </small>
               </label>
               <label>
-                Wattage
+                {t('wattage_label')}
                 <input
                   type="number"
                   name="wattage"
@@ -225,7 +227,7 @@ const RelaySelector = () => {
                   placeholder={relays[selectedRelayIndex].wattage.toString()}
                 />
                 <small id="wattage-helper">
-                  The power consumption of the connected device in watts.
+                  {t('wattage_helper')}
                 </small>
               </label>
               <fieldset role="group">
@@ -234,10 +236,10 @@ const RelaySelector = () => {
                   name="mode"
                   value={relays[selectedRelayIndex].mode}
                   onChange={handleRelayAdjustFormChange}
-                  aria-label="Select relay mode..."
+                  aria-label={t('select_relay_mode')}
                   required
                 >
-                  <option value={relays[selectedRelayIndex].mode} disabled>{availableRelayMode[relays[selectedRelayIndex].mode] ? availableRelayMode[relays[selectedRelayIndex].mode] : "Unavailable"}</option>
+                  <option value={relays[selectedRelayIndex].mode} disabled>{availableRelayMode[relays[selectedRelayIndex].mode] ? availableRelayMode[relays[selectedRelayIndex].mode] : t('unavailable_relay_mode')}</option>
                   {Array.isArray(availableRelayMode) && availableRelayMode.map((mode, index) => (
                     <option key={index} value={index}>
                       {mode}
@@ -246,7 +248,7 @@ const RelaySelector = () => {
                 </select>
                 <br/>
                 <small id="mode-helper">
-                  Change operation mode.
+                  {t('change_operation_mode')}
                 </small>
                 </label>
               </fieldset>
@@ -255,7 +257,7 @@ const RelaySelector = () => {
             {relays[selectedRelayIndex].mode == 0 && (
                 <fieldset>
                   <label>
-                    Auto Off
+                    {t('auto_off_label')}
                     <input
                       type="number"
                       name="autoOff"
@@ -263,7 +265,7 @@ const RelaySelector = () => {
                       placeholder={relays[selectedRelayIndex].autoOff.toString()}
                     />
                     <small id="autoOff-helper">
-                      Turn off relay automatically after N seconds.
+                      {t('auto_off_helper')}
                     </small>
                   </label>
                 </fieldset>
@@ -273,14 +275,14 @@ const RelaySelector = () => {
             {relays[selectedRelayIndex].mode == 1 && (
                 <fieldset>
                   <label>
-                    Duty Cycle <strong>({relays[selectedRelayIndex].dutyCycle}%)</strong>
+                    <p dangerouslySetInnerHTML={{ __html: t('duty_cycle_label', { dutyCycle: relays[selectedRelayIndex].dutyCycle }) }} />
                     <input type="range" name="dutyCycle" value={relays[selectedRelayIndex].dutyCycle} onChange={handleRelayAdjustFormChange} />
                     <small id="dutyCycle-helper">
-                      Control relay based on duty cycle. e.g. 50% means relay is ON for 50% of the duty range.
+                      {t('duty_cycle_helper')}
                     </small>
                   </label>
                   <label>
-                    Duty Range
+                    {t('duty_range_label')}
                     <input
                       type="number"
                       name="dutyRange"
@@ -288,7 +290,7 @@ const RelaySelector = () => {
                       placeholder={relays[selectedRelayIndex].dutyRange.toString()}
                     />
                     <small id="dutyRange-helper">
-                      Duty range in seconds.
+                      {t('duty_range_helper')}
                     </small>
                   </label>
                 </fieldset>
@@ -297,20 +299,19 @@ const RelaySelector = () => {
             {/* Start Only for Time Daily Mode */}
             {relays[selectedRelayIndex].mode == 2 && (
               <fieldset>
-                Timer Configuration
+                {t('timer_configuration_label')}
                 <p>
                   <small>
-                    Relay will be activated at the specified time daily and duration.
-                    E.g. 06:00:00:300 for 6 AM (5 minutes ON), 18:00:00:120 for 6 PM (2 minutes ON).
+                    {t('timer_configuration_helper')}
                   </small>
                 </p>
                 {relays[selectedRelayIndex].timers.map((timer, index) => (
                   <fieldset key={index} role="group">
-                    <legend>Timer {index + 1}</legend>
-                    <input name="h" type="number" value={timer.h} placeholder="Hour" onChange={(e) => handleTimerChange(index, e)} />
-                    <input name="i" type="number" value={timer.i} placeholder="Minute" onChange={(e) => handleTimerChange(index, e)} />
-                    <input name="s" type="number" value={timer.s} placeholder="Second" onChange={(e) => handleTimerChange(index, e)} />
-                    <input name="d" type="number" value={timer.d} placeholder="Duration" onChange={(e) => handleTimerChange(index, e)}/>
+                    <legend>{t('timer_label', { index: index + 1 })}</legend>
+                    <input name="h" type="number" value={timer.h} placeholder={t('hour_placeholder')} onChange={(e) => handleTimerChange(index, e)} />
+                    <input name="i" type="number" value={timer.i} placeholder={t('minute_placeholder')} onChange={(e) => handleTimerChange(index, e)} />
+                    <input name="s" type="number" value={timer.s} placeholder={t('second_placeholder')} onChange={(e) => handleTimerChange(index, e)} />
+                    <input name="d" type="number" value={timer.d} placeholder={t('duration_placeholder')} onChange={(e) => handleTimerChange(index, e)}/>
                   </fieldset>
                 ))}
               </fieldset>
@@ -320,14 +321,14 @@ const RelaySelector = () => {
             {relays[selectedRelayIndex].mode == 3 && (
                 <fieldset>
                   <label>
-                    Datetime <strong>({relays[selectedRelayIndex].datetime ? new Date(relays[selectedRelayIndex].datetime * 1000).toISOString().slice(0, 16) : ''})</strong>
+                    <p dangerouslySetInnerHTML={{ __html: t('datetime_label', { datetime: relays[selectedRelayIndex].datetime ? new Date(relays[selectedRelayIndex].datetime * 1000).toISOString().slice(0, 16) : '' }) }} />
                     <input type="datetime-local" name="datetime" aria-label="Datetime" value={relays[selectedRelayIndex].datetime ? new Date(relays[selectedRelayIndex].datetime * 1000).toISOString().slice(0, 16) : ''} onChange={handleRelayAdjustFormChange}></input>
                     <small id="datetime-helper">
-                      Control relay based on exact date and time.
+                      {t('datetime_helper')}
                     </small>
                   </label>
                   <label>
-                    Duration
+                    {t('duration_label')}
                     <input
                       type="number"
                       name="duration"
@@ -335,13 +336,13 @@ const RelaySelector = () => {
                       placeholder={relays[selectedRelayIndex].duration.toString()}
                     />
                     <small id="duration-helper">
-                      Active duration in seconds.
+                      {t('duration_helper')}
                     </small>
                   </label>
                 </fieldset>
             )}
             {/* End Only for Exact Datetime Mode */}
-            <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? "Saved!" : "Save"} />
+            <input disabled={disableSubmitButton} type="submit" value={disableSubmitButton ? t('saved_button') : t('save_button')} />
           </form>
         </article>
       </dialog>
