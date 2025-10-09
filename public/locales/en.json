@@ -157,5 +157,7 @@
   "fs_update_error_title": "An error occurred:",
   "fs_update_status_label": "Status: {{status}}",
   "fs_update_progress_complete": "{{progress}}% complete",
-  "fs_update_progress_bytes": "({{progress}} of {{total}} bytes)"
+  "fs_update_progress_bytes": "({{progress}} of {{total}} bytes)",
+  "language_switcher_aria_label": "Select language",
+  "language_switcher_placeholder": "Select language..."
 }

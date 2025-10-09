@@ -157,5 +157,7 @@
   "fs_update_error_title": "Terjadi kesalahan:",
   "fs_update_status_label": "Status: {{status}}",
   "fs_update_progress_complete": "{{progress}}% selesai",
-  "fs_update_progress_bytes": "({{progress}} dari {{total}} byte)"
+  "fs_update_progress_bytes": "({{progress}} dari {{total}} byte)",
+  "language_switcher_aria_label": "Pilih bahasa",
+  "language_switcher_placeholder": "Pilih bahasa..."
 }
