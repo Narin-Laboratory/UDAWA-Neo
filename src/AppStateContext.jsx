@@ -35,6 +35,7 @@ export const AppStateProvider = ({ children }) => {
     const savedPrice = localStorage.getItem('energyPrice');
     return savedPrice !== null ? JSON.parse(savedPrice) : { value: 1500, currency: 'IDR' }; 
   });
+  const [fsUpdate, setFsUpdate] = useState(null);
   
   // Store WebSocket in a ref so it persists across re-renders
   const ws = useRef(null);
@@ -63,14 +64,12 @@ export const AppStateProvider = ({ children }) => {
     ws.current = new WebSocket('ws://' + wsAddress + "/ws");
 
     ws.current.onopen = () => {
-      console.log(`WebSocket connected to ${wsAddress}`);
       setWsStatus(true);
       ws.current.send(JSON.stringify({ 'getConfig': "" }));
     };
 
     ws.current.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      //console.log(data);
       if(data.setSalt){
         setSalt(data.setSalt);
       }
@@ -79,7 +78,6 @@ export const AppStateProvider = ({ children }) => {
         if(data.status.code == 200){
           setAuthState(true);
           sendWsMessage({getConfig: ''});
-          console.log("Authenticated");
         }else{
           setAuthState(false);
         }
@@ -94,15 +92,16 @@ export const AppStateProvider = ({ children }) => {
       else if (data.setFinishedSetup){
         setFinishedSetup(data.setFinishedSetup.fInit)
       }
+      else if (data.FSUpdate) {
+        setFsUpdate(data.FSUpdate);
+      }
     };
 
     ws.current.onclose = () => {
-      console.log(`WebSocket disconnected from ${wsAddress}`);
       setWsStatus(false);
     };
 
     ws.current.onerror = (error) => {
-      console.error(`WebSocket error with ${wsAddress}:`, error);
       setWsStatus(false);
     };
 
@@ -121,9 +120,6 @@ export const AppStateProvider = ({ children }) => {
   const sendWsMessage = (data) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(data));
-      console.log('Sent:', data);
-    } else {
-      console.error('WebSocket is not open');
     }
   };
 
@@ -144,7 +140,8 @@ export const AppStateProvider = ({ children }) => {
     wsAddress, setWsAddress,
     ws,
     sendWsMessage,
-    energyPrice, setEnergyPrice
+    energyPrice, setEnergyPrice,
+    fsUpdate, setFsUpdate
   };
 
   return (
