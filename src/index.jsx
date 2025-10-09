@@ -14,6 +14,7 @@ import SetupForm from './setupForm';
 import LoginPopUp from './loginPopUp';
 import PowerSensor from './powerSensor';
 import AlarmCard from './alarm';
+import WsConnectionPopup from './WsConnectionPopup';
 
 function App() {
 	return (
@@ -67,14 +68,7 @@ function App() {
 	};
 	return (
 	  <div>
-		{ !wsStatus && (
-		<article class="full-page-cover" data-theme="dark">
-		  {/* Your cover content here */}
-		  <h1>Websocket Connect Failed</h1>
-		  <p>Unable to connect to the agent. Please make sure that you are in the same WiFi network with the agent.</p>
-		  <div>😵</div>
-		</article>
-	  )}
+		<WsConnectionPopup />
 		<header>
 			<article>
 				<nav>
