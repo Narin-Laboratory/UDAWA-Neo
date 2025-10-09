@@ -57,7 +57,6 @@ const RelaySelector = () => {
         if (data.relays) {
           if (!isRelayAdjustModalVisible) {
             setRelays(data.relays);
-            console.log(data)
           }
         } 
         else if (data.availableRelayMode) {
