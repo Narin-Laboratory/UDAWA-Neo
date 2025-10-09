@@ -8,7 +8,7 @@ const LanguageSwitcher = () => {
   };
 
   return (
-    <div class="language-switcher">
+    <div class="language-switcher" data-theme="dark">
       <select onChange={changeLanguage} value={i18n.language}>
         <option value="en">EN</option>
         <option value="id">ID</option>
