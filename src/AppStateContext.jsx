@@ -1,5 +1,6 @@
 import { createContext } from 'preact';
 import { useContext, useEffect, useState, useRef } from 'preact/hooks';
+import { route } from 'preact-router';
 
 const AppStateContext = createContext(null);
 
@@ -71,6 +72,14 @@ export const AppStateProvider = ({ children }) => {
       }
       else if (data.cfg) {
         setCfg(data.cfg);
+        const model = data.cfg.model.toLowerCase();
+        if (model === 'gadadar') {
+          route('/gadadar', true);
+        } else if (model === 'damodar') {
+          route('/damodar', true);
+        } else if (model === 'murari') {
+          route('/murari', true);
+        }
       }
       else if (data.WiFiList){
         setWiFiList(data.WiFiList);

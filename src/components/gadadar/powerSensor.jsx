@@ -1,6 +1,6 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import { useAppState } from "./AppStateContext";
+import { useAppState } from "../../AppStateContext";
 
 const PowerSensor = ({ powerSensor }) => {
 
