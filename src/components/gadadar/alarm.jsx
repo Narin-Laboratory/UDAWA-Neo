@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'preact/hooks';
 
 const alarmMessages = {
     110: "The light sensor failed to initialize; please check the module integration and wiring.",

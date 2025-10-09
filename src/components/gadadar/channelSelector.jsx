@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { useAppState } from './AppStateContext';
-import SlidersIcon from './assets/sliders.svg';
+import { useAppState } from '../../AppStateContext';
+import SlidersIcon from '../../assets/sliders.svg';
 
 const RelaySelector = () => {
   const { ws, sendWsMessage, cfg } = useAppState();
@@ -81,18 +81,23 @@ const RelaySelector = () => {
   };
 
   const handleRelayAdjustFormChange = (e) => {
-    var { name, value } = e.target;
+    const { name, value, type } = e.target;
+    let processedValue = value;
 
-    console.log(value);
-    if(name == "datetime"){
-      value = (new Date(value).getTime() / 1000) + cfg.gmtOff;
+    if (type === 'number') {
+      processedValue = parseInt(value, 10);
+      if (isNaN(processedValue)) {
+        processedValue = 0;
+      }
+    } else if (name === "datetime") {
+      processedValue = (new Date(value).getTime() / 1000) + cfg.gmtOff;
     }
-    console.log(value);
+
     setRelays((prevRelays) => {
       const updatedRelays = [...prevRelays];
       updatedRelays[selectedRelayIndex] = {
         ...updatedRelays[selectedRelayIndex],
-        [name]: value
+        [name]: processedValue
       };
       return updatedRelays;
     });
@@ -210,6 +215,18 @@ const RelaySelector = () => {
                 />
                 <small id="overrunInSec-helper">
                   Maximum seconds the relay is ON before marked as overrun.
+                </small>
+              </label>
+              <label>
+                Wattage
+                <input
+                  type="number"
+                  name="wattage"
+                  onChange={handleRelayAdjustFormChange}
+                  placeholder={relays[selectedRelayIndex].wattage.toString()}
+                />
+                <small id="wattage-helper">
+                  The power consumption of the connected device in watts.
                 </small>
               </label>
               <fieldset role="group">

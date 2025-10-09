@@ -1,5 +1,6 @@
 import { createContext } from 'preact';
 import { useContext, useEffect, useState, useRef } from 'preact/hooks';
+import { route } from 'preact-router';
 
 const AppStateContext = createContext(null);
 
@@ -29,6 +30,7 @@ export const AppStateProvider = ({ children }) => {
   const [salt, setSalt] = useState({setSalt: {salt: "", name: "", model: "", group: ""}});
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [wsStatus, setWsStatus] = useState(false);
+  const [wsAddress, setWsAddress] = useState(window.location.host);
   const [energyPrice, setEnergyPrice] = useState(() => {
     const savedPrice = localStorage.getItem('energyPrice');
     return savedPrice !== null ? JSON.parse(savedPrice) : { value: 1500, currency: 'IDR' }; 
@@ -38,11 +40,16 @@ export const AppStateProvider = ({ children }) => {
   const ws = useRef(null);
 
   useEffect(() => {
+    // Close any existing connection before creating a new one
+    if (ws.current) {
+      ws.current.close();
+    }
+
     //ws.current = new WebSocket('ws://' + "gadadar4ch.local" + "/ws");
-    ws.current = new WebSocket('ws://' + window.location.host + "/ws");
+    ws.current = new WebSocket('ws://' + wsAddress + "/ws");
 
     ws.current.onopen = () => {
-      console.log('WebSocket connected');
+      console.log(`WebSocket connected to ${wsAddress}`);
       setWsStatus(true);
       ws.current.send(JSON.stringify({ 'getConfig': "" }));
     };
@@ -65,6 +72,10 @@ export const AppStateProvider = ({ children }) => {
       }
       else if (data.cfg) {
         setCfg(data.cfg);
+        const model = data.cfg.model.toLowerCase();
+        if (model === 'gadadar' || model === 'damodar' || model === 'murari') {
+            route(`/${model}`, true);
+        }
       }
       else if (data.WiFiList){
         setWiFiList(data.WiFiList);
@@ -76,17 +87,22 @@ export const AppStateProvider = ({ children }) => {
     };
 
     ws.current.onclose = () => {
-      console.log('WebSocket disconnected');
+      console.log(`WebSocket disconnected from ${wsAddress}`);
       setWsStatus(false);
     };
 
     ws.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error(`WebSocket error with ${wsAddress}:`, error);
       setWsStatus(false);
     };
 
-    return () => ws.current.close();
-  }, []);
+    // Return a cleanup function to close the WebSocket connection when the component unmounts or wsAddress changes
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, [wsAddress]);
 
   useEffect(() => {
     localStorage.setItem('energyPrice', JSON.stringify(energyPrice));
@@ -115,6 +131,7 @@ export const AppStateProvider = ({ children }) => {
     salt, setSalt,
     showSetupForm, setShowSetupForm,
     wsStatus, setWsStatus,
+    wsAddress, setWsAddress,
     ws,
     sendWsMessage,
     energyPrice, setEnergyPrice
