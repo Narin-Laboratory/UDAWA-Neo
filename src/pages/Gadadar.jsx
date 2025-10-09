@@ -10,10 +10,8 @@ import heartIcon from '../assets/heart.svg';
 import ChannelSelector from '../components/gadadar/channelSelector';
 import { useAppState } from '../AppStateContext';
 import SetupForm from '../components/gadadar/setupForm';
-import LoginPopUp from '../components/gadadar/loginPopUp';
 import PowerSensor from '../components/gadadar/powerSensor';
 import AlarmCard from '../components/gadadar/alarm';
-import WsConnectionPopup from '../components/gadadar/WsConnectionPopup';
 
 function Gadadar() {
 	const { cfg, ws, authState, showSetupForm, setShowSetupForm, wsStatus, finishedSetup, setFinishedSetup } = useAppState();
@@ -59,7 +57,6 @@ function Gadadar() {
 	};
 	return (
 	  <div>
-		<WsConnectionPopup />
 		<header>
 			<article>
 				<nav>
@@ -104,7 +101,6 @@ function Gadadar() {
 				</p>
 			</article>
 		</dialog>
-			<LoginPopUp />
 			{!cfg.fInit ? (
 				<section>
 					<SetupForm />
