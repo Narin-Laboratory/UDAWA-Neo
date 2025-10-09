@@ -27,7 +27,7 @@ const FSUpdatePopup = () => {
         ) : (
           <div>
             <p>Status: {status}</p>
-            {status === 'updating' && (
+            {status && (
               <div>
                 <progress value={progressPercentage} max="100"></progress>
                 <p>{progressPercentage}% complete</p>
