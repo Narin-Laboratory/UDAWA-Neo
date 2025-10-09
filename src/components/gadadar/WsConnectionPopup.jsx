@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
-import { useAppState } from './AppStateContext';
+import { useAppState } from '../../AppStateContext';
 
 const WsConnectionPopup = () => {
   const { wsStatus, wsAddress, setWsAddress } = useAppState();

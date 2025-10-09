@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { useAppState } from './AppStateContext';
-import SlidersIcon from './assets/sliders.svg';
+import { useAppState } from '../../AppStateContext';
+import SlidersIcon from '../../assets/sliders.svg';
 
 const RelaySelector = () => {
   const { ws, sendWsMessage, cfg } = useAppState();

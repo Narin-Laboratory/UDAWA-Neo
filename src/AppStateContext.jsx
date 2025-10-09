@@ -1,5 +1,6 @@
 import { createContext } from 'preact';
 import { useContext, useEffect, useState, useRef } from 'preact/hooks';
+import { route } from 'preact-router';
 
 const AppStateContext = createContext(null);
 
@@ -38,6 +39,20 @@ export const AppStateProvider = ({ children }) => {
   // Store WebSocket in a ref so it persists across re-renders
   const ws = useRef(null);
 
+  // Effect for routing based on model change
+  useEffect(() => {
+    if (cfg && cfg.model) {
+      const model = cfg.model.toLowerCase();
+      if (model === 'gadadar') {
+        route('/gadadar', true);
+      } else if (model === 'damodar') {
+        route('/damodar', true);
+      } else if (model === 'murari') {
+        route('/murari', true);
+      }
+    }
+  }, [cfg.model]);
+
   useEffect(() => {
     // Close any existing connection before creating a new one
     if (ws.current) {
@@ -70,7 +85,7 @@ export const AppStateProvider = ({ children }) => {
         }
       }
       else if (data.cfg) {
-        setCfg(data.cfg);
+        setCfg(data.cfg); // Only set the config here. Routing is handled by useEffect.
       }
       else if (data.WiFiList){
         setWiFiList(data.WiFiList);

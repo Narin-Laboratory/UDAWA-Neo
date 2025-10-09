@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
-import { useAppState } from './AppStateContext';
+import { useAppState } from '../../AppStateContext';
 import CryptoJS from 'crypto-js';
 
 const LoginPopUp = () => {
