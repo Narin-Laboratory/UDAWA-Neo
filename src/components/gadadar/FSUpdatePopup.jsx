@@ -1,7 +1,9 @@
 import { h } from 'preact';
+import { useTranslation } from 'react-i18next';
 import { useAppState } from '../../AppStateContext';
 
 const FSUpdatePopup = () => {
+  const { t } = useTranslation();
   const { fsUpdate } = useAppState();
 
   // If there's no update in progress or it's completed, don't render anything
@@ -17,21 +19,21 @@ const FSUpdatePopup = () => {
     <div className="full-page-cover" data-theme="dark">
       <article>
         <header>
-          <strong>Updating Web Interface</strong>
+          <strong>{t('fs_update_title')}</strong>
         </header>
         {error ? (
           <div>
-            <p>An error occurred:</p>
+            <p>{t('fs_update_error_title')}</p>
             <p><strong>{error}</strong></p>
           </div>
         ) : (
           <div>
-            <p>Status: {status}</p>
+            <p>{t('fs_update_status_label', { status })}</p>
             {status && (
               <div>
                 <progress value={progressPercentage} max="100"></progress>
-                <p>{progressPercentage}% complete</p>
-                <p>({progress} of {total} bytes)</p>
+                <p>{t('fs_update_progress_complete', { progress: progressPercentage })}</p>
+                <p>{t('fs_update_progress_bytes', { progress, total })}</p>
               </div>
             )}
           </div>

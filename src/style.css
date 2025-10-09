@@ -121,3 +121,15 @@ div.copyleft-item{
 .super-small{
 	font-size: x-small;
 }
+
+.language-switcher {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 1000;
+}
+
+.language-switcher select {
+  padding: 5px;
+  cursor: pointer;
+}

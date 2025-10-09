@@ -1,10 +1,12 @@
 import { h } from 'preact';
+import { useTranslation } from 'react-i18next';
 
 const Damodar = () => {
+  const { t } = useTranslation();
   return (
     <div>
-      <h1>Damodar Dashboard</h1>
-      <p>This is a placeholder for the Damodar device dashboard.</p>
+      <h1>{t('damodar_dashboard_title')}</h1>
+      <p>{t('damodar_dashboard_placeholder')}</p>
     </div>
   );
 };

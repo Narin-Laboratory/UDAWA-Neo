@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
+import { useTranslation } from 'react-i18next';
 
 import '../style.css';
 import SettingsIcon from '../assets/settings.svg';
@@ -14,6 +15,7 @@ import PowerSensor from '../components/gadadar/powerSensor';
 import AlarmCard from '../components/gadadar/alarm';
 
 function Gadadar() {
+	const { t } = useTranslation();
 	const { cfg, ws, authState, showSetupForm, setShowSetupForm, wsStatus, finishedSetup, setFinishedSetup } = useAppState();
 	const [latestCfg, setLatestCfg] = useState(cfg); // State to hold latest cfg
 	const [powerSensor, setPowerSensor] = useState({amp: 0, volt: 0, watt: 0, pf: 0, freq: 0, ener: 0});
@@ -65,7 +67,7 @@ function Gadadar() {
 							<img src={SettingsIcon} alt="Settings" />
 						</a></li></ul>
 					<ul>
-						<li><strong>UDAWA {cfg.model}</strong></li>
+						<li><strong>{t('udawa_model', { model: cfg.model })}</strong></li>
 					</ul>
 				</nav>
 			</article>
@@ -91,14 +93,10 @@ function Gadadar() {
 			<article>
 				<header>
 				<p>
-					<strong>Agent Setup Completed!</strong>
+					<strong>{t('setup_completed_title')}</strong>
 				</p>
 				</header>
-				<p>
-				Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the agent built-in web interface via <br/><br/>
-				<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/>
-				Thankyou and happy farming!
-				</p>
+				<p dangerouslySetInnerHTML={{ __html: t('setup_completed_body', { wssid: latestCfg.wssid, hname: latestCfg.hname }) }} />
 			</article>
 		</dialog>
 			{!cfg.fInit ? (
@@ -131,7 +129,7 @@ function Gadadar() {
 			<hr />
 			<div id="copyleft">
 				<div class="copyleft-item">
-					<a href="https://udawa.or.id" target="_blank"><img src={heartIcon} alt="heartIcon" /> PSTI UNDIKNAS <img src={heartIcon} alt="heartIcon" /></a>
+					<a href="https://udawa.or.id" target="_blank"><img src={heartIcon} alt="heartIcon" /> {t('psti_undiknas')} <img src={heartIcon} alt="heartIcon" /></a>
 				</div>
 			</div>
 		  </section>

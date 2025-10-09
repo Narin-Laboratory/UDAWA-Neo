@@ -1,8 +1,10 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
+import { useTranslation } from 'react-i18next';
 import { useAppState } from '../../AppStateContext';
 
 const WsConnectionPopup = () => {
+  const { t } = useTranslation();
   const { wsStatus, wsAddress, setWsAddress } = useAppState();
   const [manualAddress, setManualAddress] = useState(wsAddress);
 
@@ -23,23 +25,22 @@ const WsConnectionPopup = () => {
     <div class="full-page-cover" data-theme="dark">
       <article>
         <header>
-          <strong>WebSocket Connection Failed</strong>
+          <strong>{t('ws_connection_failed_title')}</strong>
         </header>
         <p>
-          Unable to connect to the agent. Please ensure you are on the same Wi-Fi network as the device.
-          If the address has changed, you can enter the new one below.
+          {t('ws_connection_failed_body')}
         </p>
         <form onSubmit={handleReconnect}>
-          <label htmlFor="ws-address">Device Address</label>
+          <label htmlFor="ws-address">{t('device_address_label')}</label>
           <input
             type="text"
             id="ws-address"
             name="ws-address"
             value={manualAddress}
             onChange={handleInputChange}
-            placeholder="e.g., gadadar4ch.local or 192.168.1.100"
+            placeholder={t('device_address_placeholder')}
           />
-          <button type="submit">Reconnect</button>
+          <button type="submit">{t('reconnect_button')}</button>
         </form>
         <div class="text-center" style={{ marginTop: '1rem' }}>
           😵

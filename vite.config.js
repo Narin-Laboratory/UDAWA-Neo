@@ -3,7 +3,21 @@ import preact from '@preact/preset-vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      '/ws': {
+        target: 'ws://gadadar4ch.local',
+        ws: true,
+      },
+    },
+  },
   plugins: [preact()],
+  resolve: {
+    alias: {
+      'react': 'preact/compat',
+      'react-dom': 'preact/compat'
+    }
+  },
   build: {
     rollupOptions: {
       output: {
