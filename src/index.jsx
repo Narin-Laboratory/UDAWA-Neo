@@ -21,69 +21,60 @@ function App() {
 		<MainApp />
 	  </AppStateProvider>
 	);
-  }
-  
-  function MainApp() {
-	const { cfg, ws, authState, showSetupForm, setShowSetupForm, wsStatus, finishedSetup, setFinishedSetup } = useAppState();
-	const [latestCfg, setLatestCfg] = useState(cfg); // State to hold latest cfg
-	const [powerSensor, setPowerSensor] = useState({amp: 0, volt: 0, watt: 0, pf: 0, freq: 0, ener: 0});
-	const [alarm, setAlarm] = useState({code: 0, time: ''});
-	const [sysInfo, setSysInfo] = useState({uptime: 0, heap: 0, datetime: 0, rssi: 0});
-  
-	useEffect(() => {
-		// Function to update latestCfg whenever cfg changes
-		const updateCfg = () => {
-			setLatestCfg(cfg); 
-		};
+}
 
-		// Subscribe to WebSocket messages
-		if (ws.current) {
-			ws.current.addEventListener('message', (event) => {
-				const data = JSON.parse(event.data);
-				if (data.cfg) {
-					updateCfg(); // Update latestCfg when new config is received
-				} else if (data.powerSensor) {
-					setPowerSensor(data.powerSensor);
-				} else if (data.alarm && data.alarm.code !== 0) {
-					setAlarm(data.alarm);
-				} else if (data.setFinishedSetup) {
-					setFinishedSetup(data.setFinishedSetup.fInit);
-				} else if (data.sysInfo) {
-					setSysInfo(data.sysInfo);
-				}
-			});
-		}
-
-		// Cleanup: Remove the event listener when component unmounts
-		return () => {
-			if (ws.current) {
-				ws.current.removeEventListener('message', updateCfg);
-			}
-		};
-	}, [cfg, ws]); // Run effect whenever cfg or ws changes
+function MainApp() {
+	const {
+		cfg, authState, showSetupForm, setShowSetupForm, connectionStatus,
+		finishedSetup, powerSensor, alarm, sysInfo,
+		connectionMode, switchConnectionMode
+	} = useAppState();
 
 	const handleShowSetupForm = () => {
 		setShowSetupForm(!showSetupForm);
 	};
+
+	const handleModeChange = (event) => {
+		const newMode = event.target.checked ? 'cloud' : 'local';
+		switchConnectionMode(newMode);
+	};
+
 	return (
 	  <div>
-		{ !wsStatus && (
-		<article class="full-page-cover" data-theme="dark">
-		  {/* Your cover content here */}
-		  <h1>Websocket Connect Failed</h1>
-		  <p>Unable to connect to the agent. Please make sure that you are in the same WiFi network with the agent.</p>
-		  <div>😵</div>
-		</article>
-	  )}
+		{ !connectionStatus && !showSetupForm && !cfg.fInit && (
+		  <article class="full-page-cover" data-theme="dark">
+			<h1>Connection Failed</h1>
+			<p>
+			  Unable to connect to the {connectionMode} service. Please check your network connection and credentials.
+			</p>
+			<div aria-busy="true"></div>
+		  </article>
+		)}
 		<header>
 			<article>
 				<nav>
 					<ul>
-						<li><a onClick={handleShowSetupForm} class="secondary" aria-label="Menu" data-discover="true" href="#">
-							<img src={SettingsIcon} alt="Settings" />
-						</a></li></ul>
+						<li>
+							<a onClick={handleShowSetupForm} class="secondary" aria-label="Menu" href="#">
+								<img src={SettingsIcon} alt="Settings" />
+							</a>
+						</li>
+					</ul>
 					<ul>
 						<li><strong>UDAWA {cfg.model}</strong></li>
+					</ul>
+					<ul>
+						<li>
+						  <label>
+							<input
+							  type="checkbox"
+							  role="switch"
+							  checked={connectionMode === 'cloud'}
+							  onChange={handleModeChange}
+							/>
+							Cloud Mode
+						  </label>
+						</li>
 					</ul>
 				</nav>
 			</article>
@@ -113,14 +104,14 @@ function App() {
 				</p>
 				</header>
 				<p>
-				Now you can connect to WiFi <strong>{latestCfg.wssid}</strong> and access the agent built-in web interface via <br/><br/>
-				<a href={`http://${latestCfg.hname}.local`}><strong>http://{latestCfg.hname}.local</strong></a><br/><br/><br/>
+				Now you can connect to WiFi <strong>{cfg.wssid}</strong> and access the agent built-in web interface via <br/><br/>
+				<a href={`http://${cfg.hname}.local`}><strong>http://{cfg.hname}.local</strong></a><br/><br/><br/>
 				Thankyou and happy farming!
 				</p>
 			</article>
 		</dialog>
 			<LoginPopUp />
-			{!cfg.fInit ? (
+			{!cfg.fInit || showSetupForm ? (
 				<section>
 					<SetupForm />
 				</section>
@@ -135,11 +126,6 @@ function App() {
 						<article>
 							<ChannelSelector />
 						</article>
-						<dialog open={showSetupForm && !finishedSetup}>
-							<article>
-								<SetupForm></SetupForm>
-							</article>
-						</dialog>
 					</section>
 					)}
 				</div>
@@ -157,6 +143,6 @@ function App() {
 		</footer>
 	  </div>
 	);
-  }
-  
-  render(<App />, document.getElementById('app'));
+}
+
+render(<App />, document.getElementById('app'));

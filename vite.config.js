@@ -4,6 +4,14 @@ import preact from '@preact/preset-vite';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [preact()],
+  server: {
+    proxy: {
+      '/ws': {
+        target: 'ws://gadadar4ch.local',
+        ws: true,
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {
